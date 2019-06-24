@@ -48,8 +48,8 @@ class Widget:
 
     _parent_widget = None
     _style = {"height": "100%", "width": "100%"}
-    _properties = {}
-    _child_widgets = []
+    _properties = None
+    _child_widgets = None
     _widget_content = None
 
     def __init__(self, name, desc=None, tag=None, prop=None, style=None):
@@ -57,6 +57,9 @@ class Widget:
         self._name = name
         self._id = name
         self._description = desc
+        # init attributes
+        self._properties = {}
+        self._child_widgets = []
         if tag is not None:
             self._tag = tag
             self._widget_type = str(tag).upper()
@@ -67,24 +70,24 @@ class Widget:
         if style is not None:
             self._style.update(style)
 
-    def add_to_parent(self, parent):
-        """Adds the current object to provided widget
-        instance
+    # def add_to_parent(self, parent):
+    #     """Adds the current object to provided widget
+    #     instance
 
-            Args:
-                parent (Widget): An parent widget object
-        """
-        self._parent_widget = parent
-        parent.add(self)
+    #         Args:
+    #             parent (Widget): An parent widget object
+    #     """
+    #     self._parent_widget = parent
+    #     parent.add(self)
 
-    def remove_from_parent(self, parent):
-        """Removes the current object from the parent
+    # def remove_from_parent(self, parent):
+    #     """Removes the current object from the parent
 
-            Args:
-                parent (Widget): Parent widget object
-        """
-        parent.remove(self)
-        self._parent_widget = None
+    #         Args:
+    #             parent (Widget): Parent widget object
+    #     """
+    #     parent.remove(self)
+    #     self._parent_widget = None
 
     def add(self, child):
         """Adds an child to current instance
@@ -160,7 +163,7 @@ class Widget:
     def render(self):
         """Renders the widget as html script and returns
         same"""
-        sub_content = None
+        sub_content = ""
         # Get contents of child nodes
         for widget in self._child_widgets:
             sub_content += widget.render()
@@ -176,27 +179,35 @@ class Page(Widget):
     to include CSS AND JS libs
     """
 
-    _script_sections = []
-    _style_sections = []
+    _script_sections = None
+    _style_sections = None
     _jquery_section = """
+                        <script>
                         $(function(){
                         %s
                         });
+                        </script>
                         """
-    _scripts = []
+    _scripts = None
     _title = "Home"
     _jquery_css = True
     _jquery_js = True
 
     def __init__(self, name, j_cc=True, j_js=True):
+        Widget.__init__(self, name)
         self._title = name
         self._jquery_css = j_cc
         self._jquery_js = j_js
+        # init sections
+        self._style_sections = []
+        self._script_sections = []
+        self._scripts = []
+        # add script if required
         if self._jquery_css:
-            self.add_css('jquery/jquery-ui.css')
-            self.add_css('jquery/jquery-ui.theme.css')
+            self.add_css('https://code.jquery.com/ui/1.12.1/themes/black-tie/jquery-ui.css')
         if self._jquery_js:
-            self.add_js('jquery/jquery-ui.js')
+            self.add_js('https://code.jquery.com/jquery-3.4.1.min.js')
+            self.add_js('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js')
 
     def add_js(self, path):
         """Adds an javascript file to the page """
@@ -219,7 +230,7 @@ class Page(Widget):
             css_content += "<link rel='stylesheet' href='" + cssp + "' />\n"
         js_content = "\n"
         for jsp in self._script_sections:
-            js_content += "<script src='" + jsp + "'></script>"
+            js_content += "<script src='" + jsp + "'></script>\n"
         content += css_content
         content += js_content
         content += "\n</head>\n<body style='width: 100%; height: 100%'>"

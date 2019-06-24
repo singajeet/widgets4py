@@ -15,8 +15,8 @@ class SimpleGridLayout(Widget):
 
     _number_of_rows = None
     _number_of_columns = None
-    _rows_ratio = []
-    _columns_ratio = []
+    _rows_ratio = None
+    _columns_ratio = None
 
     def __init__(self, name, rows, columns, row_ratio=None, col_ratio=None,
                  desc=None, prop=None, style=None):
@@ -26,8 +26,12 @@ class SimpleGridLayout(Widget):
         self._number_of_rows = rows
         if row_ratio is not None:
             self._rows_ratio = row_ratio
+        else:
+            self._rows_ratio = []
         if col_ratio is not None:
             self._columns_ratio = col_ratio
+        else:
+            self._columns_ratio = []
 
     def render(self):
         """Renders the grid layout with its child components"""
@@ -71,9 +75,9 @@ class GridLayout(Widget):
 
     _number_of_rows = None
     _number_of_columns = None
-    _child_widgets = {}
-    _rows_ratio = []
-    _columns_ratio = []
+    _child_widgets = None
+    _rows_ratio = None
+    _columns_ratio = None
 
     def __init__(self, name, rows, columns, row_ratio=None, col_ratio=None,
                  desc=None, prop=None, style=None):
@@ -81,10 +85,15 @@ class GridLayout(Widget):
         Widget.__init__(self, name, desc, 'table', prop, style)
         self._number_of_columns = columns
         self._number_of_rows = rows
+        self._child_widgets = {}
         if row_ratio is not None:
             self._rows_ratio = row_ratio
+        else:
+            self._rows_ratio = []
         if col_ratio is not None:
             self._columns_ratio = col_ratio
+        else:
+            self._columns_ratio = []
 
     def add(self, x, y, child):
         """Adds a child component to the Grid at specified coordinates
@@ -114,7 +123,7 @@ class GridLayout(Widget):
         for row_index in range(self._number_of_rows):
             if self._rows_ratio.__len__() > 0\
                     and row_index < self._rows_ratio.__len__():
-                main_content += "\n<tr height=" + self._rows_ratio + ">"
+                main_content += "\n<tr height=" + self._rows_ratio[row_index] + ">"
             else:
                 main_content += "\n<tr>"
             for col_index in range(self._number_of_columns):
