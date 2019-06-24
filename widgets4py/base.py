@@ -49,7 +49,7 @@ class Widget:
     _parent_widget = None
     _style = {"height": "100%", "width": "100%"}
     _properties = {}
-    _child_wigets = []
+    _child_widgets = []
     _widget_content = None
 
     def __init__(self, name, desc=None, tag=None, prop=None, style=None):
@@ -139,7 +139,7 @@ class Widget:
         name, styles, properties, etc
         """
         # Render current nodes tag and id
-        content = "<" + tag + " " \
+        content = "\n<" + tag + " " \
             + "id='" + self._id + "' "\
             + "name='" + self._name + "' "
 
@@ -155,17 +155,80 @@ class Widget:
 
     def _render_post_content(self, tag):
         """Renders the post markup code to write the end HTML tag"""
-        return "</" + tag + ">"
+        return "\n</" + tag + ">"
 
     def render(self):
         """Renders the widget as html script and returns
         same"""
         sub_content = None
         # Get contents of child nodes
-        for widget in self._child_wigets:
+        for widget in self._child_widgets:
             sub_content += widget.render()
         main_content = self._render_pre_content(self._tag)
         # Merge sub content in the main content and add closing tag
         self._widget_content = main_content + sub_content + \
             self._render_post_content(self._tag)
         return self._widget_content
+
+
+class Page(Widget):
+    """The page class represents an HTML page with options
+    to include CSS AND JS libs
+    """
+
+    _script_sections = []
+    _style_sections = []
+    _jquery_section = """
+                        $(function(){
+                        %s
+                        });
+                        """
+    _scripts = []
+    _title = "Home"
+    _jquery_css = True
+    _jquery_js = True
+
+    def __init__(self, name, j_cc=True, j_js=True):
+        self._title = name
+        self._jquery_css = j_cc
+        self._jquery_js = j_js
+        if self._jquery_css:
+            self.add_css('jquery/jquery-ui.css')
+            self.add_css('jquery/jquery-ui.theme.css')
+        if self._jquery_js:
+            self.add_js('jquery/jquery-ui.js')
+
+    def add_js(self, path):
+        """Adds an javascript file to the page """
+        self._script_sections.append(path)
+
+    def add_css(self, path):
+        """Adds an css file to the page """
+        self._style_sections.append(path)
+
+    def add_script(self, script):
+        """Adds an jquery script to page """
+        self._scripts.append(script)
+
+    def render(self):
+        """Renders the page """
+        content = "<html style='height:100%;width:100%'>\n<head>\n"
+        content += "<title>" + self._title + "</title>\n"
+        css_content = "\n"
+        for cssp in self._style_sections:
+            css_content += "<link rel='stylesheet' href='" + cssp + "' />\n"
+        js_content = "\n"
+        for jsp in self._script_sections:
+            js_content += "<script src='" + jsp + "'></script>"
+        content += css_content
+        content += js_content
+        content += "\n</head>\n<body style='width: 100%; height: 100%'>"
+        script_content = ""
+        for sc in self._scripts:
+            script_content += sc + "\n"
+        content += (self._jquery_section % script_content)
+        content += "\n<div style='height:100%;width:100%'>"
+        for widget in self._child_widgets:
+            content += widget.render()
+        content += "\n</div>\n</body>\n</html>"
+        return content
