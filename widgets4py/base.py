@@ -15,7 +15,10 @@ class Widget:
             'id': 'id of html node',
             'name': 'name of the element',
             'desc': 'description of widget',
-            'styles': 'css style',
+            'styles': {
+                        'style1': 'stylevalue1',
+                        'style2': 'stylevalue2'
+                        },
             'parent_tag': 'parent tag'
             'properties': {
                             'attribute1': 'value1',
@@ -44,7 +47,7 @@ class Widget:
     _widget_type = "DIV"
 
     _parent_widget = None
-    _style = "height: 100%; width: 100%; "
+    _style = {"height": "100%", "width": "100%"}
     _properties = {}
     _child_wigets = []
     _widget_content = None
@@ -62,7 +65,7 @@ class Widget:
             self._properties = prop
 
         if style is not None:
-            self._style += style
+            self._style.update(style)
 
     def add_to_parent(self, parent):
         """Adds the current object to provided widget
@@ -101,7 +104,7 @@ class Widget:
 
     def set_properties(self, prop):
         """Properties setter"""
-        self._properties = prop
+        self._properties.update(prop)
 
     def get_properties(self):
         """properties getter"""
@@ -115,13 +118,44 @@ class Widget:
         """Removes an property from object's properties"""
         self._properties.pop(key)
 
-    def apply_style(self, style):
+    def set_styles(self, style):
         """Applies an style to HTML node """
-        self._style += style
+        self._style.update(style)
 
-    def remove_style(self):
+    def get_styles(self):
         """Removes the whole style from HTML element"""
-        self._style = None
+        return self._style
+
+    def add_style(self, style_name, style_value):
+        """Add an style to object's styles"""
+        self._style[style_name] = style_value
+
+    def remove_style(self, style_name):
+        """Removes an style from the object"""
+        self._style.pop(style_name)
+
+    def _render_pre_content(self, tag):
+        """Renders the pre markup code to write start HTML tag id,
+        name, styles, properties, etc
+        """
+        # Render current nodes tag and id
+        content = "<" + tag + " " \
+            + "id='" + self._id + "' "\
+            + "name='" + self._name + "' "
+
+        # Render properties of the node
+        for prop in self._properties:
+            content += prop + "='" + self._properties.get(prop) + "' "
+        # Render style attributes
+        content += "style='"
+        for style in self._style:
+            content += style + ":" + self._style.get(style) + ";"
+        content += "'>"
+        return content
+
+    def _render_post_content(self, tag):
+        """Renders the post markup code to write the end HTML tag"""
+        return "</" + tag + ">"
 
     def render(self):
         """Renders the widget as html script and returns
@@ -130,14 +164,8 @@ class Widget:
         # Get contents of child nodes
         for widget in self._child_wigets:
             sub_content += widget.render()
-        # Remder current nodes tag and id
-        main_content = ("<" + self._tag + " "
-                        + "id='" + self._id + "' "
-                        + "name='" + self._name + "' "
-                        )
-        # Render properties of the node
-        for prop in self._properties:
-            main_content += prop + "='" + self._properties.get(prop) + "' "
-        main_content += "style='" + self._style if self._style is not None else "" + "' >"
-        self._widget_content = main_content + sub_content + "</" + self._tag + ">"
+        main_content = self._render_pre_content(self._tag)
+        # Merge sub content in the main content and add closing tag
+        self._widget_content = main_content + sub_content + \
+            self._render_post_content(self._tag)
         return self._widget_content

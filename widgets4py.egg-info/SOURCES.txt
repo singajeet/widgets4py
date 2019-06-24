@@ -1,0 +1,8 @@
+README.txt
+widgets4py/__init__.py
+widgets4py/widgets.py
+widgets4py.egg-info/PKG-INFO
+widgets4py.egg-info/SOURCES.txt
+widgets4py.egg-info/dependency_links.txt
+widgets4py.egg-info/requires.txt
+widgets4py.egg-info/top_level.txt
