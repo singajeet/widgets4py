@@ -51,14 +51,14 @@ class Widget:
     _properties = None
     _child_widgets = None
     _widget_content = None
+    _attributes = None
 
-    def __init__(self, name, desc=None, tag=None, prop=None, style=None):
+    def __init__(self, name, desc=None, tag=None, prop=None, style=None, attr=None):
         """Default constructor"""
         self._name = name
         self._id = name
         self._description = desc
         # init attributes
-        self._properties = {}
         self._child_widgets = []
         if tag is not None:
             self._tag = tag
@@ -66,11 +66,18 @@ class Widget:
 
         if prop is not None:
             self._properties = prop
+        else:
+            self._properties = {}
 
         if style is not None:
             self._style = style
         else:
             self._style = {}
+
+        if attr is not None:
+            self._attributes = attr
+        else:
+            self._attributes = []
 
     def add(self, child):
         """Adds an child to current instance
@@ -120,6 +127,22 @@ class Widget:
         """Removes an style from the object"""
         self._style.pop(style_name)
 
+    def set_attributes(self, attr):
+        """Attributes setter """
+        self._attributes = attr
+
+    def get_attributes(self):
+        """Attributes getter"""
+        return self._attributes
+
+    def add_attribute(self, attr):
+        """Adds an attribute to the object"""
+        self._attributes.append(attr)
+
+    def remove_attribute(self, attr):
+        """Removes an attributes from the object"""
+        self._attributes.pop(attr)
+
     def _render_pre_content(self, tag):
         """Renders the pre markup code to write start HTML tag id,
         name, styles, properties, etc
@@ -136,7 +159,10 @@ class Widget:
         content += "style='"
         for style in self._style:
             content += style + ":" + self._style.get(style) + ";"
-        content += "'>"
+        content += "' "
+        for attr in self._attributes:
+            content += attr + " "
+        content += ">"
         return content
 
     def _render_post_content(self, tag):
@@ -176,8 +202,8 @@ class Page(Widget):
     _jquery_css = True
     _jquery_js = True
 
-    def __init__(self, name, title, j_cc=True, j_js=True):
-        Widget.__init__(self, name, style={})
+    def __init__(self, name, title, desc=None, j_cc=True, j_js=True, prop=None, style=None, attr=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
         self._title = title
         self._jquery_css = j_cc
         self._jquery_js = j_js

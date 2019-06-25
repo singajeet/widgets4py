@@ -10,9 +10,9 @@ class PageTest:
     def show_layout(self):
         pg = Page('myPage', 'My Page')
         frm = Form("myform", app=app, submit_callback=self.hello)
-        txt = TextBox("firstName")
-        sub = Submit("submit", "Start1")
-        rst = Reset("cancel", "Cancel1")
+        txt = TextBox("firstName", disabled=True)
+        sub = Submit("submit", "Submit")
+        rst = Reset("cancel", "Reset")
         frm.add(txt)
         frm.add(sub)
         frm.add(rst)
