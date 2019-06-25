@@ -10,10 +10,10 @@ from widgets4py.base import Widget
 class Button(Widget):
     """A simple button class"""
 
-    def __init__(self, name, readonly=False, disabled=False, required=False):
+    def __init__(self, name, title, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'button')
-        self.add_property('value', name)
+        self.add_property('value', title)
         if readonly:
             self.add_attribute('readonly')
         if disabled:
@@ -32,11 +32,17 @@ class Button(Widget):
 class TextBox(Widget):
     """A simple HTML textbox / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, text=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'text')
-        if value is not None:
-            self.add_property('value', value)
+        if text is not None:
+            self.add_property('value', text)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of textbox class"""
@@ -49,11 +55,17 @@ class TextBox(Widget):
 class CheckBox(Widget):
     """A simple HTML chexkbox / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, title=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'checkbox')
-        if value is not None:
-            self.add_property('value', value)
+        if title is not None:
+            self.add_property('value', title)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of chexkbox class"""
@@ -66,11 +78,17 @@ class CheckBox(Widget):
 class Color(Widget):
     """A simple HTML color / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'color')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of color class"""
@@ -83,7 +101,8 @@ class Color(Widget):
 class Date(Widget):
     """A simple HTML date / input field"""
 
-    def __init__(self, name, value=None, min=None, max=None):
+    def __init__(self, name, value=None, min=None, max=None, readonly=False, disabled=False,
+                 required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'date')
         if value is not None:
@@ -92,6 +111,12 @@ class Date(Widget):
             self.add_property('min', min)
         if max is not None:
             self.add_property('max', max)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of date class"""
@@ -104,11 +129,17 @@ class Date(Widget):
 class DateTimeLocal(Widget):
     """A simple HTML datetime-local / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'datetime-local')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of datetime-local class"""
@@ -121,11 +152,17 @@ class DateTimeLocal(Widget):
 class Email(Widget):
     """A simple HTML email / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'email')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of email class"""
@@ -138,11 +175,20 @@ class Email(Widget):
 class File(Widget):
     """A simple HTML file / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False,
+                 multiple=False):
         Widget.__init__(self, name)
         self.add_property('type', 'file')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add_attribute('required')
+        if multiple:
+            self.add_attribute('multiple')
 
     def render(self):
         """Renders the content of file class"""
@@ -155,11 +201,17 @@ class File(Widget):
 class Hidden(Widget):
     """A simple HTML hidden / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'hidden')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of hidden class"""
@@ -172,11 +224,17 @@ class Hidden(Widget):
 class Image(Widget):
     """A simple HTML image / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'image')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of image class"""
@@ -189,11 +247,17 @@ class Image(Widget):
 class Month(Widget):
     """A simple HTML month / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'month')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of month class"""
@@ -206,7 +270,8 @@ class Month(Widget):
 class Number(Widget):
     """A simple HTML number / input field"""
 
-    def __init__(self, name, value=None, min=None, max=None):
+    def __init__(self, name, value=None, min=None, max=None, readonly=False, disabled=False,
+                 required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'number')
         if value is not None:
@@ -215,6 +280,12 @@ class Number(Widget):
             self.add_property('min', min)
         if max is not None:
             self.add_property('max', max)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of number class"""
@@ -227,11 +298,17 @@ class Number(Widget):
 class Password(Widget):
     """A simple HTML password / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'password')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of password class"""
@@ -244,11 +321,17 @@ class Password(Widget):
 class Radio(Widget):
     """A simple HTML radio / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'radio')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of radio class"""
@@ -261,7 +344,8 @@ class Radio(Widget):
 class Range(Widget):
     """A simple HTML range / input field"""
 
-    def __init__(self, name, value=None, min=None, max=None):
+    def __init__(self, name, value=None, min=None, max=None, readonly=False, disabled=False,
+                 required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'range')
         if value is not None:
@@ -270,6 +354,12 @@ class Range(Widget):
             self.add_property('min', min)
         if max is not None:
             self.add_property('max', max)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of range class"""
@@ -282,11 +372,16 @@ class Range(Widget):
 class Reset(Widget):
     """A simple HTML reset / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, title, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'reset')
-        if value is not None:
-            self.add_property('value', value)
+        self.add_property('value', title)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of reset class"""
@@ -299,11 +394,17 @@ class Reset(Widget):
 class Search(Widget):
     """A simple HTML search / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'search')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of search class"""
@@ -316,11 +417,16 @@ class Search(Widget):
 class Submit(Widget):
     """A simple HTML submit / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, title, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'submit')
-        if value is not None:
-            self.add_property('value', value)
+        self.add_property('value', title)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of submit class"""
@@ -333,13 +439,20 @@ class Submit(Widget):
 class Telephone(Widget):
     """A simple HTML telephone / input field"""
 
-    def __init__(self, name, value=None, pattern=None):
+    def __init__(self, name, value=None, pattern=None, readonly=False, disabled=False,
+                 required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'tel')
         if value is not None:
             self.add_property('value', value)
         if pattern is not None:
             self.add_property('pattern', pattern)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of telephone class"""
@@ -352,11 +465,17 @@ class Telephone(Widget):
 class Time(Widget):
     """A simple HTML time / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'time')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of time class"""
@@ -369,11 +488,17 @@ class Time(Widget):
 class URL(Widget):
     """A simple HTML url / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'url')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of url class"""
@@ -386,11 +511,17 @@ class URL(Widget):
 class Week(Widget):
     """A simple HTML week / input field"""
 
-    def __init__(self, name, value=None):
+    def __init__(self, name, value=None, readonly=False, disabled=False, required=False):
         Widget.__init__(self, name)
         self.add_property('type', 'week')
         if value is not None:
             self.add_property('value', value)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add('required')
 
     def render(self):
         """Renders the content of week class"""
@@ -410,9 +541,10 @@ class Form(Widget):
 
     def __init__(self, name, action=None, target=None, method=None,
                  use_fieldset=False, legend=None, app=None,
-                 p_on_form_submitted=None):
-        if p_on_form_submitted is not None:
-            self._on_form_submitted = p_on_form_submitted
+                 submit_callback=None):
+        Widget.__init__(self, name)
+        if submit_callback is not None:
+            self._on_form_submitted = submit_callback
         if app is not None:
             self._app = app
         if target is not None:
@@ -421,11 +553,12 @@ class Form(Widget):
             self.add_property('method', method)
         self._use_fieldset = use_fieldset
         self._legend = legend
-        if app is not None and p_on_form_submitted is not None:
-            app.add_url_rule(('/' + __name__ + name),
-                             (__name__ + name),
+        if app is not None and submit_callback is not None:
+            rule_str = str(__name__ + "_" + name).replace(".", "_")
+            app.add_url_rule('/' + rule_str,
+                             rule_str,
                              self._on_form_submitted)
-            self.add_property('action', ('/' + __name__ + name))
+            self.add_property('action', "/" + rule_str)
         else:
             if action is not None:
                 self.add_property('action', action)
@@ -433,10 +566,11 @@ class Form(Widget):
     def on_form_submitted(self, func):
         self._on_form_submitted = func
         if self._app is not None and self._on_form_submitted is not None:
-            self._app.add_url_rule(('/' + __name__ + self._name),
-                                   (__name__ + self._name),
+            rule_str = str(__name__ + "_" + self._name).replace('.', '_')
+            self._app.add_url_rule('/' + rule_str,
+                                   rule_str,
                                    self._on_form_submitted)
-            self.add_property('action', ('/' + __name__ + self._name))
+            self.add_property('action', '/' + rule_str)
 
     def render(self):
         """Renders the content of the form"""

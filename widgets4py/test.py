@@ -1,7 +1,6 @@
 from flask import Flask
 from widgets4py.base import Page
-from widgets4py.layouts import GridLayout
-from widgets4py.basic import Button
+from widgets4py.basic import Form, TextBox, Submit, Reset
 
 app = Flask(__name__)
 
@@ -9,13 +8,21 @@ app = Flask(__name__)
 class PageTest:
 
     def show_layout(self):
-        pg = Page('My Page')
-        lay = GridLayout('Grid', 2, 2, row_ratio=['40%', '60%'], col_ratio=['30%', '70%'])
-        bt = Button('my btn')
-        lay.add(0, 0, bt)
-        pg.add(lay)
+        pg = Page('myPage', 'My Page')
+        frm = Form("myform", app=app, submit_callback=self.hello)
+        txt = TextBox("firstName")
+        sub = Submit("submit", "Start1")
+        rst = Reset("cancel", "Cancel1")
+        frm.add(txt)
+        frm.add(sub)
+        frm.add(rst)
+        pg.add(frm)
         content = pg.render()
         return content
+
+    def hello(self):
+        print("Hello!")
+        return "Hello!"
 
 
 p = PageTest()

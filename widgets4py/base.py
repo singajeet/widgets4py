@@ -47,10 +47,9 @@ class Widget:
     _widget_type = "DIV"
 
     _parent_widget = None
-    _style = {"height": "100%", "width": "100%"}
+    _style = None  # {"height": "100%", "width": "100%"}
     _properties = None
     _child_widgets = None
-    _attributes = None
     _widget_content = None
 
     def __init__(self, name, desc=None, tag=None, prop=None, style=None):
@@ -61,7 +60,6 @@ class Widget:
         # init attributes
         self._properties = {}
         self._child_widgets = []
-        self._attributes = []
         if tag is not None:
             self._tag = tag
             self._widget_type = str(tag).upper()
@@ -70,26 +68,9 @@ class Widget:
             self._properties = prop
 
         if style is not None:
-            self._style.update(style)
-
-    # def add_to_parent(self, parent):
-    #     """Adds the current object to provided widget
-    #     instance
-
-    #         Args:
-    #             parent (Widget): An parent widget object
-    #     """
-    #     self._parent_widget = parent
-    #     parent.add(self)
-
-    # def remove_from_parent(self, parent):
-    #     """Removes the current object from the parent
-
-    #         Args:
-    #             parent (Widget): Parent widget object
-    #     """
-    #     parent.remove(self)
-    #     self._parent_widget = None
+            self._style = style
+        else:
+            self._style = {}
 
     def add(self, child):
         """Adds an child to current instance
@@ -123,14 +104,6 @@ class Widget:
         """Removes an property from object's properties"""
         self._properties.pop(key)
 
-    def add_attribute(self, attrib):
-        """Adds tributes to the widget"""
-        self._attributes.append(attrib)
-
-    def remove_attribute(self, attrib):
-        """Removes attribute from the class"""
-        self._attributes.remove(attrib)
-
     def set_styles(self, style):
         """Applies an style to HTML node """
         self._style.update(style)
@@ -163,9 +136,6 @@ class Widget:
         content += "style='"
         for style in self._style:
             content += style + ":" + self._style.get(style) + ";"
-        # attributes
-        for attr in self._attributes:
-            content += attr + " "
         content += "'>"
         return content
 
@@ -206,9 +176,9 @@ class Page(Widget):
     _jquery_css = True
     _jquery_js = True
 
-    def __init__(self, name, j_cc=True, j_js=True):
-        Widget.__init__(self, name)
-        self._title = name
+    def __init__(self, name, title, j_cc=True, j_js=True):
+        Widget.__init__(self, name, style={})
+        self._title = title
         self._jquery_css = j_cc
         self._jquery_js = j_js
         # init sections
