@@ -50,6 +50,7 @@ class Widget:
     _style = {"height": "100%", "width": "100%"}
     _properties = None
     _child_widgets = None
+    _attributes = None
     _widget_content = None
 
     def __init__(self, name, desc=None, tag=None, prop=None, style=None):
@@ -60,6 +61,7 @@ class Widget:
         # init attributes
         self._properties = {}
         self._child_widgets = []
+        self._attributes = []
         if tag is not None:
             self._tag = tag
             self._widget_type = str(tag).upper()
@@ -121,6 +123,14 @@ class Widget:
         """Removes an property from object's properties"""
         self._properties.pop(key)
 
+    def add_attribute(self, attrib):
+        """Adds tributes to the widget"""
+        self._attributes.append(attrib)
+
+    def remove_attribute(self, attrib):
+        """Removes attribute from the class"""
+        self._attributes.remove(attrib)
+
     def set_styles(self, style):
         """Applies an style to HTML node """
         self._style.update(style)
@@ -153,6 +163,9 @@ class Widget:
         content += "style='"
         for style in self._style:
             content += style + ":" + self._style.get(style) + ";"
+        # attributes
+        for attr in self._attributes:
+            content += attr + " "
         content += "'>"
         return content
 
