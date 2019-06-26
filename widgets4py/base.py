@@ -52,8 +52,9 @@ class Widget:
     _child_widgets = None
     _widget_content = None
     _attributes = None
+    _css_classes = None
 
-    def __init__(self, name, desc=None, tag=None, prop=None, style=None, attr=None):
+    def __init__(self, name, desc=None, tag=None, prop=None, style=None, attr=None, css_cls=None):
         """Default constructor"""
         self._name = name
         self._id = name
@@ -78,6 +79,11 @@ class Widget:
             self._attributes = attr
         else:
             self._attributes = []
+
+        if css_cls is not None:
+            self._css_classes = css_cls
+        else:
+            self._css_classes = []
 
     def add(self, child):
         """Adds an child to current instance
@@ -143,6 +149,14 @@ class Widget:
         """Removes an attributes from the object"""
         self._attributes.pop(attr)
 
+    def add_css_class(self, css_cls):
+        """Adds an CSS class the HTML object"""
+        self._css_classes.append(css_cls)
+
+    def remove_css_class(self, css_cls):
+        """Removes an CSS class from HTML widget"""
+        self._css_classes.pop(css_cls)
+
     def _render_pre_content(self, tag):
         """Renders the pre markup code to write start HTML tag id,
         name, styles, properties, etc
@@ -162,6 +176,10 @@ class Widget:
         content += "' "
         for attr in self._attributes:
             content += attr + " "
+        content += "class='"
+        for css_cls in self._css_classes:
+            content += css_cls + " "
+        content += "' "
         content += ">"
         return content
 
@@ -202,8 +220,10 @@ class Page(Widget):
     _jquery_css = True
     _jquery_js = True
 
-    def __init__(self, name, title, desc=None, j_cc=True, j_js=True, prop=None, style=None, attr=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+    def __init__(self, name, title, desc=None, j_cc=True, j_js=True, prop=None,
+                 style=None, attr=None, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self._title = title
         self._jquery_css = j_cc
         self._jquery_js = j_js

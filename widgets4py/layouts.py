@@ -19,9 +19,10 @@ class SimpleGridLayout(Widget):
     _columns_ratio = None
 
     def __init__(self, name, rows, columns, row_ratio=None, col_ratio=None,
-                 desc=None, prop=None, style=None):
+                 desc=None, prop=None, style=None, css_cls=None):
         """Default constructor with rows and columns parameters"""
-        Widget.__init__(self, name, desc, 'table', prop, style)
+        Widget.__init__(self, name, desc=desc, tag='table', prop=prop,
+                        style=style, css_cls=css_cls)
         self._number_of_columns = columns
         self._number_of_rows = rows
         if row_ratio is not None:
@@ -32,6 +33,8 @@ class SimpleGridLayout(Widget):
             self._columns_ratio = col_ratio
         else:
             self._columns_ratio = []
+        self.add_css_class('ui-widget')
+        self.add_css_class('ui-widget-content')
 
     def render(self):
         """Renders the grid layout with its child components"""
@@ -80,9 +83,10 @@ class GridLayout(Widget):
     _columns_ratio = None
 
     def __init__(self, name, rows, columns, row_ratio=None, col_ratio=None,
-                 desc=None, prop=None, style=None):
+                 desc=None, prop=None, style=None, css_cls=None):
         """Default constructor with rows and columns parameters"""
-        Widget.__init__(self, name, desc, 'table', prop, style)
+        Widget.__init__(self, name, desc=desc, tag='table', prop=prop,
+                        style=style, css_cls=css_cls)
         self._number_of_columns = columns
         self._number_of_rows = rows
         self._child_widgets = {}
@@ -94,6 +98,8 @@ class GridLayout(Widget):
             self._columns_ratio = col_ratio
         else:
             self._columns_ratio = []
+        self.add_css_class('ui-widget')
+        self.add_css_class('ui-widget-content')
 
     def add(self, x, y, child):
         """Adds a child component to the Grid at specified coordinates
@@ -148,10 +154,12 @@ class FlowLayout(Widget):
     """The simplest layout to put the widgets one after another in the flow
     """
 
-    def __init__(self, name, rows, columns, row_ratio=None, col_ratio=None,
-                 desc=None, prop=None, style=None):
+    def __init__(self, name, desc=None, prop=None, style=None, css_cls=None):
         """Default constructor with rows and columns parameters"""
-        Widget.__init__(self, name, desc, 'div', prop, style)
+        Widget.__init__(self, name, desc=desc, tag='div', prop=prop,
+                        style=style, css_cls=css_cls)
+        self.add_css_class('ui-widget')
+        self.add_css_class('ui-widget-content')
 
     def render(self):
         """renders the widgets in flow from left to right"""
@@ -166,10 +174,12 @@ class VerticalLayout(Widget):
     """The vertical layout of the widgets
     """
 
-    def __init__(self, name, rows, columns, row_ratio=None, col_ratio=None,
-                 desc=None, prop=None, style=None):
+    def __init__(self, name, desc=None, prop=None, style=None, css_cls=None):
         """Default constructor with rows and columns parameters"""
-        Widget.__init__(self, name, desc, 'div', prop, style)
+        Widget.__init__(self, name, desc=desc, tag='div', prop=prop,
+                        style=style, css_cls=css_cls)
+        self.add_css_class('ui-widget')
+        self.add_css_class('ui-widget-content')
 
     def render(self):
         """renders the widgets in flow from left to right"""
@@ -184,18 +194,20 @@ class HorizontalLayout(Widget):
     """The vertical layout of the widgets
     """
 
-    def __init__(self, name, rows, columns, row_ratio=None, col_ratio=None,
-                 desc=None, prop=None, style=None):
+    def __init__(self, name, desc=None, prop=None, style=None, css_cls=None):
         """Default constructor with rows and columns parameters"""
-        Widget.__init__(self, name, desc, 'div', prop, style)
+        Widget.__init__(self, name, desc=desc, tag='div', prop=prop,
+                        style=style, css_cls=css_cls)
+        self.add_css_class('ui-widget')
+        self.add_css_class('ui-widget-content')
 
     def render(self):
         """renders the widgets in flow from left to right"""
         main_content = self._render_pre_content('div')
         # display div as table and table-cell
-        main_content += "\n<div style='display:table;' class='ui-widget'>"
+        main_content += "\n<div style='display:table;'>"
         for widget in self._child_widgets:
-            main_content += "\n<div style='display: table-cell;' class='ui-widget'>" + widget.render() + "\n</div>"
+            main_content += "\n<div style='display: table-cell;'>" + widget.render() + "\n</div>"
         main_content += "\n</div>"
         # table ended here
         self._widget_content = main_content + self._render_post_content('div')

@@ -15,8 +15,9 @@ class Button(Widget):
 
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
                  readonly=False, disabled=False, required=False,
-                 onclick_callback=None, app=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 onclick_callback=None, app=None, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'button')
         self.add_property('value', title)
         if readonly:
@@ -60,8 +61,9 @@ class TextBox(Widget):
     """A simple HTML textbox / input field"""
 
     def __init__(self, name, text=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'text')
         if text is not None:
             self.add_property('value', text)
@@ -86,8 +88,9 @@ class CheckBox(Widget):
     _title = None
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 title=None, readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 title=None, readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self._title = title
         self.add_property('type', 'checkbox')
         if value is not None:
@@ -118,8 +121,9 @@ class Color(Widget):
     """A simple HTML color / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'color')
         if readonly:
             self.add_attribute('readonly')
@@ -141,8 +145,9 @@ class Date(Widget):
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  min=None, max=None, readonly=False, disabled=False,
-                 required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'date')
         if value is not None:
             self.add_property('value', value)
@@ -169,8 +174,9 @@ class DateTimeLocal(Widget):
     """A simple HTML datetime-local / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'datetime-local')
         if value is not None:
             self.add_property('value', value)
@@ -193,8 +199,9 @@ class Email(Widget):
     """A simple HTML email / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'email')
         if value is not None:
             self.add_property('value', value)
@@ -217,8 +224,10 @@ class File(Widget):
     """A simple HTML file / input field"""
 
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, multiple=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, multiple=False,
+                 css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'file')
         if readonly:
             self.add_attribute('readonly')
@@ -241,8 +250,10 @@ class Hidden(Widget):
     """A simple HTML hidden / input field"""
 
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 value=None, readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 value=None, readonly=False, disabled=False, required=False,
+                 css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'hidden')
         if value is not None:
             self.add_property('value', value)
@@ -265,8 +276,10 @@ class Image(Widget):
     """A simple HTML image / input field"""
 
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 alt_text=None, readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 alt_text=None, readonly=False, disabled=False, required=False,
+                 css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'image')
         if alt_text is not None:
             self.add_property('value', alt_text)
@@ -289,8 +302,9 @@ class Month(Widget):
     """A simple HTML month / input field"""
 
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'month')
         if readonly:
             self.add_attribute('readonly')
@@ -311,8 +325,10 @@ class Number(Widget):
     """A simple HTML number / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 min=None, max=None, readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 min=None, max=None, readonly=False, disabled=False, required=False,
+                 css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'number')
         if value is not None:
             self.add_property('value', value)
@@ -339,8 +355,9 @@ class Password(Widget):
     """A simple HTML password / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'password')
         if value is not None:
             self.add_property('value', value)
@@ -363,8 +380,9 @@ class Radio(Widget):
     """A simple HTML radio / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'radio')
         if value is not None:
             self.add_property('value', value)
@@ -387,8 +405,10 @@ class Range(Widget):
     """A simple HTML range / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 min=None, max=None, readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 min=None, max=None, readonly=False, disabled=False, required=False,
+                 css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'range')
         if value is not None:
             self.add_property('value', value)
@@ -415,8 +435,9 @@ class Reset(Widget):
     """A simple HTML reset / input field"""
 
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'reset')
         self.add_property('value', title)
         if readonly:
@@ -438,8 +459,9 @@ class Search(Widget):
     """A simple HTML search / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'search')
         if value is not None:
             self.add_property('value', value)
@@ -462,8 +484,9 @@ class Submit(Widget):
     """A simple HTML submit / input field"""
 
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'submit')
         self.add_property('value', title)
         if readonly:
@@ -485,8 +508,10 @@ class Telephone(Widget):
     """A simple HTML telephone / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 pattern=None, readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 pattern=None, readonly=False, disabled=False, required=False,
+                 css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'tel')
         if value is not None:
             self.add_property('value', value)
@@ -511,8 +536,9 @@ class Time(Widget):
     """A simple HTML time / input field"""
 
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'time')
         if readonly:
             self.add_attribute('readonly')
@@ -533,8 +559,9 @@ class URL(Widget):
     """A simple HTML url / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'url')
         if value is not None:
             self.add_property('value', value)
@@ -557,8 +584,9 @@ class Week(Widget):
     """A simple HTML week / input field"""
 
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         self.add_property('type', 'week')
         if readonly:
             self.add_attribute('readonly')
@@ -586,8 +614,9 @@ class Form(Widget):
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
                  action=None, target=None, method=None,
                  use_fieldset=False, legend=None, app=None,
-                 submit_callback=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
+                 submit_callback=None, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
         if submit_callback is not None:
             self._on_form_submitted = submit_callback
         if app is not None:
@@ -637,5 +666,46 @@ class DropDown(Widget):
 
     _options = None
 
-    def __init__(self, name, readonly=False, disabled=False, required=False):
-        pass
+    def __init__(self, name, options=None, size=None, desc=None, prop=None, style=None, attr=None,
+                 readonly=False, disabled=False, required=False, css_cls=None):
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
+        if readonly:
+            self.add_attribute('readonly')
+        if disabled:
+            self.add_attribute('disabled')
+        if required:
+            self.add_attribute('required')
+        if size is not None:
+            self.add_property('size', size)
+        if options is not None:
+            self._options = options
+        else:
+            self._options = {}
+
+    def add_option(self, value, title, is_selected=False):
+        """Adds an options to the select list"""
+        self._options[value] = [title, is_selected]
+
+    def remove_options(self, value):
+        """Removes an option from the select list"""
+        self._options.pop(value)
+
+    def render(self):
+        """Renders the select list on the page"""
+        content = self._render_pre_content('select')
+        content += "\n"
+        for opt in self._options:
+            title = self._options.get(opt)[0]
+            is_selected = self._options.get(opt)[1]
+            content += "<option value='" + opt + "' "
+            if is_selected:
+                content += "selected "
+            content += ">"
+            if title is not None:
+                content += title
+            else:
+                content += opt
+            content += "</option>"
+        self._widget_content = content + self._render_post_content('select')
+        return self._widget_content
