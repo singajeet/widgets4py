@@ -213,7 +213,7 @@ class Page(Widget):
         self._scripts = []
         # add script if required
         if self._jquery_css:
-            self.add_css('https://code.jquery.com/ui/1.12.1/themes/black-tie/jquery-ui.css')
+            self.add_css('https://code.jquery.com/ui/1.10.4/themes/ui-darkness/jquery-ui.css')
         if self._jquery_js:
             self.add_js('https://code.jquery.com/jquery-3.4.1.min.js')
             self.add_js('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js')
@@ -247,7 +247,7 @@ class Page(Widget):
         for sc in self._scripts:
             script_content += sc + "\n"
         content += (self._jquery_section % script_content)
-        content += "\n<div style='height:100%;width:100%'>"
+        content += "\n<div style='height:100%;width:100%' class='ui-widget'>"
         for widget in self._child_widgets:
             content += widget.render()
         content += "\n</div>\n</body>\n</html>"

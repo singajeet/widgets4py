@@ -175,7 +175,7 @@ class VerticalLayout(Widget):
         """renders the widgets in flow from left to right"""
         main_content = self._render_pre_content('div')
         for widget in self._child_widgets:
-            main_content += "\n<div>" + widget.render() + "\n</div>"
+            main_content += "\n<div class='ui-widget'>" + widget.render() + "\n</div>"
         self._widget_content = main_content + self._render_post_content('div')
         return self._widget_content
 
@@ -193,9 +193,9 @@ class HorizontalLayout(Widget):
         """renders the widgets in flow from left to right"""
         main_content = self._render_pre_content('div')
         # display div as table and table-cell
-        main_content += "\n<div style='display:table;'>"
+        main_content += "\n<div style='display:table;' class='ui-widget'>"
         for widget in self._child_widgets:
-            main_content += "\n<div style='display: table-cell;'>" + widget.render() + "\n</div>"
+            main_content += "\n<div style='display: table-cell;' class='ui-widget'>" + widget.render() + "\n</div>"
         main_content += "\n</div>"
         # table ended here
         self._widget_content = main_content + self._render_post_content('div')

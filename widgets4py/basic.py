@@ -107,10 +107,10 @@ class CheckBox(Widget):
             self._widget_content = content
             return self._widget_content
         else:
-            content = "<div>\n"
+            content = "<div class='ui-widget-content'>\n"
             content += self._render_pre_content('input')
             content += self._render_post_content('input')
-            content += "\n<span>" + self._title + "</span>"
+            content += "\n<label for='" + self._name + "'>" + self._title + "</label>"
             content += "\n<div>"
 
 
