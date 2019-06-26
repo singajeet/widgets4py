@@ -10,8 +10,12 @@ from widgets4py.base import Widget
 class Button(Widget):
     """A simple button class"""
 
+    _onclick_callback = None
+    _app = None
+
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False):
+                 readonly=False, disabled=False, required=False,
+                 onclick_callback=None, app=None):
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
         self.add_property('type', 'button')
         self.add_property('value', title)
@@ -21,6 +25,28 @@ class Button(Widget):
             self.add_attribute('disabled')
         if required:
             self.add_attribute('required')
+        self._onclick_callback = onclick_callback
+        self._app = app
+        self._attach_onclick()
+
+    def _attach_onclick(self):
+        if self._app is not None and self._onclick_callback is not None:
+            url = str(__name__ + "_" + self._name).replace('_', '.')
+            ajax = """
+                $.ajax({
+                    url: "/%s",
+                    success: function(status){alert("success");},
+                    error: function(status){alert("failed");}
+                });
+            """ % url
+            self.add_property('onclick', ajax)
+            self._app.add_url_rule('/' + url, url, self._onclick_callback)
+
+    def on_click(self, onclick_callback, app=None):
+        if app is not None:
+            self._app = app
+        self._onclick_callback = onclick_callback
+        self._attach_onclick()
 
     def render(self):
         """Renders the content of button class"""

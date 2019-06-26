@@ -1,6 +1,6 @@
 from flask import Flask
 from widgets4py.base import Page
-from widgets4py.basic import Form, TextBox, Submit, Reset
+from widgets4py.basic import Form, TextBox, Submit, Reset, Button
 
 app = Flask(__name__)
 
@@ -11,9 +11,11 @@ class PageTest:
         pg = Page('myPage', 'My Page')
         frm = Form("myform", app=app, submit_callback=self.hello)
         txt = TextBox("firstName", disabled=True)
+        btn = Button("btn", "Push Me!", app=app, onclick_callback=self.click)
         sub = Submit("submit", "Submit")
         rst = Reset("cancel", "Reset")
         frm.add(txt)
+        frm.add(btn)
         frm.add(sub)
         frm.add(rst)
         pg.add(frm)
@@ -23,6 +25,10 @@ class PageTest:
     def hello(self):
         print("Hello!")
         return "Hello!"
+
+    def click(self):
+        print("Btn pushed")
+        return "success"
 
 
 p = PageTest()
