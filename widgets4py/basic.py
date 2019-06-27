@@ -32,12 +32,12 @@ class Button(Widget):
 
     def _attach_onclick(self):
         if self._app is not None and self._onclick_callback is not None:
-            url = str(__name__ + "_" + self._name).replace('_', '.')
+            url = str(__name__ + "_" + self._name).replace('.', '_')
             ajax = """
                 $.ajax({
                     url: "/%s",
-                    success: function(status){alert("success");},
-                    error: function(status){alert("failed");}
+                    success: function(status){alertify.success(status);},
+                    error: function(status){alertify.error(status);}
                 });
             """ % url
             self.add_property('onclick', ajax)
@@ -60,8 +60,12 @@ class Button(Widget):
 class TextBox(Widget):
     """A simple HTML textbox / input field"""
 
+    _app = None
+    _onchange_callback = None
+
     def __init__(self, name, text=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
+                 readonly=False, disabled=False, required=False, css_cls=None,
+                 app=None, onchange_callback=None):
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self.add_property('type', 'text')
@@ -73,6 +77,31 @@ class TextBox(Widget):
             self.add_attribute('disabled')
         if required:
             self.add_attribute('required')
+        self._app = app
+        self._onchange_callback = onchange_callback
+        self._attach_onchange()
+
+    def _attach_onchange(self):
+        if self._app is not None and self._onchange_callback is not None:
+            url = str(__name__ + "_" + self._name).replace('.', '_')
+            ajax = """
+                $.ajax({
+                    url: "/%s",
+                    success: function(status){alertify.success(status);},
+                    error: function(status){alertify.error(status);}
+                });
+            """ % url
+            self.add_property('onchange', ajax)
+            self._app.add_url_rule('/' + url, url, self._onchange_callback)
+
+    def on_change(self, onchange_callback, app=None):
+        """Attaches an callback handler to an Textbox"""
+        self._onchange_callback = onchange_callback
+        self._app = app
+        self._attach_onchange()
+
+    def set_text(self, txt):
+        self.add_property('value', txt)
 
     def render(self):
         """Renders the content of textbox class"""
@@ -637,14 +666,22 @@ class Form(Widget):
             if action is not None:
                 self.add_property('action', action)
 
-    def on_form_submitted(self, func):
-        self._on_form_submitted = func
+    #  Event for the on form submit
+    def on_form_submit(self, submit_callback, app=None):
+        if app is not None:
+            self._app = app
+        self._on_form_submitted = submit_callback
         if self._app is not None and self._on_form_submitted is not None:
             rule_str = str(__name__ + "_" + self._name).replace('.', '_')
             self._app.add_url_rule('/' + rule_str,
                                    rule_str,
                                    self._on_form_submitted)
             self.add_property('action', '/' + rule_str)
+
+    # def _process_on_form_submitted(self):
+    #    # call the callback handler
+    #    self._on_form_submitted()
+    #    return self._root_widget.render()
 
     def render(self):
         """Renders the content of the form"""
@@ -708,4 +745,24 @@ class DropDown(Widget):
                 content += opt
             content += "</option>"
         self._widget_content = content + self._render_post_content('select')
+        return self._widget_content
+
+
+class Label(Widget):
+    """An label widget to be use for other widgets"""
+
+    _text = None
+    _for_widget = None
+
+    def __init__(self, name, text, for_widget):
+        Widget.__init__(self, name)
+        self._text = text
+        self._for_widget = for_widget
+        self.add_property('for', for_widget.get_name())
+
+    def render(self):
+        """Renders the label for a given widget"""
+        content = self._render_pre_content('label')
+        content += self._text
+        self._widget_content = content + self._render_post_content('label')
         return self._widget_content

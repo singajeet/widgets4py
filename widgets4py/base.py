@@ -54,6 +54,8 @@ class Widget:
     _attributes = None
     _css_classes = None
 
+    _root_widget = None
+
     def __init__(self, name, desc=None, tag=None, prop=None, style=None, attr=None, css_cls=None):
         """Default constructor"""
         self._name = name
@@ -85,12 +87,20 @@ class Widget:
         else:
             self._css_classes = []
 
+    def get_name(self):
+        return self._name
+
+    def set_root_widget(self, root_widget):
+        """Sets the reference to the root widget"""
+        self._root_widget = root_widget
+
     def add(self, child):
         """Adds an child to current instance
 
             Args:
                 child (Widget): An child of the current object
         """
+        child.set_root_widget(self._root_widget)
         self._child_widgets.append(child)
 
     def remove(self, child):
@@ -231,12 +241,16 @@ class Page(Widget):
         self._style_sections = []
         self._script_sections = []
         self._scripts = []
+        self.set_root_widget(self)
         # add script if required
         if self._jquery_css:
             self.add_css('https://code.jquery.com/ui/1.10.4/themes/ui-darkness/jquery-ui.css')
+            self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/alertify.min.css')
+            self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/themes/bootstrap.min.css')
         if self._jquery_js:
             self.add_js('https://code.jquery.com/jquery-3.4.1.min.js')
             self.add_js('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js')
+            self.add_js('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/alertify.min.js')
 
     def add_js(self, path):
         """Adds an javascript file to the page """

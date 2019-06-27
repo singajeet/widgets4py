@@ -109,6 +109,7 @@ class GridLayout(Widget):
                 y (int): The vertical position of the component in grid
                 child (Widget): The child widget component
         """
+        child.set_root_widget(self._root_widget)
         key = str(x) + "|" + str(y)
         self._child_widgets[key] = child
 
