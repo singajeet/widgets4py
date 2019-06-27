@@ -657,11 +657,7 @@ class Form(Widget):
         self._use_fieldset = use_fieldset
         self._legend = legend
         if app is not None and submit_callback is not None:
-            rule_str = str(__name__ + "_" + name).replace(".", "_")
-            app.add_url_rule('/' + rule_str,
-                             rule_str,
-                             self._on_form_submitted)
-            self.add_property('action', "/" + rule_str)
+            self._register_rule()
         else:
             if action is not None:
                 self.add_property('action', action)
@@ -672,16 +668,26 @@ class Form(Widget):
             self._app = app
         self._on_form_submitted = submit_callback
         if self._app is not None and self._on_form_submitted is not None:
-            rule_str = str(__name__ + "_" + self._name).replace('.', '_')
+            self._register_rule()
+
+    def _register_rule(self):
+        # Prepare endpoint name and URL
+        rule_str = str(__name__ + "_" + self._name).replace(".", "_")
+        # Check if rule already exists? If not add it to rule map
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == rule_str:
+                found = True
+        if not found:
             self._app.add_url_rule('/' + rule_str,
                                    rule_str,
-                                   self._on_form_submitted)
-            self.add_property('action', '/' + rule_str)
+                                   self._process_on_form_submitted)
+        self.add_property('action', "/" + rule_str)
 
-    # def _process_on_form_submitted(self):
-    #    # call the callback handler
-    #    self._on_form_submitted()
-    #    return self._root_widget.render()
+    def _process_on_form_submitted(self):
+        # call the callback handler
+        self._on_form_submitted()
+        return self._root_widget.render()
 
     def render(self):
         """Renders the content of the form"""

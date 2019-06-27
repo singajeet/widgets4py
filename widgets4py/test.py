@@ -3,6 +3,7 @@ from widgets4py.base import Page
 from widgets4py.basic import TextBox, Submit, Reset, Form, Label
 from widgets4py.layouts import SimpleGridLayout
 
+
 app = Flask(__name__)
 
 
