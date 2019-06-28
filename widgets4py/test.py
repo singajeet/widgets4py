@@ -10,13 +10,14 @@ app = Flask(__name__)
 class PageTest:
 
     _txt = None
+    btn = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
         sg = SimpleGridLayout("Grid", 2, 2)
-        btn = Button('btn', 'Push', app=app, onclick_callback=self.click)
+        self.btn = Button('btn', 'Push', app=app, onclick_callback=self.click)
         btn1 = Button('btn1', 'Pop', app=app, onclick_callback=self.hello)
-        sg.add(btn)
+        sg.add(self.btn)
         sg.add(btn1)
         pg.add(sg)
         content = pg.render()
@@ -27,6 +28,7 @@ class PageTest:
         return "Hello!"
 
     def click(self):
+        self.btn.set_title("New Title")
         print("Btn pushed")
         return "success"
 

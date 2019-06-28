@@ -47,14 +47,21 @@ class Button(Widget):
             ajax = """
                 $.ajax({
                     url: "/%s",
-                    success: function(status){alertify.success(status);},
-                    error: function(status){alertify.error(status);}
+                    success: function(status){alertify.success("Action completed successfully!");},
+                    error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            }
                 });
             """ % url
             self.add_property('onclick', ajax)
             if not found:
                 self._app.add_url_rule('/' + url, url,
                                        self._onclick_callback)
+
+    def set_title(self, title):
+        self._title = title
 
     def _sync_properties(self):
         print("Syncing properties...")
@@ -71,17 +78,25 @@ class Button(Widget):
                                 $.ajax({
                                     url: "/%s",
                                     success: function(props){
-                                        alertify.success(props);
+                                        selector = $('#%s');
+                                        selector.attr('value', props.title);
+                                        selector.prop('readOnly', props.readonly);
+                                        selector.prop('disabled', props.disabled);
+                                        //alertify.success(props.title +"-" + props.readonly + "-" + props.disabled);
                                         //poll again
                                         %s_poll();
                                     },
-                                    error: function(status){alertify.error(status);}//,
-                                    //dataType: "json"
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
                                 });
-                            },30000);
+                            },10000);
                         })();
                     </script>
-                """ % (url, url, url)
+                """ % (url, url, self._name, url)
         found = False
         for rule in self._app.url_map.iter_rules():
             if rule.endpoint == url:
