@@ -1,7 +1,7 @@
 from flask import Flask
 from widgets4py.base import Page
-from widgets4py.basic import TextBox, Submit, Reset, Form, Label
 from widgets4py.layouts import SimpleGridLayout
+from widgets4py.ajax import Button
 
 
 app = Flask(__name__)
@@ -14,22 +14,15 @@ class PageTest:
     def show_layout(self):
         pg = Page('myPage', 'My Page')
         sg = SimpleGridLayout("Grid", 2, 2)
-        frm = Form("myform", app=app, submit_callback=self.hello)
-        self._txt = TextBox("firstName", app=app, onchange_callback=self.txt_change)
-        lbl = Label('lbl', 'First Name', self._txt)
-        sub = Submit("submit", "Submit")
-        rst = Reset("cancel", "Reset")
-        sg.add(lbl)
-        sg.add(self._txt)
-        sg.add(sub)
-        sg.add(rst)
-        frm.add(sg)
-        pg.add(frm)
+        btn = Button('btn', 'Push', app=app, onclick_callback=self.click)
+        btn1 = Button('btn1', 'Pop', app=app, onclick_callback=self.hello)
+        sg.add(btn)
+        sg.add(btn1)
+        pg.add(sg)
         content = pg.render()
         return content
 
     def hello(self):
-        self._txt.set_text("My Text")
         print("Hello!")
         return "Hello!"
 

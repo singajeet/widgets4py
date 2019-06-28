@@ -5,6 +5,7 @@ Author: Ajeet Singh
 Date: 06/25/2019
 """
 from widgets4py.base import Widget
+from flask import json
 
 
 class Button(Widget):
@@ -12,26 +13,95 @@ class Button(Widget):
 
     _onclick_callback = None
     _app = None
+    _title = None
+    _disabled = None
+    _readonly = None
 
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
                  readonly=False, disabled=False, required=False,
-                 css_cls=None):
+                 onclick_callback=None, app=None, css_cls=None):
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self.add_property('type', 'button')
         self.add_property('value', title)
+        self._title = title
         if readonly:
             self.add_attribute('readonly')
+            self._readonly = True
         if disabled:
             self.add_attribute('disabled')
+            self._disabled = True
         if required:
             self.add_attribute('required')
+        self._onclick_callback = onclick_callback
+        self._app = app
+        self._attach_onclick()
+
+    def _attach_onclick(self):
+        if self._app is not None and self._onclick_callback is not None:
+            url = str(__name__ + "_" + self._name).replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            ajax = """
+                $.ajax({
+                    url: "/%s",
+                    success: function(status){alertify.success(status);},
+                    error: function(status){alertify.error(status);}
+                });
+            """ % url
+            self.add_property('onclick', ajax)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._onclick_callback)
+
+    def _sync_properties(self):
+        print("Syncing properties...")
+        return json.dumps({'title': self._title,
+                           'readonly': self._readonly if self._readonly is not None else False,
+                           'disabled': self._disabled if self._disabled is not None else False
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    success: function(props){
+                                        alertify.success(props);
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(status){alertify.error(status);}//,
+                                    //dataType: "json"
+                                });
+                            },30000);
+                        })();
+                    </script>
+                """ % (url, url, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
+
+    def on_click(self, onclick_callback, app=None):
+        if app is not None:
+            self._app = app
+        self._onclick_callback = onclick_callback
+        self._attach_onclick()
 
     def render(self):
         """Renders the content of button class"""
         content = self._render_pre_content('input')
         content += self._render_post_content('input')
-        self._widget_content = content
+        self._widget_content = content + self._attach_polling()
         return self._widget_content
 
 
@@ -42,8 +112,8 @@ class TextBox(Widget):
     _onchange_callback = None
 
     def __init__(self, name, text=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None
-                 ):
+                 readonly=False, disabled=False, required=False, css_cls=None,
+                 app=None, onchange_callback=None):
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self.add_property('type', 'text')
@@ -55,6 +125,31 @@ class TextBox(Widget):
             self.add_attribute('disabled')
         if required:
             self.add_attribute('required')
+        self._app = app
+        self._onchange_callback = onchange_callback
+        self._attach_onchange()
+
+    def _attach_onchange(self):
+        if self._app is not None and self._onchange_callback is not None:
+            url = str(__name__ + "_" + self._name).replace('.', '_')
+            ajax = """
+                $.ajax({
+                    url: "/%s",
+                    success: function(status){alertify.success(status);},
+                    error: function(status){alertify.error(status);}
+                });
+            """ % url
+            self.add_property('onchange', ajax)
+            self._app.add_url_rule('/' + url, url, self._onchange_callback)
+
+    def on_change(self, onchange_callback, app=None):
+        """Attaches an callback handler to an Textbox"""
+        self._onchange_callback = onchange_callback
+        self._app = app
+        self._attach_onchange()
+
+    def set_text(self, txt):
+        self.add_property('value', txt)
 
     def render(self):
         """Renders the content of textbox class"""
