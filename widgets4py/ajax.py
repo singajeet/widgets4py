@@ -170,16 +170,16 @@ class TextBox(Widget):
             ajax = """
                 $.ajax({
                     url: "/%s",
-                    data: {text: abc},
+                    data: {"text": $("#%s").val()},
                     type: "get",
                     success: function(status){alertify.success("Action completed successfully!");},
-                    error: function(status){
+                    error: function(err_status){
                                                 alertify.error("Status Code: "
                                                 + err_status.status + "<br />" + "Error Message:"
                                                 + err_status.statusText);
                                             }
                 });
-            """ % (url)
+            """ % (url, self._name)
             self.add_property('onchange', ajax)
             found = False
             for rule in self._app.url_map.iter_rules():
@@ -189,9 +189,13 @@ class TextBox(Widget):
                 self._app.add_url_rule('/' + url, url, self._process_onchange_callback)
 
     def _process_onchange_callback(self):
-        print("Result: ")
-        for arg in request.args:
-            print("Arg: " + arg)
+        if request.args.__len__() > 0:
+            txt = request.args['text']
+            if txt is not None:
+                self._text = txt
+        # print("Result: ")
+        # for arg in request.args:
+        #     print("Arg: " + arg + "Value: " + request.args[arg])
         return self._onchange_callback()
 
     def on_change(self, onchange_callback, app=None):
@@ -233,10 +237,10 @@ class TextBox(Widget):
                                     url: "/%s",
                                     success: function(props){
                                         selector = $('#%s');
-                                        selector.attr('value', props.text);
+                                        selector.val(props.text);
                                         selector.prop('readOnly', props.readonly);
                                         selector.prop('disabled', props.disabled);
-                                        //alertify.success(props.title +"-" + props.readonly + "-" + props.disabled);
+
                                         //poll again
                                         %s_poll();
                                     },
