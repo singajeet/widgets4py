@@ -5,7 +5,7 @@ Author: Ajeet Singh
 Date: 06/25/2019
 """
 from widgets4py.base import Widget
-from flask import json
+from flask import json, request
 
 
 class Button(Widget):
@@ -63,8 +63,22 @@ class Button(Widget):
     def set_title(self, title):
         self._title = title
 
+    def get_title(self):
+        return self._title
+
+    def set_readonly(self, readonly):
+        self._readonly = readonly
+
+    def get_readonly(self):
+        return self._readonly
+
+    def set_disabled(self, disabled):
+        self._disabled = disabled
+
+    def get_disabled(self):
+        return self._disabled
+
     def _sync_properties(self):
-        print("Syncing properties...")
         return json.dumps({'title': self._title,
                            'readonly': self._readonly if self._readonly is not None else False,
                            'disabled': self._disabled if self._disabled is not None else False
@@ -116,7 +130,7 @@ class Button(Widget):
         """Renders the content of button class"""
         content = self._render_pre_content('input')
         content += self._render_post_content('input')
-        self._widget_content = content + self._attach_polling()
+        self._widget_content = content + "\n" + self._attach_polling()
         return self._widget_content
 
 
@@ -125,6 +139,9 @@ class TextBox(Widget):
 
     _app = None
     _onchange_callback = None
+    _text = None
+    _disabled = None
+    _readonly = None
 
     def __init__(self, name, text=None, desc=None, prop=None, style=None, attr=None,
                  readonly=False, disabled=False, required=False, css_cls=None,
@@ -134,10 +151,13 @@ class TextBox(Widget):
         self.add_property('type', 'text')
         if text is not None:
             self.add_property('value', text)
+            self._text = text
         if readonly:
             self.add_attribute('readonly')
+            self._readonly = readonly
         if disabled:
             self.add_attribute('disabled')
+            self._disabled = disabled
         if required:
             self.add_attribute('required')
         self._app = app
@@ -150,12 +170,29 @@ class TextBox(Widget):
             ajax = """
                 $.ajax({
                     url: "/%s",
-                    success: function(status){alertify.success(status);},
-                    error: function(status){alertify.error(status);}
+                    data: {text: abc},
+                    type: "get",
+                    success: function(status){alertify.success("Action completed successfully!");},
+                    error: function(status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            }
                 });
-            """ % url
+            """ % (url)
             self.add_property('onchange', ajax)
-            self._app.add_url_rule('/' + url, url, self._onchange_callback)
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + url, url, self._process_onchange_callback)
+
+    def _process_onchange_callback(self):
+        print("Result: ")
+        for arg in request.args:
+            print("Arg: " + arg)
+        return self._onchange_callback()
 
     def on_change(self, onchange_callback, app=None):
         """Attaches an callback handler to an Textbox"""
@@ -164,13 +201,70 @@ class TextBox(Widget):
         self._attach_onchange()
 
     def set_text(self, txt):
-        self.add_property('value', txt)
+        self._text = txt
+
+    def get_text(self):
+        return self._text
+
+    def set_readonly(self, readonly):
+        self._readonly = readonly
+
+    def get_readonly(self):
+        return self._readonly
+
+    def set_disabled(self, disabled):
+        self._disabled = disabled
+
+    def get_disabled(self):
+        return self._disabled
+
+    def _sync_properties(self):
+        return json.dumps({'text': self._text,
+                           'readonly': self._readonly if self._readonly is not None else False,
+                           'disabled': self._disabled if self._disabled is not None else False
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    success: function(props){
+                                        selector = $('#%s');
+                                        selector.attr('value', props.text);
+                                        selector.prop('readOnly', props.readonly);
+                                        selector.prop('disabled', props.disabled);
+                                        //alertify.success(props.title +"-" + props.readonly + "-" + props.disabled);
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
 
     def render(self):
         """Renders the content of textbox class"""
         content = self._render_pre_content('input')
         content += self._render_post_content('input')
-        self._widget_content = content
+        self._widget_content = content + "\n" + self._attach_polling()
         return self._widget_content
 
 

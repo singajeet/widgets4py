@@ -1,7 +1,7 @@
 from flask import Flask
 from widgets4py.base import Page
 from widgets4py.layouts import SimpleGridLayout
-from widgets4py.ajax import Button
+from widgets4py.ajax import Button, TextBox
 
 
 app = Flask(__name__)
@@ -9,31 +9,39 @@ app = Flask(__name__)
 
 class PageTest:
 
-    _txt = None
+    txt = None
     btn = None
+    btn1 = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
         sg = SimpleGridLayout("Grid", 2, 2)
-        self.btn = Button('btn', 'Push', app=app, onclick_callback=self.click)
-        btn1 = Button('btn1', 'Pop', app=app, onclick_callback=self.hello)
+        self.btn = Button('btn', 'Push', app=app, onclick_callback=self.change_btn_title)
+        self.btn1 = Button('btn1', 'Populate', app=app, onclick_callback=self.populate_text)
+        self.txt = TextBox('txt', app=app, onchange_callback=self.text_changed)
         sg.add(self.btn)
-        sg.add(btn1)
+        sg.add(self.btn1)
+        sg.add(self.txt)
         pg.add(sg)
         content = pg.render()
         return content
 
-    def hello(self):
-        print("Hello!")
-        return "Hello!"
-
-    def click(self):
-        self.btn.set_title("New Title")
-        print("Btn pushed")
+    def populate_text(self):
+        self.txt.set_text("Hello!")
+        print("Text Populated!")
         return "success"
 
-    def txt_change(self):
-        print('Text changed')
+    def change_btn_title(self):
+        self.btn.set_title("New Title")
+        print("Btn title changed!")
+        return "success"
+
+    def text_changed(self):
+        print("Text Changed:" + self.txt.get_text())
+        if self.txt.get_text() == "" or self.txt.get_text() is None:
+            self.btn1.set_title('Populate')
+        else:
+            self.btn1.set_title('Clear')
         return "Text Change Triggred!"
 
 
