@@ -47,6 +47,10 @@ class Button(Widget):
             ajax = """
                 $.ajax({
                     url: "/%s",
+                    data: {"title": $("#%s").val(),
+                            "readOnly": $("#%s").prop("readOnly"),
+                            "disabled": $("#%s").prop("disabled")},
+                    type: "get",
                     success: function(status){alertify.success("Action completed successfully!");},
                     error: function(err_status){
                                                 alertify.error("Status Code: "
@@ -54,11 +58,24 @@ class Button(Widget):
                                                 + err_status.statusText);
                                             }
                 });
-            """ % url
+            """ % (url, self._name, self._name, self._name)
             self.add_property('onclick', ajax)
             if not found:
                 self._app.add_url_rule('/' + url, url,
-                                       self._onclick_callback)
+                                       self._process_onclick_callback)
+
+    def _process_onclick_callback(self):
+        if request.args.__len__() > 0:
+            tit = request.args['title']
+            if tit is not None:
+                self._title = tit
+            rdOnly = request.args['readOnly']
+            if rdOnly is not None:
+                self._readonly = True if rdOnly == "true" else False
+            dsbld = request.args['disabled']
+            if dsbld is not None:
+                self._disabled = True if dsbld == "true" else False
+        return self._onclick_callback()
 
     def set_title(self, title):
         self._title = title
@@ -93,7 +110,8 @@ class Button(Widget):
                                     url: "/%s",
                                     success: function(props){
                                         selector = $('#%s');
-                                        selector.attr('value', props.title);
+                                        //selector.attr('value', props.title);
+                                        selector.val(props.title);
                                         selector.prop('readOnly', props.readonly);
                                         selector.prop('disabled', props.disabled);
                                         //alertify.success(props.title +"-" + props.readonly + "-" + props.disabled);
@@ -170,7 +188,9 @@ class TextBox(Widget):
             ajax = """
                 $.ajax({
                     url: "/%s",
-                    data: {"text": $("#%s").val()},
+                    data: {"text": $("#%s").val(),
+                            "readOnly": $("#%s").prop("readOnly"),
+                            "disabled": $("#%s").prop("disabled")},
                     type: "get",
                     success: function(status){alertify.success("Action completed successfully!");},
                     error: function(err_status){
@@ -179,7 +199,7 @@ class TextBox(Widget):
                                                 + err_status.statusText);
                                             }
                 });
-            """ % (url, self._name)
+            """ % (url, self._name, self._name, self._name)
             self.add_property('onchange', ajax)
             found = False
             for rule in self._app.url_map.iter_rules():
@@ -193,9 +213,12 @@ class TextBox(Widget):
             txt = request.args['text']
             if txt is not None:
                 self._text = txt
-        # print("Result: ")
-        # for arg in request.args:
-        #     print("Arg: " + arg + "Value: " + request.args[arg])
+            rdOnly = request.args['readOnly']
+            if rdOnly is not None:
+                self._readonly = True if rdOnly == "true" else False
+            dsbld = request.args['disabled']
+            if dsbld is not None:
+                self._disabled = True if dsbld == "true" else False
         return self._onchange_callback()
 
     def on_change(self, onchange_callback, app=None):
