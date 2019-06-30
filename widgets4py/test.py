@@ -1,7 +1,7 @@
 from flask import Flask
 from widgets4py.base import Page
 from widgets4py.layouts import SimpleGridLayout
-from widgets4py.ajax import Button, TextBox
+from widgets4py.ajax import Button, TextBox, CheckBox
 
 
 app = Flask(__name__)
@@ -19,12 +19,18 @@ class PageTest:
         self.btn = Button('btn', 'Push', app=app, onclick_callback=self.change_btn_title)
         self.btn1 = Button('btn1', 'Populate', app=app, onclick_callback=self.populate_text)
         self.txt = TextBox('txt', app=app, onchange_callback=self.text_changed)
+        self.chk = CheckBox('chk', "Checkbox text", app=app, onclick_callback=self.checkbox_clicked)
         sg.add(self.btn)
         sg.add(self.btn1)
         sg.add(self.txt)
+        sg.add(self.chk)
         pg.add(sg)
         content = pg.render()
         return content
+
+    def checkbox_clicked(self):
+        print("Checkbox clicked!")
+        return "success"
 
     def populate_text(self):
         self.txt.set_text("Hello!")
