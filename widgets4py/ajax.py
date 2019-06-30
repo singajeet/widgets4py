@@ -512,7 +512,7 @@ class Color(Widget):
                                             },
                     dataType: "json"
                 });
-            """ % (url, self._name, self._name)
+            """ % (url)
             self.add_property('onclick', ajax)
             if not found:
                 self._app.add_url_rule('/' + url, url,
@@ -560,7 +560,7 @@ class Color(Widget):
             dsbld = request.args["disabled"]
             if dsbld is not None:
                 self._disabled = dsbld
-                return json.dumps({'result': self._onchange_callback()})
+        return json.dumps({'result': self._onchange_callback()})
 
     def set_value(self, val):
         self._value = val
@@ -642,30 +642,233 @@ class Color(Widget):
 class Date(Widget):
     """A simple HTML date / input field"""
 
+    _value = None
+    _disabled = None
+    _readonly = None
+    _onclick_callback = None
+    _onchange_callback = None
+    _min = None
+    _max = None
+    _app = None
+
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  min=None, max=None, readonly=False, disabled=False,
-                 required=False, css_cls=None):
+                 required=False, css_cls=None, onclick_callback=None, onchange_callback=None,
+                 app=None):
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self.add_property('type', 'date')
         if value is not None:
             self.add_property('value', value)
+            self._value = value
         if min is not None:
             self.add_property('min', min)
+            self._min = min
         if max is not None:
             self.add_property('max', max)
+            self._max = max
         if readonly:
             self.add_attribute('readonly')
+            self._readonly = readonly
         if disabled:
             self.add_attribute('disabled')
+            self._disabled = disabled
         if required:
             self.add_attribute('required')
+        self._app = app
+        self._onchange_callback = onchange_callback
+        self._onclick_callback = onclick_callback
+        self._attach_onclick()
+        self._attach_onchange()
+
+    def _attach_onclick(self):
+        if self._app is not None and self._onclick_callback is not None:
+            url = str(__name__ + "_" + self._name + "_onclick").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            ajax = """
+                $.ajax({
+                    url: "/%s",
+                    data: {},
+                    type: "get",
+                    success: function(status){
+                                                alertify.success("Action completed successfully!");
+                                            },
+                    error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            },
+                    dataType: "json"
+                });
+            """ % (url)
+            self.add_property('onclick', ajax)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_onclick_callback)
+
+    def _attach_onchange(self):
+        if self._app is not None and self._onchange_callback is not None:
+            url = str(__name__ + "_" + self._name + "_onchange").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            ajax = """
+                $.ajax({
+                    url: "/%s",
+                    data: {
+                            "min": $("#%s").prop("min"),
+                            "max": $("#%s").prop("max"),
+                            "readOnly": $("#%s").prop("readOnly"),
+                            "disabled": $("#%s").prop("disabled"),
+                            "value": $("#%s").val()
+                            },
+                    type: "get",
+                    success: function(status){
+                                                alertify.success("Action completed successfully!");
+                                            },
+                    error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            },
+                    dataType: "json"
+                });
+            """ % (url, self._name, self._name, self._name, self._name, self._name)
+            self.add_property('onchange', ajax)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_onchange_callback)
+
+    def _process_onclick_callback(self):
+        return json.dumps({'result': self._onclick_callback()})
+
+    def _process_onchange_callback(self):
+        if request.args.__len__() > 0:
+            val = request.args["value"]
+            if val is not None:
+                self._value = val
+            dsbld = request.args["disabled"]
+            if dsbld is not None:
+                self._disabled = dsbld
+            min = request.args["min"]
+            if min is not None:
+                self._min = min
+            max = request.args["max"]
+            if max is not None:
+                self._max = max
+            rdOnly = request.args["readOnly"]
+            if rdOnly is not None:
+                self._readonly = rdOnly
+        return json.dumps({'result': self._onchange_callback()})
+
+    def set_value(self, val):
+        self._value = val
+
+    def get_value(self):
+        return self._value
+
+    def set_min(self, val):
+        self._min = val
+
+    def get_min(self):
+        return self._min
+
+    def set_max(self, val):
+        self._max = val
+
+    def get_max(self):
+        return self._max
+
+    def set_readonly(self, val):
+        self._readonly = val
+
+    def get_readonly(self):
+        return self._readonly
+
+    def set_disabled(self, val):
+        self._disabled = val
+
+    def get_disabled(self):
+        return self._disabled
+
+    def on_click(self, onclick_callback, app=None):
+        if app is not None:
+            self._app = app
+        self._onclick_callback = onclick_callback
+        self._attach_onclick()
+
+    def on_change(self, onchange_callback, app=None):
+        if app is not None:
+            self._app = app
+        self._onchange_callback = onchange_callback
+        self._attach_onchange()
+
+    def _sync_properties(self):
+        return json.dumps({'disabled': self._disabled if self._disabled is not None else 'false',
+                           'value': self._value,
+                           'min': self._min,
+                           'max': self._max,
+                           'readOnly': self._readonly if self._readonly is not None else "false"
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    type: "get",
+                                    success: function(props){
+                                        selector = $('#%s');
+                                        if(props.disabled == true){
+                                            selector.prop('disabled', props.disabled);
+                                        }
+                                        if(props.value != undefined){
+                                            selector.val(props.value);
+                                        }
+                                        if(props.readOnly == true){
+                                            selector.prop('readOnly', props.readOnly);
+                                        }
+                                        if(props.min != undefined){
+                                            selector.prop('min', props.min);
+                                        }
+                                        if(props.max != undefined){
+                                            selector.prop('max', props.max);
+                                        }
+                                        //alertify.success(props.title+ "<br />" + props.checked);
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
 
     def render(self):
         """Renders the content of date class"""
         content = self._render_pre_content('input')
         content += self._render_post_content('input')
-        self._widget_content = content
+        self._widget_content = content + "\n" + self._attach_polling()
         return self._widget_content
 
 

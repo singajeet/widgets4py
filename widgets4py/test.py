@@ -1,7 +1,7 @@
 from flask import Flask
 from widgets4py.base import Page
 from widgets4py.layouts import SimpleGridLayout
-from widgets4py.ajax import Button, TextBox, CheckBox, Color
+from widgets4py.ajax import Button, TextBox, CheckBox, Color, Date
 
 
 app = Flask(__name__)
@@ -13,6 +13,7 @@ class PageTest:
     btn = None
     btn1 = None
     clr = None
+    dt = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -22,14 +23,21 @@ class PageTest:
         self.txt = TextBox('txt', app=app, onchange_callback=self.text_changed)
         self.chk = CheckBox('chk', "Checkbox text", app=app, onclick_callback=self.checkbox_clicked)
         self.clr = Color('clr', app=app, onchange_callback=self.color_changed)
+        self.dt = Date('dt', min="2019-01-01", max="2020-12-31", app=app, onchange_callback=self.date_changed)
         sg.add(self.btn)
         sg.add(self.btn1)
         sg.add(self.txt)
         sg.add(self.chk)
         sg.add(self.clr)
+        sg.add(self.dt)
         pg.add(sg)
         content = pg.render()
         return content
+
+    def date_changed(self):
+        print("Date Changed!")
+        print("Date: " + self.dt.get_value())
+        return "success"
 
     def color_changed(self):
         print("Color changed!")
