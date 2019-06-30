@@ -15,19 +15,15 @@ class Button(Widget):
     _app = None
     _title = None
     _disabled = None
-    _readonly = None
 
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False,
+                 disabled=False, required=False,
                  onclick_callback=None, app=None, css_cls=None):
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self.add_property('type', 'button')
         self.add_property('value', title)
         self._title = title
-        if readonly:
-            self.add_attribute('readonly')
-            self._readonly = True
         if disabled:
             self.add_attribute('disabled')
             self._disabled = True
@@ -47,8 +43,8 @@ class Button(Widget):
             ajax = """
                 $.ajax({
                     url: "/%s",
+                    dataType: "json",
                     data: {"title": $("#%s").val(),
-                            "readOnly": $("#%s").prop("readOnly"),
                             "disabled": $("#%s").prop("disabled")},
                     type: "get",
                     success: function(status){alertify.success("Action completed successfully!");},
@@ -58,7 +54,7 @@ class Button(Widget):
                                                 + err_status.statusText);
                                             }
                 });
-            """ % (url, self._name, self._name, self._name)
+            """ % (url, self._name, self._name)
             self.add_property('onclick', ajax)
             if not found:
                 self._app.add_url_rule('/' + url, url,
@@ -69,25 +65,16 @@ class Button(Widget):
             tit = request.args['title']
             if tit is not None:
                 self._title = tit
-            rdOnly = request.args['readOnly']
-            if rdOnly is not None:
-                self._readonly = True if rdOnly == "true" else False
             dsbld = request.args['disabled']
             if dsbld is not None:
                 self._disabled = True if dsbld == "true" else False
-        return self._onclick_callback()
+        return json.dumps({"result": self._onclick_callback()})
 
     def set_title(self, title):
         self._title = title
 
     def get_title(self):
         return self._title
-
-    def set_readonly(self, readonly):
-        self._readonly = readonly
-
-    def get_readonly(self):
-        return self._readonly
 
     def set_disabled(self, disabled):
         self._disabled = disabled
@@ -97,7 +84,6 @@ class Button(Widget):
 
     def _sync_properties(self):
         return json.dumps({'title': self._title,
-                           'readonly': self._readonly if self._readonly is not None else False,
                            'disabled': self._disabled if self._disabled is not None else False
                            })
 
@@ -110,10 +96,10 @@ class Button(Widget):
                                     url: "/%s",
                                     success: function(props){
                                         selector = $('#%s');
-                                        //selector.attr('value', props.title);
+
                                         selector.val(props.title);
-                                        selector.prop('readOnly', props.readonly);
                                         selector.prop('disabled', props.disabled);
+
                                         //alertify.success(props.title +"-" + props.readonly + "-" + props.disabled);
                                         //poll again
                                         %s_poll();
@@ -192,6 +178,7 @@ class TextBox(Widget):
                             "readOnly": $("#%s").prop("readOnly"),
                             "disabled": $("#%s").prop("disabled")},
                     type: "get",
+                    dataType: "json",
                     success: function(status){alertify.success("Action completed successfully!");},
                     error: function(err_status){
                                                 alertify.error("Status Code: "
@@ -219,7 +206,7 @@ class TextBox(Widget):
             dsbld = request.args['disabled']
             if dsbld is not None:
                 self._disabled = True if dsbld == "true" else False
-        return self._onchange_callback()
+        return json.dumps({"result": self._onchange_callback()})
 
     def on_change(self, onchange_callback, app=None):
         """Attaches an callback handler to an Textbox"""
@@ -337,17 +324,24 @@ class CheckBox(Widget):
             ajax = """
                 $.ajax({
                     url: "/%s",
-                    data: {"title": $("#%s_lbl").val(),
-                            "checked": $("#%s").is(":checked")},
+                    data: {
+                            "title": $("#%s_lbl").text(),
+                            "checked": $("#%s").is(":checked"),
+                            "disabled": $("#%s").prop("disabled"),
+                            "value": $("#%s").val()
+                            },
                     type: "get",
-                    success: function(status){alertify.success("Action completed successfully!");},
+                    success: function(status){
+                                                alertify.success("Action completed successfully!");
+                                            },
                     error: function(err_status){
                                                 alertify.error("Status Code: "
                                                 + err_status.status + "<br />" + "Error Message:"
                                                 + err_status.statusText);
-                                            }
+                                            },
+                    dataType: "json"
                 });
-            """ % (url, self._name, self._name)
+            """ % (url, self._name, self._name, self._name, self._name)
             self.add_property('onclick', ajax)
             if not found:
                 self._app.add_url_rule('/' + url, url,
@@ -358,12 +352,16 @@ class CheckBox(Widget):
             tit = request.args['title']
             if tit is not None:
                 self._title = tit
-                print("Title: " + tit)
             chk = request.args['checked']
             if chk is not None:
-                print("Checked: " + chk)
                 self._checked = chk
-        return self._onclick_callback()
+            dsbl = request.args["disabled"]
+            if dsbl is not None:
+                self._disabled = dsbl
+            val = request.args["value"]
+            if val is not None:
+                self._value = val
+        return json.dumps({"result": self._onclick_callback()})
 
     def set_title(self, title):
         self._title = title
@@ -390,10 +388,10 @@ class CheckBox(Widget):
         return self._checked
 
     def _sync_properties(self):
-        print("sync props....")
-        print("Tit: %s, Check: %s" % (self._title, self._checked))
         return json.dumps({'title': self._title,
-                           'checked': self._checked if self._checked is not None else "false"
+                           'checked': self._checked if self._checked is not None else 'false',
+                           'disabled': self._disabled if self._disabled is not None else 'false',
+                           'value': self._value
                            })
 
     def _attach_polling(self):
@@ -403,14 +401,21 @@ class CheckBox(Widget):
                             setTimeout(function(){
                                 $.ajax({
                                     url: "/%s",
+                                    type: "get",
                                     success: function(props){
                                         selector = $('#%s');
-                                        selector_lbl = $('#%s_lbl')
-                                        selector_lbl.val(props.title);
+                                        selector_lbl = $('#%s_lbl');
+                                        selector_lbl.text(props.title);
                                         if(props.checked == true){
-                                            selector.attr('checked', props.checked)
+                                            selector.attr('checked', props.checked);
                                         }
-                                        alertify.success(props.title+ "<br />" + props.checked);
+                                        if(props.disabled == true){
+                                            selector.prop('disabled', props.disabled);
+                                        }
+                                        if(props.value != undefined){
+                                            selector.val(props.value);
+                                        }
+                                        //alertify.success(props.title+ "<br />" + props.checked);
                                         //poll again
                                         %s_poll();
                                     },
