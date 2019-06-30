@@ -299,35 +299,185 @@ class CheckBox(Widget):
     """A simple HTML chexkbox / input field"""
 
     _title = None
+    _value = None
+    _checked = None
+    _readonly = None
+    _disabled = None
+    _app = None
+    _onclick_callback = None
 
-    def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 title=None, readonly=False, disabled=False, required=False, css_cls=None):
+    def __init__(self, name, title, value=None, checked=False, desc=None,
+                 prop=None, style=None, attr=None, readonly=False, disabled=False,
+                 required=False, css_cls=None, app=None, onclick_callback=None):
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self._title = title
+        self._app = app
+        self._onclick_callback = onclick_callback
         self.add_property('type', 'checkbox')
         if value is not None:
             self.add_property('value', value)
+            self._value = value
         if readonly:
             self.add_attribute('readonly')
+            self._readonly = readonly
         if disabled:
             self.add_attribute('disabled')
+            self._disabled = disabled
         if required:
             self.add_attribute('required')
+        if checked:
+            self.add_attribute('checked')
+            self._checked = checked
+        self._attach_onclick()
+
+    def _attach_onclick(self):
+        if self._app is not None and self._onclick_callback is not None:
+            url = str(__name__ + "_" + self._name).replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            ajax = """
+                $.ajax({
+                    url: "/%s",
+                    data: {"title": $("#%s_lbl").val(),
+                            "value": $("#%s").val(),
+                            "readOnly": $("#%s").prop("readOnly"),
+                            "disabled": $("#%s").prop("disabled"),
+                            "checked": $("#%s").prop("checked")},
+                    type: "get",
+                    success: function(status){alertify.success("Action completed successfully!");},
+                    error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            }
+                });
+            """ % (url, self._name, self._name, self._name, self._name, self._name)
+            self.add_property('onclick', ajax)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_onclick_callback)
+
+    def _process_onclick_callback(self):
+        if request.args.__len__() > 0:
+            tit = request.args['title']
+            if tit is not None:
+                self._title = tit
+            rdOnly = request.args['readOnly']
+            if rdOnly is not None:
+                self._readonly = True if rdOnly == "true" else False
+            dsbld = request.args['disabled']
+            if dsbld is not None:
+                self._disabled = True if dsbld == "true" else False
+            val = request.args['value']
+            if val is not None:
+                self._value = val
+            chk = request.args['checked']
+            if chk is not None:
+                self._checked = chk
+        return self._onclick_callback()
+
+    def set_title(self, title):
+        self._title = title
+
+    def get_title(self):
+        return self._title
+
+    def set_readonly(self, readonly):
+        self._readonly = readonly
+
+    def get_readonly(self):
+        return self._readonly
+
+    def set_disabled(self, disabled):
+        self._disabled = disabled
+
+    def get_disabled(self):
+        return self._disabled
+
+    def set_value(self, val):
+        self._value = val
+
+    def get_value(self):
+        return self._value
+
+    def set_checked(self, chk):
+        self._checked = chk
+
+    def get_checked(self):
+        return self._checked
+
+    def _sync_properties(self):
+        return json.dumps({'title': self._title,
+                           'value': self._value if self._value is not None else "",
+                           'readonly': self._readonly if self._readonly is not None else False,
+                           'disabled': self._disabled if self._disabled is not None else False,
+                           'checked': self._checked if self._checked is not None else False
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    success: function(props){
+                                        selector = $('#%s');
+                                        selector_lbl = $('#%s_lbl')
+                                        selector_lbl.val(props.title);
+                                        selector.val(props.value);
+                                        selector.prop('readOnly', props.readonly);
+                                        selector.prop('disabled', props.disabled);
+                                        selector.prop('checked', props.checked)
+                                        //alertify.success(props.title +"-" + props.readonly + "-" + props.disabled);
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, self._name, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
+
+    def on_click(self, onclick_callback, app=None):
+        if app is not None:
+            self._app = app
+        self._onclick_callback = onclick_callback
+        self._attach_onclick()
 
     def render(self):
         """Renders the content of chexkbox class"""
         if self._title is None:
             content = self._render_pre_content('input')
             content += self._render_post_content('input')
-            self._widget_content = content
+            self._widget_content = content + "\n" + self._attach_polling()
             return self._widget_content
         else:
             content = "<div class='ui-widget-content'>\n"
             content += self._render_pre_content('input')
             content += self._render_post_content('input')
-            content += "\n<label for='" + self._name + "'>" + self._title + "</label>"
-            content += "\n<div>"
+            content += "\n<label for='" + self._name + "' id='" +\
+                       self._name + "_lbl'>" + self._title + "</label>"
+            content += "\n<div>" + "\n" + self._attach_polling()
+            self._widget_content = content
+            return self._widget_content
 
 
 class Color(Widget):
