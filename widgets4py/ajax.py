@@ -301,13 +301,12 @@ class CheckBox(Widget):
     _title = None
     _value = None
     _checked = None
-    _readonly = None
     _disabled = None
     _app = None
     _onclick_callback = None
 
     def __init__(self, name, title, value=None, checked=False, desc=None,
-                 prop=None, style=None, attr=None, readonly=False, disabled=False,
+                 prop=None, style=None, attr=None, disabled=False,
                  required=False, css_cls=None, app=None, onclick_callback=None):
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
@@ -318,9 +317,6 @@ class CheckBox(Widget):
         if value is not None:
             self.add_property('value', value)
             self._value = value
-        if readonly:
-            self.add_attribute('readonly')
-            self._readonly = readonly
         if disabled:
             self.add_attribute('disabled')
             self._disabled = disabled
@@ -342,10 +338,7 @@ class CheckBox(Widget):
                 $.ajax({
                     url: "/%s",
                     data: {"title": $("#%s_lbl").val(),
-                            "value": $("#%s").val(),
-                            "readOnly": $("#%s").prop("readOnly"),
-                            "disabled": $("#%s").prop("disabled"),
-                            "checked": $("#%s").prop("checked")},
+                            "checked": $("#%s").is(":checked")},
                     type: "get",
                     success: function(status){alertify.success("Action completed successfully!");},
                     error: function(err_status){
@@ -354,7 +347,7 @@ class CheckBox(Widget):
                                                 + err_status.statusText);
                                             }
                 });
-            """ % (url, self._name, self._name, self._name, self._name, self._name)
+            """ % (url, self._name, self._name)
             self.add_property('onclick', ajax)
             if not found:
                 self._app.add_url_rule('/' + url, url,
@@ -365,17 +358,10 @@ class CheckBox(Widget):
             tit = request.args['title']
             if tit is not None:
                 self._title = tit
-            rdOnly = request.args['readOnly']
-            if rdOnly is not None:
-                self._readonly = True if rdOnly == "true" else False
-            dsbld = request.args['disabled']
-            if dsbld is not None:
-                self._disabled = True if dsbld == "true" else False
-            val = request.args['value']
-            if val is not None:
-                self._value = val
+                print("Title: " + tit)
             chk = request.args['checked']
             if chk is not None:
+                print("Checked: " + chk)
                 self._checked = chk
         return self._onclick_callback()
 
@@ -384,12 +370,6 @@ class CheckBox(Widget):
 
     def get_title(self):
         return self._title
-
-    def set_readonly(self, readonly):
-        self._readonly = readonly
-
-    def get_readonly(self):
-        return self._readonly
 
     def set_disabled(self, disabled):
         self._disabled = disabled
@@ -410,11 +390,10 @@ class CheckBox(Widget):
         return self._checked
 
     def _sync_properties(self):
+        print("sync props....")
+        print("Tit: %s, Check: %s" % (self._title, self._checked))
         return json.dumps({'title': self._title,
-                           'value': self._value if self._value is not None else "",
-                           'readonly': self._readonly if self._readonly is not None else False,
-                           'disabled': self._disabled if self._disabled is not None else False,
-                           'checked': self._checked if self._checked is not None else False
+                           'checked': self._checked if self._checked is not None else "false"
                            })
 
     def _attach_polling(self):
@@ -428,11 +407,10 @@ class CheckBox(Widget):
                                         selector = $('#%s');
                                         selector_lbl = $('#%s_lbl')
                                         selector_lbl.val(props.title);
-                                        selector.val(props.value);
-                                        selector.prop('readOnly', props.readonly);
-                                        selector.prop('disabled', props.disabled);
-                                        selector.prop('checked', props.checked)
-                                        //alertify.success(props.title +"-" + props.readonly + "-" + props.disabled);
+                                        if(props.checked == true){
+                                            selector.attr('checked', props.checked)
+                                        }
+                                        alertify.success(props.title+ "<br />" + props.checked);
                                         //poll again
                                         %s_poll();
                                     },
