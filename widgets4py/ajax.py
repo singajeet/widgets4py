@@ -957,7 +957,7 @@ class DateTimeLocal(Date):
 class Email(TextBox):
     """A simple HTML email / input field"""
 
-    def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
+    def __init__(self, name, text=None, desc=None, prop=None, style=None, attr=None,
                  readonly=False, disabled=False, required=False, css_cls=None,
                  onchange_callback=None, app=None):
         TextBox.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
@@ -970,26 +970,194 @@ class Email(TextBox):
 class File(Widget):
     """A simple HTML file / input field"""
 
-    def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, multiple=False,
-                 css_cls=None):
+    _value = None
+    _app = None
+    _onclick_callback = None
+    _onchange_callback = None
+    _disabled = None
+    _multiple = None
+
+    def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, required=False, multiple=False,
+                 css_cls=None, onclick_callback=None, onchange_callback=None, app=None):
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self.add_property('type', 'file')
-        if readonly:
-            self.add_attribute('readonly')
         if disabled:
             self.add_attribute('disabled')
+            self._disabled = disabled
         if required:
             self.add_attribute('required')
         if multiple:
             self.add_attribute('multiple')
+            self._multiple = multiple
+        self._app = app
+        self._onchange_callback = onchange_callback
+        self._onclick_callback = onclick_callback
+        self._value = value
+        self._attach_onclick()
+        self._attach_onchange()
+
+    def _attach_onclick(self):
+        if self._app is not None and self._onclick_callback is not None:
+            url = str(__name__ + "_" + self._name + "_onclick").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            ajax = """
+                $.ajax({
+                    url: "/%s",
+                    data: {},
+                    type: "get",
+                    success: function(status){
+                                                alertify.success("Action completed successfully!");
+                                            },
+                    error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            },
+                    dataType: "json"
+                });
+            """ % (url)
+            self.add_property('onclick', ajax)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_onclick_callback)
+
+    def _attach_onchange(self):
+        if self._app is not None and self._onchange_callback is not None:
+            url = str(__name__ + "_" + self._name + "_onchange").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            ajax = """
+                $.ajax({
+                    url: "/%s",
+                    data: {
+                            "disabled": $("#%s").prop("disabled"),
+                            "multiple": $("#%s").prop("multiple"),
+                            "value": $("#%s").val()
+                            },
+                    type: "get",
+                    success: function(status){
+                                                alertify.success("Action completed successfully!");
+                                            },
+                    error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            },
+                    dataType: "json"
+                });
+            """ % (url, self._name, self._name, self._name)
+            self.add_property('onchange', ajax)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_onchange_callback)
+
+    def _process_onclick_callback(self):
+        return json.dumps({'result': self._onclick_callback()})
+
+    def _process_onchange_callback(self):
+        if request.args.__len__() > 0:
+            val = request.args["value"]
+            if val is not None:
+                self._value = val
+            dsbld = request.args["disabled"]
+            if dsbld is not None:
+                self._disabled = dsbld
+            multi = request.args["multiple"]
+            if multi is not None:
+                self._multiple = multi
+        return json.dumps({'result': self._onchange_callback()})
+
+    def set_value(self, val):
+        self._value = val
+
+    def get_value(self):
+        return self._value
+
+    def set_disabled(self, val):
+        self._disabled = val
+
+    def get_disabled(self):
+        return self._disabled
+
+    def set_multiple(self, val):
+        self._multiple = val
+
+    def get_multiple(self):
+        return self._multiple
+
+    def on_click(self, onclick_callback, app=None):
+        if app is not None:
+            self._app = app
+        self._onclick_callback = onclick_callback
+        self._attach_onclick()
+
+    def on_change(self, onchange_callback, app=None):
+        if app is not None:
+            self._app = app
+        self._onchange_callback = onchange_callback
+        self._attach_onchange()
+
+    def _sync_properties(self):
+        return json.dumps({'disabled': self._disabled if self._disabled is not None else 'false',
+                           'value': self._value,
+                           'multiple': self._multiple if self._multiple is not None else 'false'
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    type: "get",
+                                    success: function(props){
+                                        selector = $('#%s');
+                                        if(props.disabled == true){
+                                            selector.prop('disabled', props.disabled);
+                                        }
+                                        if(props.value != undefined){
+                                            selector.val(props.value);
+                                        }
+                                        if(props.multiple != undefined){
+                                            selector.prop('multiple', props.multiple);
+                                        }
+                                        //alertify.success(props.title+ "<br />" + props.checked);
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
 
     def render(self):
         """Renders the content of file class"""
         content = self._render_pre_content('input')
         content += self._render_post_content('input')
-        self._widget_content = content
+        self._widget_content = content + "\n" + self._attach_polling()
         return self._widget_content
 
 
