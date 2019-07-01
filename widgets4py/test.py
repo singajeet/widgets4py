@@ -47,7 +47,6 @@ class PageTest:
 
     def file_changed(self):
         print("File changed")
-        print("File: " + self.fl.get_value())
         return "success"
 
     def email_changed(self):

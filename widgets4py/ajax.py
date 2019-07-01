@@ -4,6 +4,7 @@ GUI apps
 Author: Ajeet Singh
 Date: 06/25/2019
 """
+import os
 from widgets4py.base import Widget
 from flask import json, request
 
@@ -970,16 +971,18 @@ class Email(TextBox):
 class File(Widget):
     """A simple HTML file / input field"""
 
-    _value = None
     _app = None
     _onclick_callback = None
     _onchange_callback = None
     _disabled = None
     _multiple = None
+    _upload_folder = None
+    _allowed_extensions = None
 
-    def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
+    def __init__(self, name, desc=None, prop=None, style=None, attr=None,
                  disabled=False, required=False, multiple=False,
-                 css_cls=None, onclick_callback=None, onchange_callback=None, app=None):
+                 css_cls=None, onclick_callback=None, onchange_callback=None, app=None,
+                 upload_folder=None, allowed_extensions=None):
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self.add_property('type', 'file')
@@ -991,12 +994,23 @@ class File(Widget):
         if multiple:
             self.add_attribute('multiple')
             self._multiple = multiple
+        if upload_folder is not None:
+            self._upload_folder = upload_folder
+        else:
+            self._upload_folder = "uploads/"
+        if allowed_extensions is not None:
+            self._allowed_extensions = allowed_extensions
+        else:
+            self._allowed_extensions = set(['txt', 'pdf', 'png', 'jpg', 'jpeg',
+                                            'gif', 'doc', 'docx', 'xls', 'xlsx'])
         self._app = app
         self._onchange_callback = onchange_callback
         self._onclick_callback = onclick_callback
-        self._value = value
         self._attach_onclick()
         self._attach_onchange()
+
+    def _allowed_file(self, filename):
+        return '.' in filename and filename.rsplit('.', 1)[1] in self._allowed_extensions
 
     def _attach_onclick(self):
         if self._app is not None and self._onclick_callback is not None:
@@ -1034,14 +1048,16 @@ class File(Widget):
                 if rule.endpoint == url:
                     found = True
             ajax = """
+                var formData = new FormData();
+                formData.append("disabled", $("#%s").prop("disabled"));
+                formData.append("multiple", $("#%s").prop("multiple"));
+                formData.append("file", $("#%s").prop("files")[0])
                 $.ajax({
                     url: "/%s",
-                    data: {
-                            "disabled": $("#%s").prop("disabled"),
-                            "multiple": $("#%s").prop("multiple"),
-                            "value": $("#%s").val()
-                            },
-                    type: "get",
+                    data: formData,
+                    type: "post",
+                    processData: false,
+                    contentType: false,
                     success: function(status){
                                                 alertify.success("Action completed successfully!");
                                             },
@@ -1052,27 +1068,43 @@ class File(Widget):
                                             },
                     dataType: "json"
                 });
-            """ % (url, self._name, self._name, self._name)
+            """ % (self._name, self._name, self._name, url)
             self.add_property('onchange', ajax)
             if not found:
                 self._app.add_url_rule('/' + url, url,
-                                       self._process_onchange_callback)
+                                       self._process_onchange_callback, methods=['GET', 'POST'])
 
     def _process_onclick_callback(self):
         return json.dumps({'result': self._onclick_callback()})
 
     def _process_onchange_callback(self):
         if request.args.__len__() > 0:
-            val = request.args["value"]
-            if val is not None:
-                self._value = val
             dsbld = request.args["disabled"]
             if dsbld is not None:
                 self._disabled = dsbld
             multi = request.args["multiple"]
             if multi is not None:
                 self._multiple = multi
+        if request.files.__len__() > 0:
+            file = request.files['file']
+            if file and self._allowed_file(file.filename):
+                filename = file.filename
+                if not os.path.exists(self._upload_folder):
+                    os.mkdir(self._upload_folder)
+                file.save(os.path.join(self._upload_folder, filename))
         return json.dumps({'result': self._onchange_callback()})
+
+    def set_upload_folder(self, upload_folder):
+        self._upload_folder = upload_folder
+
+    def get_upload_folder(self):
+        return self._upload_folder
+
+    def set_allowed_ext(self, extensions):
+        self._allowed_extensions = extensions
+
+    def get_allowed_ext(self):
+        return self._allowed_extensions
 
     def set_value(self, val):
         self._value = val
@@ -1106,7 +1138,6 @@ class File(Widget):
 
     def _sync_properties(self):
         return json.dumps({'disabled': self._disabled if self._disabled is not None else 'false',
-                           'value': self._value,
                            'multiple': self._multiple if self._multiple is not None else 'false'
                            })
 
@@ -1120,13 +1151,10 @@ class File(Widget):
                                     type: "get",
                                     success: function(props){
                                         selector = $('#%s');
-                                        if(props.disabled == true){
+                                        if(props.disabled === true){
                                             selector.prop('disabled', props.disabled);
                                         }
-                                        if(props.value != undefined){
-                                            selector.val(props.value);
-                                        }
-                                        if(props.multiple != undefined){
+                                        if(props.multiple === true){
                                             selector.prop('multiple', props.multiple);
                                         }
                                         //alertify.success(props.title+ "<br />" + props.checked);
