@@ -940,54 +940,31 @@ class Date(Widget):
         return self._widget_content
 
 
-class DateTimeLocal(Widget):
+class DateTimeLocal(Date):
     """A simple HTML datetime-local / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+                 readonly=False, disabled=False, required=False, css_cls=None,
+                 onclick_callback=None, onchange_callback=None, app=None, min=None,
+                 max=None):
+        Date.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                      css_cls=css_cls, readonly=readonly, disabled=disabled,
+                      required=required, onclick_callback=onclick_callback,
+                      onchange_callback=onchange_callback, app=app, min=min, max=max)
         self.add_property('type', 'datetime-local')
-        if value is not None:
-            self.add_property('value', value)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of datetime-local class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
 
 
-class Email(Widget):
+class Email(TextBox):
     """A simple HTML email / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+                 readonly=False, disabled=False, required=False, css_cls=None,
+                 onchange_callback=None, app=None):
+        TextBox.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, readonly=readonly, disabled=disabled,
+                         required=required, onchange_callback=onchange_callback,
+                         app=app)
         self.add_property('type', 'email')
-        if value is not None:
-            self.add_property('value', value)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of email class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
 
 
 class File(Widget):
