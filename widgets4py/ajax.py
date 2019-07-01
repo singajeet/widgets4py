@@ -9,7 +9,41 @@ from flask import json, request
 
 
 class Button(Widget):
-    """A simple button class"""
+    """A standard `Button` to be displayed in the parent container. The required fields for
+    this class is `name` and `title`. The name parameter is the identifier to refer this button
+    by the internal logic or can be referenced from outside using JScript. Below is an example of
+    creating a button in an App:
+
+        >>> from flask import Flask
+
+        >>> from widgets4py.ajax import Button
+
+        >>> from widgets4py.base import Page
+
+        >>> from widgets4py.layouts import SimpleGridLayout
+
+        >>> app = Flask("My Flask App")
+
+        >>> class PageTest:
+        ...
+        ...    btn = None
+        ...
+        ...    def show_layout(self):
+        ...        pg = Page('myPage', 'My Page')
+        ...        sg = SimpleGridLayout("Grid", 3, 2)
+        ...        self.btn = Button('btn', 'Push', app=app, onclick_callback=self.change_btn_title)
+        ...        content = pg.render()
+        ...        return content
+        ...    def change_btn_title(self):
+        ...        self.btn.set_title("New Title")
+        ...        print("Btn title changed!")
+        ...        return "success"
+        ...
+
+        >>> p = PageTest()
+
+        >>> app.add_url_rule('/', 'index', p.show_layout)
+    """
 
     _onclick_callback = None
     _app = None
@@ -19,6 +53,21 @@ class Button(Widget):
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
                  disabled=False, required=False,
                  onclick_callback=None, app=None, css_cls=None):
+        """Default constructor of the Button widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the button widget
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                required (Boolean): Widget is required to be filled-in or not
+                onclick_callback (function): A function to be called back on onclick event
+                app (Flask): An instance of Flask class
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self.add_property('type', 'button')
@@ -71,15 +120,27 @@ class Button(Widget):
         return json.dumps({"result": self._onclick_callback()})
 
     def set_title(self, title):
+        """Sets the title of button widget
+
+            Args:
+                title (string): title of the button
+        """
         self._title = title
 
     def get_title(self):
+        """Returns the title of Button widget"""
         return self._title
 
     def set_disabled(self, disabled):
+        """Sets Button widget as disabled
+
+            Args:
+                disabled (Boolean): state of the button
+        """
         self._disabled = disabled
 
     def get_disabled(self):
+        """Returns the disabled state of the Button"""
         return self._disabled
 
     def _sync_properties(self):
@@ -125,6 +186,13 @@ class Button(Widget):
         return script
 
     def on_click(self, onclick_callback, app=None):
+        """Attach the `on_click` event handler to the Button widget
+
+            Args:
+                onclick_callback (function): A reference to method or function that
+                                                will be called when this event is fired
+                app (Flask): An instance of the Flask application
+        """
         if app is not None:
             self._app = app
         self._onclick_callback = onclick_callback
