@@ -1189,56 +1189,45 @@ class File(Widget):
         return self._widget_content
 
 
-class Hidden(Widget):
-    """A simple HTML hidden / input field"""
+# class Hidden(Widget):
+#     """A simple HTML hidden / input field"""
 
-    def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 value=None, readonly=False, disabled=False, required=False,
-                 css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
-        self.add_property('type', 'hidden')
-        if value is not None:
-            self.add_property('value', value)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
+#     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
+#                  value=None, readonly=False, disabled=False, required=False,
+#                  css_cls=None):
+#         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+#                         css_cls=css_cls)
+#         self.add_property('type', 'hidden')
+#         if value is not None:
+#             self.add_property('value', value)
+#         if readonly:
+#             self.add_attribute('readonly')
+#         if disabled:
+#             self.add_attribute('disabled')
+#         if required:
+#             self.add_attribute('required')
 
-    def render(self):
-        """Renders the content of hidden class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
+#     def render(self):
+#         """Renders the content of hidden class"""
+#         content = self._render_pre_content('input')
+#         content += self._render_post_content('input')
+#         self._widget_content = content
+#         return self._widget_content
 
 
-class Image(Widget):
+class Image(Button):
     """A simple HTML image / input field"""
 
-    def __init__(self, name, desc=None, prop=None, style=None, attr=None,
+    def __init__(self, name, src, desc=None, prop=None, style=None, attr=None,
                  alt_text=None, readonly=False, disabled=False, required=False,
-                 css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+                 css_cls=None, onclick_callback=None, app=None):
+        Button.__init__(self, name, src, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls, onclick_callback=onclick_callback,
+                        app=app)
         self.add_property('type', 'image')
+        self.add_property('src', src)
         if alt_text is not None:
             self.add_property('value', alt_text)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of image class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
 
 
 class Month(Widget):

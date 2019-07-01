@@ -2,7 +2,7 @@ from flask import Flask
 from widgets4py.base import Page
 from widgets4py.layouts import SimpleGridLayout
 from widgets4py.ajax import Button, TextBox, CheckBox, Color, Date
-from widgets4py.ajax import DateTimeLocal, Email, File
+from widgets4py.ajax import DateTimeLocal, Email, File, Image
 
 
 app = Flask(__name__)
@@ -19,6 +19,7 @@ class PageTest:
     dtl = None
     eml = None
     fl = None
+    img = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -32,6 +33,7 @@ class PageTest:
         self.dtl = DateTimeLocal('dtl', app=app, onchange_callback=self.datetime_changed)
         self.eml = Email('eml', app=app, onchange_callback=self.email_changed)
         self.fl = File('fl', app=app, onchange_callback=self.file_changed)
+        self.img = Image('img', '../../clipboard2.png', app=app, onclick_callback=self.image_clicked)
         sg.add(self.btn)
         sg.add(self.btn1)
         sg.add(self.txt)
@@ -41,9 +43,14 @@ class PageTest:
         sg.add(self.dtl)
         sg.add(self.eml)
         sg.add(self.fl)
+        sg.add(self.img)
         pg.add(sg)
         content = pg.render()
         return content
+
+    def image_clicked(self):
+        print("Image Clcked!")
+        return "success"
 
     def file_changed(self):
         print("File changed")
