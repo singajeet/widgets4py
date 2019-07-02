@@ -11,7 +11,7 @@ from flask import json, request
 
 class Button(Widget):
     """A standard `Button` to be displayed in the parent container. The required fields for
-    this class is `name` and `title`. The name parameter is the identifier to refer this button
+    this class are `name` and `title`. The name parameter is the identifier to refer this button
     by the internal logic or can be referenced from outside using JScript. Below is an example of
     creating a button in an App:
 
@@ -31,7 +31,7 @@ class Button(Widget):
         ...
         ...    def show_layout(self):
         ...        pg = Page('myPage', 'My Page')
-        ...        sg = SimpleGridLayout("Grid", 3, 2)
+        ...        sg = SimpleGridLayout("Grid", 1, 2)
         ...        self.btn = Button('btn', 'Push', app=app, onclick_callback=self.change_btn_title)
         ...        content = pg.render()
         ...        return content
@@ -200,7 +200,9 @@ class Button(Widget):
         self._attach_onclick()
 
     def render(self):
-        """Renders the content of button class"""
+        """Renders the content of button class and returns it back to the parent widget
+        for final rendering to the `Page`
+        """
         content = self._render_pre_content('input')
         content += self._render_post_content('input')
         self._widget_content = content + "\n" + self._attach_polling()
@@ -1306,153 +1308,96 @@ class Range(Date):
         self.add_property('type', 'range')
 
 
-class Reset(Widget):
-    """A simple HTML reset / input field"""
+class Reset(Button):
+    """A Reset button helps in resetting the values of other widgets to default
+    at the frontend but can also be used to reset variables at backend using the
+    provided hook/event `onclick_callback`. Resetting widgets at frontend is
+    built-in but the resetting logic needs to be written by users for backend by
+    hooking up their custom logic `onclick_callback` event
+    """
 
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+                 disabled=False, required=False, css_cls=None,
+                 onclick_callback=None, app=None):
+        Button.__init__(self, name, title, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls, disabled=disabled, required=required, app=app,
+                        onclick_callback=onclick_callback)
         self.add_property('type', 'reset')
-        self.add_property('value', title)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of reset class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
 
 
-class Search(Widget):
-    """A simple HTML search / input field"""
+class Search(TextBox):
+    """Works similar to TextBox widget. An `onchange_callback` event will be fired after
+    widget lost the focus and that can be used to start the search operation at the
+    backend
+    """
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+                 readonly=False, disabled=False, required=False, css_cls=None,
+                 onchange_callback=None, app=None):
+        TextBox.__init__(self, name, value=value, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, readonly=readonly, disabled=disabled, required=required,
+                         onchange_callback=onchange_callback, app=app)
         self.add_property('type', 'search')
-        if value is not None:
-            self.add_property('value', value)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of search class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
 
 
-class Submit(Widget):
-    """A simple HTML submit / input field"""
+class Submit(Button):
+    """A submit button that submits the value of all widgets available under an `Form` to
+    which this button is associated. Similar to `Button` class, this class also have an
+    `onclick_event` which gets fired on the button click operation
+    """
 
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+                 disabled=False, required=False, css_cls=None, onclick_callback=None,
+                 app=None):
+        Widget.__init__(self, name, title, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls, disabled=disabled, required=required, app=app,
+                        onclick_callback=onclick_callback)
         self.add_property('type', 'submit')
-        self.add_property('value', title)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of submit class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
 
 
-class Telephone(Widget):
-    """A simple HTML telephone / input field"""
+class Telephone(TextBox):
+    """Similar to TextBox, this widget take telephone numbers as input in specified
+    pattern if one is provided as parameter to this class. If no pattern is given,
+    this widget takes any sequence of digits as phone number
+    """
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  pattern=None, readonly=False, disabled=False, required=False,
-                 css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+                 css_cls=None, onchange_callback=None, app=None):
+        TextBox.__init__(self, name, value=value, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, readonly=readonly, disabled=disabled,
+                         required=required, onchange_callback=onchange_callback,
+                         app=app)
         self.add_property('type', 'tel')
-        if value is not None:
-            self.add_property('value', value)
-        if pattern is not None:
-            self.add_property('pattern', pattern)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of telephone class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
 
 
-class Time(Widget):
-    """A simple HTML time / input field"""
-
-    def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
-        self.add_property('type', 'time')
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of time class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
-
-
-class URL(Widget):
-    """A simple HTML url / input field"""
+class Time(Date):
+    """Helps in selecting the time to the user. Depending upon browser, this widget could
+    be displayed as TextBox or an DropDown to select the desired time
+    """
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
-        self.add_property('type', 'url')
-        if value is not None:
-            self.add_property('value', value)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
+                 disabled=False, required=False, css_cls=None, onchange_callback=None,
+                 app=None):
+        Date.__init__(self, name, value=value, desc=desc, prop=prop, style=style, attr=attr,
+                      css_cls=css_cls, disabled=disabled, required=required,
+                      onchange_callback=onchange_callback, app=app)
+        self.add_property('type', 'time')
 
-    def render(self):
-        """Renders the content of url class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
+
+class URL(TextBox):
+    """The URL Widget is used for input fields that should contain a URL address.
+    Depending on browser support, the url field can be automatically validated when submitted.
+    Some smartphones recognize the url type, and adds ".com" to the keyboard to match url input.
+    """
+
+    def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, required=False, css_cls=None, onchange_callback=None,
+                 app=None):
+        TextBox.__init__(self, name, value=value, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, disabled=disabled, required=required,
+                         onchange_callback=onchange_callback, app=app)
+        self.add_property('type', 'url')
 
 
 class Week(Widget):

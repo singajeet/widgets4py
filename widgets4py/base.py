@@ -396,19 +396,38 @@ class Page(Widget):
             self.add_js('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/alertify.min.js')
 
     def add_js(self, path):
-        """Adds an javascript file to the page """
+        """Adds an reference to javascript file to the page. The JS file could from the available
+        CDNs or can be from locally hosted static files. The PATH should be an full URL to JS file
+        if it's hosted on CDN or it should be relative if hosted locally
+
+            Args:
+                path (str): Relative or absolute URL to the JS File
+        """
         self._script_sections.append(path)
 
     def add_css(self, path):
-        """Adds an css file to the page """
+        """Adds an reference to css file to the page. It works similar to `add_js` method but it works
+        with CSS files instead of JS files.
+
+            Args:
+                path (str): Relative or absolute URL to the CSS file
+        """
         self._style_sections.append(path)
 
     def add_script(self, script):
-        """Adds an jquery script to page """
+        """Adds an jquery code or script to the current page. The script will be rendered in the
+        script section which exists inside the `Body` HTML tags of the page
+
+            Args:
+                script (str): The script or JS code that needs to be included in the page
+        """
         self._scripts.append(script)
 
     def render(self):
-        """Renders the page """
+        """Renders the page along with the links to various JS and CSS files, scripts in the script
+        section and all of its children inside the `Body` tag of the page. This is the method that
+        will send the compiled HTML page to the HTTP server for final rendering on the user's browser.
+        """
         content = "<html style='height:100%;width:100%'>\n<head>\n"
         content += "<title>" + self._title + "</title>\n"
         css_content = "\n"
