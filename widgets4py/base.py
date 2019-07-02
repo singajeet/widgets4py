@@ -8,10 +8,13 @@ Date: 06/24/2019
 
 class Widget:
     """
-    The object of this class should resemble the following
-    structure...:
-        {
-            'tag': 'HTML tag name',
+    The `Widget` class will server as the base class to all the `Widget`(s) in this module.
+    An widget can be a simple HTML element to be rendered on the web page or it can be an
+    `AJAX` based widget which can be used in either web or desktop application. All widgets
+    in this package should have structure shown below and it can have more attributes apart
+    from the attributes/properties shown in the below structure...:
+      \n  {
+      \n      'tag': 'HTML tag name',
             'id': 'id of html node',
             'name': 'name of the element',
             'desc': 'description of widget',
@@ -23,20 +26,16 @@ class Widget:
             'properties': {
                             'attribute1': 'value1',
                             'attribute2': 'value2'
+                            ...
                             },
             'children': [
-                        {
-                            'tag': 'div'
-                            'id': 'child1'
+                            'child1',
+                            'child2',
                             ...
-                        },
-                        {
-                            'tag': 'div',
-                            'id': 'child2'
-                            ...
-                        },
-                        ...
-            ]
+                        ],
+            'on_xxx_event_callback',
+            'app' (instance of `Flask` app)
+            ...
         }
     """
     _id = None
@@ -57,7 +56,35 @@ class Widget:
     _root_widget = None
 
     def __init__(self, name, desc=None, tag=None, prop=None, style=None, attr=None, css_cls=None):
-        """Default constructor"""
+        """The default constructor have the following arguments...
+
+            Parameters
+            ----------
+                name : str
+                    Name of the widget to be used internally by the framework
+                desc : str, optional
+                    Description of the widget to be shown in tooltip
+                tag : str, optional
+                    HTML tag of the widget, by default it will be populated
+                    with the respective class but can be used to create
+                    custom widget if one is not available in the package
+                prop : dict, optionl
+                    A dictionary object containing the properties to be added to the
+                    HTML tag. For example, {'type': 'submit'} will be rendered as
+                    "type='submit'" in the HTML tag generated for this class
+                style : dict, optional
+                    Similar to the `prop` parameter, but render dict elements as
+                    "style={color: red}" if following dict element is available in
+                    the style parameter: {color: red}
+                attr : list, optional
+                    It will render the list elements as-is in the HTML tag for this
+                    class. For example, ['required', 'disabled'] will be rendered as
+                    "<... required disabled />" in the HTML tag
+                css_cls : list, optional
+                    This will render the class names inside the HTML tag, For example,
+                    the value of css_cls is ['class1', 'class2'], same will be rendered
+                    as "<... class='class1 class2' />" in the HTML tag
+        """
         self._name = name
         self._id = name
         self._description = desc
@@ -88,83 +115,159 @@ class Widget:
             self._css_classes = []
 
     def get_name(self):
+        """Returns the name of this widget
+
+            Returns:
+                str: name of the widget
+        """
         return self._name
 
     def set_root_widget(self, root_widget):
-        """Sets the reference to the root widget"""
+        """Sets the widget passed as arg as the root element of GUI structure
+
+            Args:
+                root_widget (Widget): An instance of the widget class to be set as
+                                        root element
+        """
         self._root_widget = root_widget
 
     def add(self, child):
-        """Adds an child to current instance
+        """Adds an child widget to the current widget
 
             Args:
-                child (Widget): An child of the current object
+                child (Widget): An child of the current widget
         """
         child.set_root_widget(self._root_widget)
         self._child_widgets.append(child)
 
     def remove(self, child):
-        """Removes an child from the current object children
+        """Removes an child widget from the current parent widget. The child should
+        exists as the member of children list of current widget
 
             Args:
-                child (Widget): Child to be removed
+                child (Widget): Child that needs to be removed from parent widget
         """
         self._child_widgets.remove(child)
 
     def set_properties(self, prop):
-        """Properties setter"""
+        """ Sets the list of properties to the current widget. The properties can be
+        added to widget using the method `add_property` of the widget class
+
+            Args:
+                prop (list): A list of properties to be added to widget
+        """
         self._properties.update(prop)
 
     def get_properties(self):
-        """properties getter"""
+        """Returns all the properties associated with the current widget
+
+            Returns:
+                list: A list of properties that exists for an widget
+        """
         return self._properties
 
     def add_property(self, key, value):
-        """Adds an property to object's properties"""
+        """Adds an key-value property to the widget's properties. This will be rendered as
+        shown, in the HTML tag, generated for the widget: "<... key='value' .../>"
+
+            Args:
+                key (str): Name or identifier of the record in the `dict` object
+                value (object): A value that needs to be stored along the key
+        """
         self._properties[key] = value
 
     def remove_property(self, key):
-        """Removes an property from object's properties"""
+        """Removes an property from widget's properties matching the key passed as
+        parameter
+
+            Args:
+                key (str): Name or identifier of the property
+        """
         self._properties.pop(key)
 
     def set_styles(self, style):
-        """Applies an style to HTML node """
+        """Applies the dict of styles to the widget. The style names should be same as styles
+        used in the CSS. All the styles will be rendered as CSS styles for the current widget
+        in the HTML tag that will be generated for this widget. For example, if dict object
+        is as follows : {'color': 'red'}, it will be rendered as "<... style='color: red;' ../>"
+
+            Args:
+                style (dict): A dict containing CSS style elements
+        """
         self._style.update(style)
 
     def get_styles(self):
-        """Removes the whole style from HTML element"""
+        """Returns the dict object containing the CSS style elements
+
+            Returns:
+                dict: A dict of CSS style elements
+        """
         return self._style
 
     def add_style(self, style_name, style_value):
-        """Add an style to object's styles"""
+        """Add an CSS style element to the widget styles
+
+            Args:
+                style_name (str): Name or identifier of the CSS style to be applied
+                style_value (str): Value of the style that needs to be applied on widget
+        """
         self._style[style_name] = style_value
 
     def remove_style(self, style_name):
-        """Removes an style from the object"""
+        """Removes an style from the widget's CSS style dict object
+
+            Args:
+                style_name (str): Name or identifier of the CSS style
+        """
         self._style.pop(style_name)
 
     def set_attributes(self, attr):
-        """Attributes setter """
+        """Set's the list of attributes for an widget. The attributes will be rendered as
+        follows, in the HTML tag for the widget: "<... readonly disabled .../>"
+
+            Args:
+                attr (list): A list of attributes to be rendered
+        """
         self._attributes = attr
 
     def get_attributes(self):
-        """Attributes getter"""
+        """Returns the attributes used for the current widget
+
+            Returns:
+                list: list of attributes for a given widget
+        """
         return self._attributes
 
     def add_attribute(self, attr):
-        """Adds an attribute to the object"""
+        """Adds an attribute to the list of attributes for a given widget
+
+            Args:
+                attr (str): An attribute to be added to attributes list
+        """
         self._attributes.append(attr)
 
     def remove_attribute(self, attr):
-        """Removes an attributes from the object"""
+        """Removes an attribute from the widget's attributes list
+
+            Args:
+                attr (str): Attribute that needs to be removed from list
+        """
         self._attributes.pop(attr)
 
     def add_css_class(self, css_cls):
-        """Adds an CSS class the HTML object"""
+        """Adds an CSS class to the list of classes for a given widget
+
+            Args:
+                css_cls (str): Name of the class that needs to be added
+        """
         self._css_classes.append(css_cls)
 
     def remove_css_class(self, css_cls):
-        """Removes an CSS class from HTML widget"""
+        """Removes an CSS class from the list of classes for a given widget
+
+            Args:
+                css_cls (str): Name of the class that needs to be removed
+        """
         self._css_classes.pop(css_cls)
 
     def _render_pre_content(self, tag):
@@ -198,8 +301,9 @@ class Widget:
         return "\n</" + tag + ">"
 
     def render(self):
-        """Renders the widget as html script and returns
-        same"""
+        """Renders the widget as html markup and return same to the parent widget
+        for final rendering
+        """
         sub_content = ""
         # Get contents of child nodes
         for widget in self._child_widgets:
@@ -212,8 +316,12 @@ class Widget:
 
 
 class Page(Widget):
-    """The page class represents an HTML page with options
-    to include CSS AND JS libs
+    """The page class represents an HTML page and the root container that will host all
+    other widgets at its children. All the widgets or their parent widgets needs to be
+    added to Page instance to be shown on the screen. Apart from that the hyper links to
+    the CSS and JavaScript files can be added through this class. Apart from that, this
+    class provides the option to add the inline JavaScript to the page, so both a reference
+    to JavaScript file and inline JavaScript can be added to the page at same time.
     """
 
     _script_sections = None
@@ -232,6 +340,41 @@ class Page(Widget):
 
     def __init__(self, name, title, desc=None, j_cc=True, j_js=True, prop=None,
                  style=None, attr=None, css_cls=None):
+        """The default constructor have the following arguments...
+
+            Parameters
+            ----------
+                name : str
+                    Name of the widget to be used internally by the framework
+                title : str
+                    Title of the page to be rendered using this class
+                desc : str, optional
+                    Description of the widget to be shown in tooltip
+                prop : dict, optionl
+                    A dictionary object containing the properties to be added to the
+                    HTML tag. For example, {'type': 'submit'} will be rendered as
+                    "type='submit'" in the HTML tag generated for this class
+                style : dict, optional
+                    Similar to the `prop` parameter, but render dict elements as
+                    "style={color: red}" if following dict element is available in
+                    the style parameter: {color: red}
+                attr : list, optional
+                    It will render the list elements as-is in the HTML tag for this
+                    class. For example, ['required', 'disabled'] will be rendered as
+                    "<... required disabled />" in the HTML tag
+                css_cls : list, optional
+                    This will render the class names inside the HTML tag, For example,
+                    the value of css_cls is ['class1', 'class2'], same will be rendered
+                    as "<... class='class1 class2' />" in the HTML tag
+                j_cc : boolean, optional
+                    If set to true, it will add the CSS (CDN) URL to the page itself. The
+                    URLS that will be added are for JQuery-UI, Alertify and JQuery Themes.
+                    This option is `True` by default
+                j_js : boolean, optional
+                    If set to true, it will add the JQuery JavaScript URLs pointing to CDN,
+                    to the current page. By default, this option is true and will add the
+                    URL to following libraries: JQuery, JQuery-UI and Alertify
+        """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self._title = title
