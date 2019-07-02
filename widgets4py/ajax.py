@@ -1285,10 +1285,10 @@ class Radio(CheckBox):
     """A simple HTML radio / input field"""
 
     def __init__(self, name, title, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None, onclick_callback=None,
+                 disabled=False, required=False, css_cls=None, onclick_callback=None,
                  app=None):
         CheckBox.__init__(self, name, title, value=value, desc=desc, prop=prop, style=style, attr=attr,
-                          css_cls=css_cls, readonly=readonly, disabled=disabled, required=required,
+                          css_cls=css_cls, disabled=disabled, required=required,
                           onclick_callback=onclick_callback, app=app)
         self.add_property('type', 'radio')
 
