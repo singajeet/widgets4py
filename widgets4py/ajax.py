@@ -961,7 +961,7 @@ class Email(TextBox):
     def __init__(self, name, text=None, desc=None, prop=None, style=None, attr=None,
                  readonly=False, disabled=False, required=False, css_cls=None,
                  onchange_callback=None, app=None):
-        TextBox.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+        TextBox.__init__(self, name, text=text, desc=desc, prop=prop, style=style, attr=attr,
                          css_cls=css_cls, readonly=readonly, disabled=disabled,
                          required=required, onchange_callback=onchange_callback,
                          app=app)
@@ -1243,59 +1243,42 @@ class Month(Date):
         self.add_property('type', 'month')
 
 
-class Number(Widget):
+class Number(TextBox):
     """A simple HTML number / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 min=None, max=None, readonly=False, disabled=False, required=False,
-                 css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+                 readonly=False, disabled=False, required=False, onchange_callback=None,
+                 css_cls=None, app=None):
+        TextBox.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, readonly=readonly, disabled=disabled,
+                         required=required, text=value, onchange_callback=onchange_callback,
+                         app=app)
         self.add_property('type', 'number')
-        if value is not None:
-            self.add_property('value', value)
-        if min is not None:
-            self.add_property('min', min)
-        if max is not None:
-            self.add_property('max', max)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
 
-    def render(self):
-        """Renders the content of number class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
+    def set_number(self, numb):
+        self.set_text(numb)
+
+    def get_number(self):
+        return self.get_text()
 
 
-class Password(Widget):
+class Password(TextBox):
     """A simple HTML password / input field"""
 
-    def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+    def __init__(self, name, password=None, desc=None, prop=None, style=None, attr=None,
+                 readonly=False, disabled=False, required=False, css_cls=None,
+                 onchange_callback=None, app=None):
+        TextBox.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, readonly=readonly, disabled=disabled,
+                         required=required, text=password, onchange_callback=onchange_callback,
+                         app=app)
         self.add_property('type', 'password')
-        if value is not None:
-            self.add_property('value', value)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
 
-    def render(self):
-        """Renders the content of password class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
+    def set_password(self, passwd):
+        self.set_text(passwd)
+
+    def get_password(self):
+        return self.get_text()
 
 
 class Radio(Widget):
