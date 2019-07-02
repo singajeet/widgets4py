@@ -1400,66 +1400,77 @@ class URL(TextBox):
         self.add_property('type', 'url')
 
 
-class Week(Widget):
-    """A simple HTML week / input field"""
+class Week(Date):
+    """The Week widget allows the user to select a week and year.
+    Depending on browser support, a date picker can show up in the input field.
+    """
 
-    def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+    def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, required=False, css_cls=None, onchange_callback=None,
+                 app=None):
+        Widget.__init__(self, name, value=value, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls, disabled=disabled, required=required,
+                        onchange_callback=onchange_callback, app=app)
         self.add_property('type', 'week')
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of week class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
 
 
 class Form(Widget):
-    """An HTML form widget class"""
+    """The Form widget defines a form that is used to collect user input. An form contains form
+    elements. Form elements are different types of input elements, like text fields, checkboxes,
+    radio buttons, submit buttons, and more. By default, this widget will display an submit
+    button for the form, and form will get submitted with all the data from it's child elements,
+    when the button will be pressed by the user. The submitted data can be fetched from form at
+    server side using the followig method of this class: `get_submitted_form_data`. This method
+    will return an dict of key-value pairs submitted from the frontend.
+    """
 
     _use_fieldset = False
     _legend = None
     _on_form_submitted = None
     _app = None
+    _action = None
+    _url = None
+    _submitted_form_data = None
 
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 action=None, target=None, method=None,
                  use_fieldset=False, legend=None, app=None,
-                 submit_callback=None, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+                 submit_callback=None):
+        """Default constructor for Form class with below parameters...
+        Args:
+                name (string): name of the widget for internal use
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                app (Flask, optional): An instance of `Flask` class
+                use_fieldset (boolean, optional): Whether to use the fieldset to group the fields
+                legend (string, optional): The legend/title of the fieldset to be shown on top of frame
+                submit_callback (func, optional): A reference to callback function/method that \
+                will be called once the form is submitted successfully
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
         if submit_callback is not None:
             self._on_form_submitted = submit_callback
         if app is not None:
             self._app = app
-        if target is not None:
-            self.add_property('target', target)
-        if method is not None:
-            self.add_property('method', method)
         self._use_fieldset = use_fieldset
         self._legend = legend
         if app is not None and submit_callback is not None:
-            self._register_rule()
-        else:
-            if action is not None:
-                self.add_property('action', action)
+            self._url = self._register_rule()
 
     #  Event for the on form submit
     def on_form_submit(self, submit_callback, app=None):
+        """An event handler that will be called once the form is submitted successfully.
+        The parameter `submit_callback` should be an reference to method or function,
+        which will be called after this event is triggered. The submitted form data
+        can be collected using the method `get_submitted_form_data`, which will return
+        an dict object with key-value pair of the submitted data
+        """
         if app is not None:
             self._app = app
         self._on_form_submitted = submit_callback
         if self._app is not None and self._on_form_submitted is not None:
-            self._register_rule()
+            self._url = self._register_rule()
 
     def _register_rule(self):
         # Prepare endpoint name and URL
@@ -1472,13 +1483,37 @@ class Form(Widget):
         if not found:
             self._app.add_url_rule('/' + rule_str,
                                    rule_str,
-                                   self._process_on_form_submitted)
-        self.add_property('action', "/" + rule_str)
+                                   self._process_on_form_submitted, methods=['GET', 'POST'])
+        return rule_str
+        # self.add_property('action', "/" + rule_str)
+
+    def _attach_submit_button(self, url):
+        content = """\n<button id="%s_btn" type="button" name="%s_btn"
+                        onclick="
+                            $.ajax({
+                                url: '/%s',
+                                data: $('#%s').serialize(),
+                                type: 'post',
+                                success: function(response){alertify.success('Form submitted successfully!')},
+                                error: function(response){
+                                                            alertify.error('Status Code: '
+                                                                + err_status.status + '<br />' + 'Error Message:'
+                                                                + err_status.statusText);
+                                                            }
+                            });
+                        ">Submit</button>
+                """ % (self._name, self._name, url, self._name)
+        return content
 
     def _process_on_form_submitted(self):
+        if request.form.__len__() > 0:
+            self._submitted_form_data = request.form
         # call the callback handler
-        self._on_form_submitted()
-        return self._root_widget.render()
+        return self._on_form_submitted()
+        # return self._root_widget.render()
+
+    def get_submitted_form_data(self):
+        return self._submitted_form_data
 
     def render(self):
         """Renders the content of the form"""
@@ -1491,7 +1526,8 @@ class Form(Widget):
             content += widget.render()
         if self._use_fieldset is True:
             content += "\n</fieldset>"
-        self._widget_content = content + self._render_post_content('form')
+        self._widget_content = content + self._render_post_content('form')\
+                                       + self._attach_submit_button(self._url)
         return self._widget_content
 
 
