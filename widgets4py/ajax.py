@@ -1221,7 +1221,7 @@ class Image(Button):
     def __init__(self, name, src, desc=None, prop=None, style=None, attr=None,
                  alt_text=None, readonly=False, disabled=False, required=False,
                  css_cls=None, onclick_callback=None, app=None):
-        Button.__init__(self, name, src, desc=desc, prop=prop, style=style, attr=attr,
+        Button.__init__(self, name, "image", desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls, onclick_callback=onclick_callback,
                         app=app)
         self.add_property('type', 'image')
@@ -1230,27 +1230,17 @@ class Image(Button):
             self.add_property('value', alt_text)
 
 
-class Month(Widget):
+class Month(Date):
     """A simple HTML month / input field"""
 
-    def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+    def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
+                 readonly=False, disabled=False, required=False, css_cls=None,
+                 onclick_callback=None, onchange_callback=None, app=None, min=None, max=None):
+        Date.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                      css_cls=css_cls, readonly=readonly, disabled=disabled,
+                      required=required, onclick_callback=onclick_callback,
+                      onchange_callback=onchange_callback, app=app, min=min, max=max, value=value)
         self.add_property('type', 'month')
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of month class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
 
 
 class Number(Widget):

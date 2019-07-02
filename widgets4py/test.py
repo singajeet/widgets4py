@@ -1,8 +1,8 @@
-from flask import Flask
+from flask import Flask, url_for
 from widgets4py.base import Page
 from widgets4py.layouts import SimpleGridLayout
 from widgets4py.ajax import Button, TextBox, CheckBox, Color, Date
-from widgets4py.ajax import DateTimeLocal, Email, File, Image
+from widgets4py.ajax import DateTimeLocal, Email, File, Image, Month
 
 
 app = Flask(__name__)
@@ -20,10 +20,11 @@ class PageTest:
     eml = None
     fl = None
     img = None
+    mth = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
-        sg = SimpleGridLayout("Grid", 5, 2)
+        sg = SimpleGridLayout("Grid", 6, 2)
         self.btn = Button('btn', 'Push', app=app, onclick_callback=self.change_btn_title)
         self.btn1 = Button('btn1', 'Populate', app=app, onclick_callback=self.populate_text)
         self.txt = TextBox('txt', app=app, onchange_callback=self.text_changed)
@@ -33,7 +34,8 @@ class PageTest:
         self.dtl = DateTimeLocal('dtl', app=app, onchange_callback=self.datetime_changed)
         self.eml = Email('eml', app=app, onchange_callback=self.email_changed)
         self.fl = File('fl', app=app, onchange_callback=self.file_changed)
-        self.img = Image('img', '../../clipboard2.png', app=app, onclick_callback=self.image_clicked)
+        self.img = Image('img', url_for('static', filename='images.jpeg'), app=app, onclick_callback=self.image_clicked)
+        self.mth = Month('mth', app=app, onchange_callback=self.month_changed)
         sg.add(self.btn)
         sg.add(self.btn1)
         sg.add(self.txt)
@@ -44,9 +46,14 @@ class PageTest:
         sg.add(self.eml)
         sg.add(self.fl)
         sg.add(self.img)
+        sg.add(self.mth)
         pg.add(sg)
         content = pg.render()
         return content
+
+    def month_changed(self):
+        print("Month Changed")
+        return "success"
 
     def image_clicked(self):
         print("Image Clcked!")
