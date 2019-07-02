@@ -1281,59 +1281,29 @@ class Password(TextBox):
         return self.get_text()
 
 
-class Radio(Widget):
+class Radio(CheckBox):
     """A simple HTML radio / input field"""
 
-    def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+    def __init__(self, name, title, value=None, desc=None, prop=None, style=None, attr=None,
+                 readonly=False, disabled=False, required=False, css_cls=None, onclick_callback=None,
+                 app=None):
+        CheckBox.__init__(self, name, title, value=value, desc=desc, prop=prop, style=style, attr=attr,
+                          css_cls=css_cls, readonly=readonly, disabled=disabled, required=required,
+                          onclick_callback=onclick_callback, app=app)
         self.add_property('type', 'radio')
-        if value is not None:
-            self.add_property('value', value)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of radio class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
 
 
-class Range(Widget):
+class Range(Date):
     """A simple HTML range / input field"""
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  min=None, max=None, readonly=False, disabled=False, required=False,
-                 css_cls=None):
-        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls)
+                 css_cls=None, onchange_callback=None, app=None):
+        Date.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                      css_cls=css_cls, value=value, readonly=readonly, disabled=disabled,
+                      required=required, onchange_callback=onchange_callback, app=app,
+                      min=min, max=max)
         self.add_property('type', 'range')
-        if value is not None:
-            self.add_property('value', value)
-        if min is not None:
-            self.add_property('min', min)
-        if max is not None:
-            self.add_property('max', max)
-        if readonly:
-            self.add_attribute('readonly')
-        if disabled:
-            self.add_attribute('disabled')
-        if required:
-            self.add_attribute('required')
-
-    def render(self):
-        """Renders the content of range class"""
-        content = self._render_pre_content('input')
-        content += self._render_post_content('input')
-        self._widget_content = content
-        return self._widget_content
 
 
 class Reset(Widget):
