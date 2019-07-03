@@ -2,10 +2,10 @@ import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
 # from widgets4py.layouts import SimpleGridLayout
-from widgets4py.ajax import TextBox  # , Button, CheckBox, Color, Date
-# from widgets4py.ajax import DateTimeLocal, Email, File, Image, Month
-# from widgets4py.ajax import Number, Password, Radio, Range
-from widgets4py.ajax import Form, Label, DropDown
+from widgets4py.app_ui import TextBox  # , Button, CheckBox, Color, Date
+# from widgets4py.app_ui import DateTimeLocal, Email, File, Image, Month
+# from widgets4py.app_ui import Number, Password, Radio, Range
+from widgets4py.app_ui import Form, Label, DropDown
 from multiprocessing import Process
 
 
