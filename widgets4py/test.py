@@ -4,7 +4,7 @@ from widgets4py.base import Page
 from widgets4py.ajax import TextBox  # , Button, CheckBox, Color, Date
 # from widgets4py.ajax import DateTimeLocal, Email, File, Image, Month
 # from widgets4py.ajax import Number, Password, Radio, Range
-from widgets4py.ajax import Form
+from widgets4py.ajax import Form, Label, DropDown
 
 app = Flask(__name__)
 
@@ -26,6 +26,9 @@ class PageTest:
     # passwd = None
     # rd = None
     # rng = None
+    lbl1 = None
+    lbl2 = None
+    dd = None
     frm = None
 
     def show_layout(self):
@@ -64,10 +67,27 @@ class PageTest:
         # sg.add(self.rd)
         # sg.add(self.rng)
         # pg.add(sg)
+        self.lbl1 = Label('lbl1', 'TextBox Label:', self.txt)
+        self.dd = DropDown('dd', app=app, onchange_callback=self.dd_changed)
+        self.dd.add_option('a', 'A', False)
+        self.dd.add_option('b', 'B', False)
+        self.dd.add_option('c', 'C', False)
+        self.lbl2 = Label('lbl2', 'DropDown Label:', self.dd, app=app, onclick_callback=self.lbl_clicked)
+        self.frm.add(self.lbl1)
         self.frm.add(self.txt)
+        self.frm.add(self.lbl2)
+        self.frm.add(self.dd)
         pg.add(self.frm)
         content = pg.render()
         return content
+
+    def lbl_clicked(self):
+        print("Label 2 clicked")
+        return "success"
+
+    def dd_changed(self):
+        print("DD Changed")
+        return "success"
 
     def form_submitted(self):
         print("Form Submitted Successfully!")

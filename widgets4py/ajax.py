@@ -1536,42 +1536,265 @@ class Form(Widget):
 
 
 class DropDown(Widget):
-    """A dropdown widget class"""
+    """Renders an dropdown widget with options passed as dict object or options added through
+    `add_option` method of this class. This class has an another property known as `size`
+    which helps in determining the number of options to be visible at a time in the dropdown.
+    """
 
     _options = None
+    _size = None
+    _required = None
+    _disabled = None
+    _onclick_callback = None
+    _onchange_callback = None
+    _app = None
+    _value = None
 
     def __init__(self, name, options=None, size=None, desc=None, prop=None, style=None, attr=None,
-                 readonly=False, disabled=False, required=False, css_cls=None):
+                 disabled=False, required=False, css_cls=None, onclick_callback=None, app=None,
+                 onchange_callback=None):
+        """Default constructor with the below given arguments...
+
+            Args:
+                name (str): Name or identifier of the widget
+                options (dict, optional): A `dict` object containing options in key-value pair
+                size (int, optional): The number of options to be displayed in dropdown
+                desc (str, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                app (Flask, optional): An instance of `Flask` class
+                disabled (boolean, optional): Sets the widget in disabled mode
+                required (boolean, optional): Makes the widget as required field
+                css_cls (list, optional): A list of CSS Classes to be used with widget
+                onclick_callback (func, optional): A callback function or method to be called once
+                                                    click event is triggered on widget
+                onchange_callback (func, optional): A callback function or method to be called once
+                                                    a change is done in the widget
+        """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
-        if readonly:
-            self.add_attribute('readonly')
         if disabled:
             self.add_attribute('disabled')
+            self._disabled = disabled
         if required:
             self.add_attribute('required')
+            self._required = required
         if size is not None:
             self.add_property('size', size)
+            self._size = size
         if options is not None:
             self._options = options
         else:
             self._options = {}
+        self._onchange_callback = onchange_callback
+        self._onclick_callback = onclick_callback
+        self._app = app
+        self._attach_onclick()
+        self._attach_onchange()
 
-    def add_option(self, value, title, is_selected=False):
-        """Adds an options to the select list"""
-        self._options[value] = [title, is_selected]
+    def _attach_onclick(self):
+        if self._app is not None and self._onclick_callback is not None:
+            url = str(__name__ + "_" + self._name + "_onclick").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            ajax = """
+                $.ajax({
+                    url: "/%s",
+                    data: {'value': $('#%s').val()},
+                    type: "get",
+                    success: function(status){
+                                                alertify.success("Action completed successfully!");
+                                            },
+                    error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            },
+                    dataType: "json"
+                });
+            """ % (url)
+            self.add_property('onclick', ajax)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_onclick_callback)
+
+    def _attach_onchange(self):
+        if self._app is not None and self._onchange_callback is not None:
+            url = str(__name__ + "_" + self._name + "_onchange").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            ajax = """
+                $.ajax({
+                    url: "/%s",
+                    data: {
+                        "value": $("#%s").val(),
+                        "disabled": $("#%s").prop("disabled")
+                    },
+                    type: "get",
+                    success: function(status){
+                                                alertify.success("Action completed successfully!");
+                                            },
+                    error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            },
+                    dataType: "json"
+                });
+            """ % (url, self._name, self._name)
+            self.add_property('onchange', ajax)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_onchange_callback)
+
+    def _process_onclick_callback(self):
+        return json.dumps({'result': self._onclick_callback()})
+
+    def _process_onchange_callback(self):
+        if request.args.__len__() > 0:
+            dsbld = request.args["disabled"]
+            if dsbld is not None:
+                self._disabled = dsbld
+            val = request.args["value"]
+            if val is not None:
+                self._value = val
+        return json.dumps({'result': self._onchange_callback()})
+
+    def set_size(self, size):
+        """Sets the size of the dropdown's height based on number of rows passed
+        in `size` param. Ex, if size=3, 3 rows will be displayed in dropdown at a
+        time and rest of it can be scrolled
+
+            Args:
+                size (int): Number of rows to be displayed in dropdown
+        """
+        self._size = size
+
+    def get_size(self):
+        """Returns the number of rows that are displayed in the dropdown
+
+            Returns:
+                int: Number of rows that are displayed by dropdown
+        """
+        return self._size
+
+    def add_option(self, value, title=None, is_selected=False):
+        """Adds a new option to the list of dropdown and
+        can be marked as selected by passing the
+        `is_selected` param as True
+
+            Args:
+                value (str): The value of the option to be added
+                title (str, optional): The title of the value that will be shown in
+                                        dropdown list. If it is blank, value will be
+                                        used as title to be shown in the list
+                is_selected (boolean, optional): Whether to show the current
+                                                value as selected or not
+        """
+        self._options[value] = [title if title is not None else value, is_selected]
 
     def remove_options(self, value):
-        """Removes an option from the select list"""
+        """Removes the given option from the list
+
+            Args:
+                value (str): The value to be removed from the list
+        """
         self._options.pop(value)
 
+    def on_click(self, onclick_callback, app=None):
+        """Adds an event handler to on_click event of the widget. The event handler can be
+        a method or function. If no app is associated with current widget, it should be
+        linked by passing `app` param
+
+            Args:
+                onclick_callback (function): The function/callback that will be called for this event
+                app (Flask, optional): An instance of Flask app, though this param is optional, it is
+                                        required to have events work properly. So, it should be passed
+                                        during creation of widget in the constructor or should be passed
+                                        in this function
+        """
+        if app is not None:
+            self._app = app
+        self._onclick_callback = onclick_callback
+        self._attach_onclick()
+
+    def on_change(self, onchange_callback, app=None):
+        """Adds an event handler to on_change event of the widget. The event handler can be
+        a method or function. If no app is associated with current widget, it should be
+        linked by passing `app` param
+
+            Args:
+                onchange_callback (function): The function/callback that will be called for this event
+                app (Flask, optional): An instance of Flask app, though this param is optional, it is
+                                        required to have events work properly. So, it should be passed
+                                        during creation of widget in the constructor or should be passed
+                                        in this function
+        """
+        if app is not None:
+            self._app = app
+        self._onchange_callback = onchange_callback
+        self._attach_onchange()
+
+    def _sync_properties(self):
+        return json.dumps({'disabled': self._disabled if self._disabled is not None else 'false',
+                           'value': self._value if self._value is not None else ''
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    type: "get",
+                                    success: function(props){
+                                        selector = $('#%s');
+                                        if(props.disabled === true){
+                                            selector.prop('disabled', props.disabled);
+                                        }
+                                        if(props.value != undefined){
+                                            selector.val(props.value)
+                                        }
+                                        //alertify.success(props.title+ "<br />" + props.checked);
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
+
     def render(self):
-        """Renders the select list on the page"""
+        """Renders the dropdown list widget under its parent container
+        using the `size` param to manage the height of dropdown
+        """
         content = self._render_pre_content('select')
         content += "\n"
         for opt in self._options:
-            title = self._options.get(opt)[0]
-            is_selected = self._options.get(opt)[1]
+            opt_list = self._options.get(opt)
+            title = str(opt_list[0])
+            is_selected = opt_list[1]
             content += "<option value='" + opt + "' "
             if is_selected:
                 content += "selected "
@@ -1582,24 +1805,50 @@ class DropDown(Widget):
                 content += opt
             content += "</option>"
         self._widget_content = content + self._render_post_content('select')
+        self._widget_content += "\n" + self._attach_polling()
         return self._widget_content
 
 
-class Label(Widget):
-    """An label widget to be use for other widgets"""
+class Label(Button):
+    """An label widget to display a text on the screen. The style can be handled
+    by passing the `style` dict or the CSS class list to the constructor of the
+    label
+    """
 
     _text = None
     _for_widget = None
 
-    def __init__(self, name, text, for_widget):
-        Widget.__init__(self, name)
+    def __init__(self, name, text, for_widget, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, required=False, onclick_callback=None, app=None, css_cls=None):
+        """Default constructor of the Label widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the button widget
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                disabled (Boolean, optional): Enabled or Disabled state of widget
+                required (Boolean, optional): Widget is required to be filled-in or not
+                onclick_callback (function, optional): A function to be called back on onclick event
+                app (Flask, optional): An instance of Flask class
+                css_cls (list, optional): An list of CSS class names to be added to current widget
+        """
+        Button.__init__(self, name, text, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls, disabled=disabled, required=required,
+                        onclick_callback=onclick_callback, app=app)
         self._text = text
         self._for_widget = for_widget
         self.add_property('for', for_widget.get_name())
 
     def render(self):
-        """Renders the label for a given widget"""
+        """Renders the label content and associate it with other component if `for`
+        param is passed and returns the content to parent widget for final rendering
+        """
         content = self._render_pre_content('label')
         content += self._text
         self._widget_content = content + self._render_post_content('label')
+        if self._app is not None and self._onclick_callback is not None:
+            self._widget_content += "\n" + self._attach_polling()
         return self._widget_content
