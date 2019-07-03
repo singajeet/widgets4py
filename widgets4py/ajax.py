@@ -1513,6 +1513,10 @@ class Form(Widget):
         # return self._root_widget.render()
 
     def get_submitted_form_data(self):
+        """Returns the data submitted by the form in `dict` format. Value of each form elemet
+        can be extracted from this `dict`. This function should be called only once the
+        `submit_callback` is fired
+        """
         return self._submitted_form_data
 
     def render(self):
