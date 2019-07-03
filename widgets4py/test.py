@@ -1,3 +1,4 @@
+import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
 # from widgets4py.layouts import SimpleGridLayout
@@ -5,6 +6,8 @@ from widgets4py.ajax import TextBox  # , Button, CheckBox, Color, Date
 # from widgets4py.ajax import DateTimeLocal, Email, File, Image, Month
 # from widgets4py.ajax import Number, Password, Radio, Range
 from widgets4py.ajax import Form, Label, DropDown
+from multiprocessing import Process
+
 
 app = Flask(__name__)
 
@@ -168,16 +171,20 @@ class PageTest:
         return "Text Change Triggred!"
 
 
-p = PageTest()
-app.add_url_rule('/', 'index', p.show_layout)
-# def local_func():
-#     w = Page('My Widget')
-#     lay = GridLayout('Grid', 2, 2)
-#     w.add(lay)
-#     print(w.render())
+def start_app():
+    p = PageTest()
+    app.add_url_rule('/', 'index', p.show_layout)
+    app.run(host='127.0.0.1', port=5000)
 
 
-# if __name__ == "__main__":
-#     local_func()
-#     input()
-#     local_func()
+def start_web_view():
+    webview.create_window("My Application", "http://localhost:5000", resizable=True)
+
+
+if __name__ == "__main__":
+    app_proc = Process(target=start_app)
+    web_app = Process(target=start_web_view)
+    app_proc.start()
+    web_app.start()
+    app_proc.join()
+    web_app.join()
