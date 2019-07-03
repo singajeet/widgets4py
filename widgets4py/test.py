@@ -1,3 +1,4 @@
+import os
 import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
@@ -182,9 +183,12 @@ def start_web_view():
 
 
 if __name__ == "__main__":
-    app_proc = Process(target=start_app)
-    web_app = Process(target=start_web_view)
-    app_proc.start()
-    web_app.start()
-    app_proc.join()
-    web_app.join()
+    if os.uname().machine == 'aarch64':
+        start_app()
+    else:
+        app_proc = Process(target=start_app)
+        web_app = Process(target=start_web_view)
+        app_proc.start()
+        web_app.start()
+        app_proc.join()
+        web_app.join()
