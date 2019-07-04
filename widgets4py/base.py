@@ -387,7 +387,7 @@ class Page(Widget):
         self.set_root_widget(self)
         # add script if required
         if self._jquery_css:
-            self.add_css('https://code.jquery.com/ui/1.10.4/themes/ui-darkness/jquery-ui.css')
+            self.add_css('https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css')
             self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/alertify.min.css')
             self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/themes/bootstrap.min.css')
         if self._jquery_js:

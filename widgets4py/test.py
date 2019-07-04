@@ -7,7 +7,7 @@ from widgets4py.app_ui import TextBox  # , Button, CheckBox, Color, Date
 # from widgets4py.app_ui import DateTimeLocal, Email, File, Image, Month
 # from widgets4py.app_ui import Number, Password, Radio, Range
 from widgets4py.app_ui import Form, Label, DropDown
-from widgets4py.jquery_ui import Accordion, Section
+from widgets4py.jquery_ui import Accordion, Section, RadioButtonGroup
 from multiprocessing import Process
 
 
@@ -38,6 +38,12 @@ class PageTest:
     sec1 = None
     sec2 = None
     acrd = None
+    rbg = None
+    rbg_items = {
+                 'rd1': ['Radio1', False],
+                 'rd2': ['Radio2', False],
+                 'rd3': ['Radio3', False]
+                 }
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -86,12 +92,14 @@ class PageTest:
         self.frm.add(self.lbl2)
         self.frm.add(self.dd)
         pg.add(self.frm)
-        self.acrd = Accordion('acrd')
+        self.acrd = Accordion('acrd', collapsible=True)
         self.sec1 = Section('sec1', 'Section1', app=app, onclick_callback=self.section_clicked)
         self.sec2 = Section('sec2', 'Section2', app=app, onclick_callback=self.section_clicked)
         self.acrd.add(self.sec1)
         self.acrd.add(self.sec2)
+        self.rbg = RadioButtonGroup('rbg', "RadioBtn Group", self.rbg_items)
         pg.add(self.acrd)
+        pg.add(self.rbg)
         content = pg.render()
         return content
 

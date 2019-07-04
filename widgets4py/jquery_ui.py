@@ -102,9 +102,13 @@ class Accordion(Widget):
     _onclick_callback = None
     _disabled = None
     _required = None
+    _collapsible = None
+    _icons = None
+    _fill_space = None
 
-    def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 disabled=False, required=False, onclick_callback=None, app=None, css_cls=None):
+    def __init__(self, name, collapsible=False, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, required=False, onclick_callback=None, app=None, css_cls=None,
+                 icons=None, fill_space=False):
         """Default constructor of the Label widget class
 
             Args:
@@ -119,6 +123,9 @@ class Accordion(Widget):
                 onclick_callback (function, optional): A function to be called back on onclick event
                 app (Flask, optional): An instance of Flask class
                 css_cls (list, optional): An list of CSS class names to be added to current widget
+                collapsible (boolean, optional): Whether to have all sections collapsible
+                fill_space (boolean, optional): Fill the vertical space to match the parent container's
+                                                height
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
@@ -126,6 +133,68 @@ class Accordion(Widget):
         self._onclick_callback = onclick_callback
         self._disabled = disabled
         self._required = required
+        self._collapsible = collapsible
+        if icons is not None:
+            self._icons = icons
+        else:
+            self._icons = {}
+        self._fill_space = fill_space
+
+    def set_collapsible(self, value):
+        """Sets whether to have all sections as collapsible or not
+
+            Args:
+                value (boolean): True or False to have sections collapsible or not
+        """
+        self._collapsible = value
+
+    def get_collapsible(self):
+        """Returns whether the sections are collapsible or not
+
+            Returns:
+                boolean: True or False based on the sections state
+        """
+        return self._collapsible
+
+    def set_icons(self, value):
+        """Sets the icons to be used. The value of parameter should be a `dict`
+        (JavaScript dict)of objects as shown below
+
+            Example:
+                icons = {
+                            header: "ui-icon-circle-arrow-e",
+                            activeHeader: "ui-icon-circle-arrow-s"
+                        };
+            Args:
+                value (str): An JavaScript `dict` of CSS classes as shown in the example
+        """
+        self._icons = value
+
+    def get_icons(self):
+        """Returns JavaScript `dict` of CSS classes related to icons of sections
+
+            Returns:
+                str: Icon css classes for Accordion sections
+        """
+        return self._icons
+
+    def set_fill_space(self, val):
+        """Whether to fill the vertical height of section with space to match the
+        height of parent containet
+
+            Args:
+                val (boolean): True or False as required
+        """
+        self._fill_space = val
+
+    def get_fill_space(self):
+        """Returns whether sections will be filled with space to match parent's
+        height
+
+            Returns:
+                boolean: True or False
+        """
+        return self._fill_space
 
     def render(self):
         """Method to render the content of Accordion and its child widget's
@@ -137,9 +206,91 @@ class Accordion(Widget):
         content += self._render_post_content('div')
         content += """<script>
                         $(function(){
-                            $("#%s").accordion();
+                            $("#%s").accordion({
+                                collapsible: %s,
+                                icons: %s,
+                                heightStyle: "%s"
+                            });
                         });
                         </script>
-                    """ % (self._name)
+                    """ % (self._name, "true" if self._collapsible else "false",
+                           self._icons, "fill" if self._fill_space else "")
         self._widget_content = content
+        return self._widget_content
+
+
+class RadioButtonGroup(Widget):
+    """Widget to display options provided in `dict` object as RadioButton grouped
+    together under a title passed as parameter
+    """
+
+    _title = None
+    _items = None
+    _show_icon = None
+
+    def __init__(self, name, title, items, show_icon=True, desc=None, prop=None, style=None, attr=None,
+                 onclick_callback=None, app=None, css_cls=None):
+        """Default constructor of the Label widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the Radio button group
+                items (dict): A dict object containing items in the following format...
+                                {'key1': ['title1', false]} false means radio will be shown unselected
+                show_icon (boolean, optional): whether to show icon or not, default is true
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                onclick_callback (function, optional): A function to be called back on onclick event
+                app (Flask, optional): An instance of Flask class
+                css_cls (list, optional): An list of CSS class names to be added to current widget
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
+        self._title = title
+        self._items = items
+        self._show_icon = show_icon
+
+    def _attach_script(self):
+        script = """<script>
+                        $(function(){
+                            $("input[id^='%s_rd']").checkboxradio({
+                                icon: %s
+                            });
+                        });
+                    </script>
+                """ % (self._name, "true" if self._show_icon else "false")
+        return script
+
+    def _attach_onclick(self, item):
+        url = ""
+        ajax = """$.ajax({
+                    url: "/%s",
+                    dataType: "json",
+                    type: "get"
+                    data: {"value": $("#%s").val(),
+                    success: function(response){},
+                    error: function(response){}
+                });
+                """ % (url, self._name + "_rd_" + item)
+        return ajax
+
+    def render(self):
+        """Renders the Radio button group with title passed as param
+        """
+        content = "<fieldset>\n<legend>" + self._title + "</legend>\n"
+        for item in self._items:
+            val = self._items.get(item)
+            title = val[0]
+            is_sel = val[1]
+            name = self._name + "_rd_" + item
+            label = "<label for='" + name + "'>"\
+                + (title if title is not None else item) + "</label>"
+            radio = "<input id='" + name + "' type='radio'"\
+                + (" checked" if is_sel else "")\
+                + " name='" + self._name + "_rd'"\
+                + " onclick='" + self._attach_onclick(item) + "' />"
+            content += "\n" + label + "\n" + radio
+        self._widget_content = content + "\n</fieldset>" + self._attach_script()
         return self._widget_content
