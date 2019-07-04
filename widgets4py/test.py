@@ -39,8 +39,7 @@ class PageTest:
     sec2 = None
     acrd = None
     rbg = None
-    rbg_items = {
-                 'rd1': ['Radio1', False],
+    rbg_items = {'rd1': ['Radio1', False],
                  'rd2': ['Radio2', False],
                  'rd3': ['Radio3', False]
                  }
@@ -97,11 +96,16 @@ class PageTest:
         self.sec2 = Section('sec2', 'Section2', app=app, onclick_callback=self.section_clicked)
         self.acrd.add(self.sec1)
         self.acrd.add(self.sec2)
-        self.rbg = RadioButtonGroup('rbg', "RadioBtn Group", self.rbg_items)
+        self.rbg = RadioButtonGroup('rbg', "RadioBtn Group", self.rbg_items,
+                                    app=app, onclick_callback=self.rbg_clicked)
         pg.add(self.acrd)
         pg.add(self.rbg)
         content = pg.render()
         return content
+
+    def rbg_clicked(self):
+        print("RBG clicked: " + self.rbg.get_value())
+        return "success"
 
     def section_clicked(self):
         print("Section clicked")

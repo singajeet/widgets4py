@@ -227,6 +227,10 @@ class RadioButtonGroup(Widget):
     _title = None
     _items = None
     _show_icon = None
+    _app = None
+    _onclick_callback = None
+    _value = None
+    _disabled_buttons = None
 
     def __init__(self, name, title, items, show_icon=True, desc=None, prop=None, style=None, attr=None,
                  onclick_callback=None, app=None, css_cls=None):
@@ -251,6 +255,14 @@ class RadioButtonGroup(Widget):
         self._title = title
         self._items = items
         self._show_icon = show_icon
+        self._app = app
+        self._onclick_callback = onclick_callback
+        self._disabled_buttons = {}
+
+    def set_disable(self, btn, state):
+        if self._disabled_buttons is None:
+            self._disabled_buttons = {}
+        self._disabled_buttons[btn] = state
 
     def _attach_script(self):
         script = """<script>
@@ -264,17 +276,115 @@ class RadioButtonGroup(Widget):
         return script
 
     def _attach_onclick(self, item):
-        url = ""
-        ajax = """$.ajax({
-                    url: "/%s",
-                    dataType: "json",
-                    type: "get"
-                    data: {"value": $("#%s").val(),
-                    success: function(response){},
-                    error: function(response){}
-                });
-                """ % (url, self._name + "_rd_" + item)
+        ajax = ""
+        found = False
+        if self._app is not None and self._onclick_callback is not None:
+            url = str(__name__ + "_" + self._name).replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            name = (self._name + "_rd_" + item)
+            ajax = """
+                    var full_id = $("#%s").prop("id");
+                    var index = $("#%s").prop("id").indexOf("rd_") + 3; //3=len(rd_)
+                    var id = $("#%s").prop("id").substr(index);
+                    $.ajax({
+                        url: "/%s",
+                        dataType: "json",
+                        type: "get",
+                        data: {"value": id},
+                        success: function(status){alertify.success("Action completed successfully!");},
+                        error: function(err_status){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                                }
+                    });
+                """ % (name, name, name, url)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_onclick_callback)
         return ajax
+
+    def _process_onclick_callback(self):
+        if request.args.__len__() > 0:
+            val = request.args['value']
+            if val is not None:
+                self._value = val
+        return json.dumps({"result": self._onclick_callback()})
+
+    def set_value(self, val):
+        """Set the value of RadioButtonGroup widget's value to the one passed as parameter
+
+            Args:
+                val (str): Value passed from RadioButtonGroup widget
+        """
+        self._value = val
+
+    def get_value(self):
+        """Returns the selected value of the RadioButtonGroup
+
+            Returns:
+                str: The selected value from the group
+        """
+        return self._value
+
+    def _sync_properties(self):
+        return json.dumps({'name': self._name,
+                           'value': self._value,
+                           'disabled': json.dumps(self._disabled_buttons)
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    success: function(props){
+                                        id = props.name + "_rd_" + props.value;
+                                        selector = $("#" + id);
+                                        if(selector != undefined){
+                                            selector.prop('checked', true);
+                                            $('input[name^="' + props.name + '_rd"]').checkboxradio('refresh');
+                                        }
+                                        if(props.disabled != undefined && props.disabled != "")
+                                        {
+                                            radios = JSON.parse(props.disabled);
+                                            for(index in radios){
+                                                rd = props.name + "_rd_" + index;
+                                                if(radios[index]){
+                                                    $('#' + rd).checkboxradio('disable');
+                                                }
+                                                else{
+                                                    $('#' + rd).checkboxradio('enable');
+                                                }
+                                            }
+                                        }
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
 
     def render(self):
         """Renders the Radio button group with title passed as param
@@ -292,5 +402,7 @@ class RadioButtonGroup(Widget):
                 + " name='" + self._name + "_rd'"\
                 + " onclick='" + self._attach_onclick(item) + "' />"
             content += "\n" + label + "\n" + radio
-        self._widget_content = content + "\n</fieldset>" + self._attach_script()
+        self._widget_content = content + "\n</fieldset>"\
+                                       + self._attach_script() + "\n"\
+                                       + self._attach_polling()
         return self._widget_content
