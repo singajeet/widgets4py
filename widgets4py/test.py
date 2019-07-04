@@ -7,6 +7,7 @@ from widgets4py.app_ui import TextBox  # , Button, CheckBox, Color, Date
 # from widgets4py.app_ui import DateTimeLocal, Email, File, Image, Month
 # from widgets4py.app_ui import Number, Password, Radio, Range
 from widgets4py.app_ui import Form, Label, DropDown
+from widgets4py.jquery_ui import Accordion, Section
 from multiprocessing import Process
 
 
@@ -34,6 +35,9 @@ class PageTest:
     lbl2 = None
     dd = None
     frm = None
+    sec1 = None
+    sec2 = None
+    acrd = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -82,8 +86,18 @@ class PageTest:
         self.frm.add(self.lbl2)
         self.frm.add(self.dd)
         pg.add(self.frm)
+        self.acrd = Accordion('acrd')
+        self.sec1 = Section('sec1', 'Section1', app=app, onclick_callback=self.section_clicked)
+        self.sec2 = Section('sec2', 'Section2', app=app, onclick_callback=self.section_clicked)
+        self.acrd.add(self.sec1)
+        self.acrd.add(self.sec2)
+        pg.add(self.acrd)
         content = pg.render()
         return content
+
+    def section_clicked(self):
+        print("Section clicked")
+        return "success"
 
     def lbl_clicked(self):
         print("Label 2 clicked")
