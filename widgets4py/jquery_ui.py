@@ -665,7 +665,7 @@ class DialogBox(Widget):
 
     def _onbefore_close_event(self):
         self._command = "close"
-        if self._onbefore_close is not None:
+        if self._onbefore_close_callback is not None:
             return json.dumps({'result': self._onbefore_close_callback()})
         else:
             return json.dumps({'result': ''})
