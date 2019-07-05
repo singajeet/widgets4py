@@ -8,6 +8,7 @@ from widgets4py.app_ui import TextBox  # , Button, CheckBox, Color, Date
 # from widgets4py.app_ui import Number, Password, Radio, Range
 from widgets4py.app_ui import Form, Label, DropDown
 from widgets4py.jquery_ui import Accordion, Section, RadioButtonGroup
+from widgets4py.jquery_ui import CheckBoxGroup
 from multiprocessing import Process
 
 
@@ -42,6 +43,11 @@ class PageTest:
     rbg_items = {'rd1': ['Radio1', False],
                  'rd2': ['Radio2', False],
                  'rd3': ['Radio3', False]
+                 }
+    cbg = None
+    cbg_items = {'cb1': ['CheckBox1', False],
+                 'cb2': ['CheckBox2', False],
+                 'cb3': ['CheckBox3', False],
                  }
 
     def show_layout(self):
@@ -98,13 +104,22 @@ class PageTest:
         self.acrd.add(self.sec2)
         self.rbg = RadioButtonGroup('rbg', "RadioBtn Group", self.rbg_items,
                                     app=app, onclick_callback=self.rbg_clicked)
+        self.cbg = CheckBoxGroup('cbg', "CheckBox Group", self.cbg_items,
+                                 app=app, onclick_callback=self.cbg_clicked)
         pg.add(self.acrd)
         pg.add(self.rbg)
+        pg.add(self.cbg)
         content = pg.render()
         return content
 
+    def cbg_clicked(self):
+        print("CBG Clicked: " + str(self.cbg.get_value()))
+        return "success"
+
     def rbg_clicked(self):
         print("RBG clicked: " + self.rbg.get_value())
+        if self.rbg.get_value() == "rd3":
+            self.rbg.set_disable("rd1", True)
         return "success"
 
     def section_clicked(self):

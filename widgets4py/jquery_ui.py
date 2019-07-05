@@ -395,13 +395,185 @@ class RadioButtonGroup(Widget):
             title = val[0]
             is_sel = val[1]
             name = self._name + "_rd_" + item
-            label = "<label for='" + name + "'>"\
+            lbl_name = self._name + "_lbl_" + item
+            label = "<label for='" + name + "' id='" + lbl_name + "' >"\
                 + (title if title is not None else item) + "</label>"
             radio = "<input id='" + name + "' type='radio'"\
                 + (" checked" if is_sel else "")\
                 + " name='" + self._name + "_rd'"\
                 + " onclick='" + self._attach_onclick(item) + "' />"
             content += "\n" + label + "\n" + radio
+        self._widget_content = content + "\n</fieldset>"\
+                                       + self._attach_script() + "\n"\
+                                       + self._attach_polling()
+        return self._widget_content
+
+
+class CheckBoxGroup(RadioButtonGroup):
+    """Widget to display options provided in `dict` object as CheckBox grouped
+    together under a title passed as parameter
+    """
+
+    def __init__(self, name, title, items, show_icon=True, desc=None, prop=None, style=None, attr=None,
+                 onclick_callback=None, app=None, css_cls=None):
+        """Default constructor of the Label widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the Checkbox button group
+                items (dict): A dict object containing items in the following format...
+                                {'key1': ['title1', false]} false means radio will be shown unselected
+                show_icon (boolean, optional): whether to show icon or not, default is true
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                onclick_callback (function, optional): A function to be called back on onclick event
+                app (Flask, optional): An instance of Flask class
+                css_cls (list, optional): An list of CSS class names to be added to current widget
+        """
+        RadioButtonGroup.__init__(self, name, title, items, show_icon=show_icon, desc=desc, prop=prop,
+                                  style=style, attr=attr, css_cls=css_cls, onclick_callback=onclick_callback,
+                                  app=app)
+        self._value = {}
+        for item in items:
+            record = items.get(item)
+            is_checked = record[1]
+            self._value[item] = is_checked
+
+    def _attach_script(self):
+        script = """<script>
+                        $(function(){
+                            $("input[id^='%s_chk']").checkboxradio({
+                                icon: %s
+                            });
+                        });
+                    </script>
+                """ % (self._name, "true" if self._show_icon else "false")
+        return script
+
+    def _attach_onclick(self, item):
+        ajax = ""
+        found = False
+        if self._app is not None and self._onclick_callback is not None:
+            url = str(__name__ + "_" + self._name).replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            name = (self._name + "_chk_" + item)
+            ajax = """
+                    var full_id = $("#%s").prop("id");
+                    var index = $("#%s").prop("id").indexOf("chk_") + 4; //4=len(chk_)
+                    var id = $("#%s").prop("id").substr(index);
+                    $.ajax({
+                        url: "/%s",
+                        dataType: "json",
+                        type: "get",
+                        data: {"value": id},
+                        success: function(status){alertify.success("Action completed successfully!");},
+                        error: function(err_status){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                                }
+                    });
+                """ % (name, name, name, url)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_onclick_callback)
+        return ajax
+
+    def _process_onclick_callback(self):
+        if request.args.__len__() > 0:
+            val = request.args['value']
+            if val is not None:
+                if self._value is not None:
+                    existing_val = self._value.get(val)
+                    if existing_val is not None:
+                        self._value[val] = not self._value.get(val)
+                    else:
+                        self._value[val] = True
+                else:
+                    self._value = {val: True}
+        return json.dumps({"result": self._onclick_callback()})
+
+    def _sync_properties(self):
+        return json.dumps({'name': self._name,
+                           'value': json.dumps(self._value),
+                           'disabled': json.dumps(self._disabled_buttons)
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    success: function(props){
+                                        checks = JSON.parse(props.value)
+                                        for(check in checks){
+                                            id = props.name + "_chk_" + check;
+                                            selector = $("#" + id);
+                                            if(selector != undefined){
+                                                selector.prop('checked', checks.get(check));
+                                                $('input[name^="' + props.name + '_chk"]').checkboxradio('refresh');
+                                            }
+                                        }
+                                        if(props.disabled != undefined && props.disabled != "")
+                                        {
+                                            checks = JSON.parse(props.disabled);
+                                            for(index in checks){
+                                                cb = props.name + "_chk_" + index;
+                                                if(checks[index]){
+                                                    $('#' + cb).checkboxradio('disable');
+                                                }
+                                                else{
+                                                    $('#' + cb).checkboxradio('enable');
+                                                }
+                                            }
+                                        }
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
+
+    def render(self):
+        """Renders the checkbox group with title passed as param
+        """
+        content = "<fieldset>\n<legend>" + self._title + "</legend>\n"
+        for item in self._items:
+            val = self._items.get(item)
+            title = val[0]
+            is_sel = val[1]
+            name = self._name + "_chk_" + item
+            lbl_name = self._name + "_lbl_" + item
+            label = "<label for='" + name + "' id='" + lbl_name + "' >"\
+                + (title if title is not None else item) + "</label>"
+            checkbox = "<input id='" + name + "' type='checkbox'"\
+                + (" checked" if is_sel else "")\
+                + " name='" + self._name + "_chk'"\
+                + " onclick='" + self._attach_onclick(item) + "' />"
+            content += "\n" + label + "\n" + checkbox
         self._widget_content = content + "\n</fieldset>"\
                                        + self._attach_script() + "\n"\
                                        + self._attach_polling()
