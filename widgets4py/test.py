@@ -108,7 +108,7 @@ class PageTest:
                                     app=app, onclick_callback=self.rbg_clicked)
         self.cbg = CheckBoxGroup('cbg', "CheckBox Group", self.cbg_items,
                                  app=app, onclick_callback=self.cbg_clicked)
-        self.dlg = DialogBox('dlg', 'My Dialog', DialogTypes.DEFAULT, app=app)
+        self.dlg = DialogBox('dlg', 'My Dialog', DialogTypes.MODAL_CONFIRM, app=app)
         self.dlg_btn = Button('dlg_btn', "Open Dialog", app=app, onclick_callback=self.open_dialog)
         pg.add(self.acrd)
         pg.add(self.rbg)
