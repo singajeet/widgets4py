@@ -604,17 +604,19 @@ class DialogBox(Widget):
 
     _title = None
     _app = None
-    _onclick_callback = None
+    _onok_pressed_callback = None
+    _oncancel_pressed_callback = None
     _disabled = None
     _command = None
     _dialog_type = None
     _height = None
     _width = None
-    _onbefore_close = None
+    _onbefore_close_callback = None
 
     def __init__(self, name, title, dlg_type, desc=None, prop=None, style=None, attr=None,
-                 disabled=False, required=False, onclick_callback=None, app=None, css_cls=None,
-                 height=400, width=350, onbefore_close=None):
+                 disabled=False, required=False, app=None, css_cls=None, height=400, width=350,
+                 onbefore_close_callback=None, onok_pressed_callback=None,
+                 oncancel_pressed_callback=None):
         """Default constructor of the Label widget class
 
             Args:
@@ -633,18 +635,22 @@ class DialogBox(Widget):
                                         MODAL_FORM, MODAL_MESSAGE
                 width (int, optional): Width of the dialog box, used in dialog type = MODAL_CONFIRM,
                                         MODAL_FORM, MODAL_MESSAGE
-                onbefore_close (func): Callback function that will be called before dialog is closed
+                onbefore_close_callback (func): Callback function that will be called before dialog
+                                                is closed
+                onok_pressed_callback (func): This function is called when ok button is pressed
+                oncancel_pressed_callback (func): Function is called when cancel is pressed
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self._title = title
         self._app = app
-        self._onclick_callback = onclick_callback
+        self._onok_pressed_callback = onok_pressed_callback
+        self._oncancel_pressed_callback = oncancel_pressed_callback
         self._disabled = disabled
         self._dialog_type = dlg_type
         self._height = height
         self._width = width
-        self._onbefore_close = onbefore_close
+        self._onbefore_close_callback = onbefore_close_callback
         self.add_property('title', title)
 
     def open(self):
@@ -660,7 +666,19 @@ class DialogBox(Widget):
     def _onbefore_close_event(self):
         self._command = "close"
         if self._onbefore_close is not None:
-            return json.dumps({'result': self._onbefore_close()})
+            return json.dumps({'result': self._onbefore_close_callback()})
+        else:
+            return json.dumps({'result': ''})
+
+    def _onok_pressed_event(self):
+        if self._onok_pressed_callback is not None:
+            return json.dumps({'result': self._onok_pressed_callback()})
+        else:
+            return json.dumps({'result': ''})
+
+    def _oncancel_pressed_event(self):
+        if self._oncancel_pressed_callback is not None:
+            return json.dumps({'result': self._oncancel_pressed_callback()})
         else:
             return json.dumps({'result': ''})
 
@@ -719,13 +737,34 @@ class DialogBox(Widget):
 
     def _attach_script(self, dlg_type):
         if self._app is not None:
-            url = str(__name__ + "_" + self._name + "_onbefore_close").replace('.', '_')
+            before_close_url = str(__name__ + "_" + self._name + "_onbefore_close").replace('.', '_')
+            ok_pressed_url = str(__name__ + "_" + self._name + "_onok_pressed").replace('.', '_')
+            cancel_pressed_url = str(__name__ + "_" + self._name +
+                                     "_oncancel_pressed").replace('.', '_')
+            # before close url rule
             found = False
             for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
+                if rule.endpoint == before_close_url:
                     found = True
             if not found:
-                self._app.add_url_rule('/' + url, url, self._onbefore_close_event)
+                self._app.add_url_rule('/' + before_close_url, before_close_url,
+                                       self._onbefore_close_event)
+            # ok pressed url rule
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == ok_pressed_url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + ok_pressed_url, ok_pressed_url,
+                                       self._onok_pressed_event)
+            # cancel pressed url rule
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == cancel_pressed_url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + cancel_pressed_url, cancel_pressed_url,
+                                       self._oncancel_pressed_event)
         script = ""
         if dlg_type == DialogTypes.DEFAULT:
             script = """<script>
@@ -749,7 +788,7 @@ class DialogBox(Widget):
                                 });
                             });
                         </script>
-                    """ % (self._name, url)
+                    """ % (self._name, before_close_url)
         elif dlg_type == DialogTypes.MODAL_CONFIRM:
             script = """<script>
                             $(function(){
@@ -761,10 +800,33 @@ class DialogBox(Widget):
                                     modal: true,
                                     buttons: {
                                         "Ok": function(){
-                                            //---> logic to call ajax <--
+                                            //Call the OK pressed callback or endpoint
+                                            $.ajax({
+                                                url: '/%s',
+                                                type: 'get',
+                                                dataType: 'json',
+                                                success: function(status){},
+                                                error: function(err_status){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                                }
+                                            });
                                             $(this).dialog('close');
                                         },
                                         "Cancel": function(){
+                                            //Call the CANCEL pressed callback or endpoint
+                                            $.ajax({
+                                                url: '/%s',
+                                                type: 'get',
+                                                dataType: 'json',
+                                                success: function(status){},
+                                                error: function(err_status){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                                }
+                                            });
                                             $(this).dialog('close');
                                         }
                                     },
@@ -784,7 +846,8 @@ class DialogBox(Widget):
                                 });
                             });
                         </script>
-                    """ % (self._name, self._height, self._width, url)
+                    """ % (self._name, self._height, self._width, ok_pressed_url,
+                           cancel_pressed_url, before_close_url)
         elif dlg_type == DialogTypes.MODAL_FORM:
             script = """<script>
                             $(function(){
@@ -796,10 +859,33 @@ class DialogBox(Widget):
                                     modal: true,
                                     buttons: {
                                         "Ok": function(){
-                                            //---> logic to call ajax <--
+                                            //Call the OK pressed callback or endpoint
+                                            $.ajax({
+                                                url: '/%s',
+                                                type: 'get',
+                                                dataType: 'json',
+                                                success: function(status){},
+                                                error: function(err_status){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                                }
+                                            });
                                             $(this).dialog('close');
                                         },
                                         "Cancel": function(){
+                                            //Call the CANCEL pressed callback or endpoint
+                                            $.ajax({
+                                                url: '/%s',
+                                                type: 'get',
+                                                dataType: 'json',
+                                                success: function(status){},
+                                                error: function(err_status){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                                }
+                                            });
                                             $(this).dialog('close');
                                         }
                                     },
@@ -820,7 +906,8 @@ class DialogBox(Widget):
                                 });
                             });
                         </script>
-                    """ % (self._name, self._height, self._width, url)
+                    """ % (self._name, self._height, self._width, ok_pressed_url,
+                           cancel_pressed_url, before_close_url)
         elif dlg_type == DialogTypes.MODAL_MESSAGE:
             script = """<script>
                             $(function(){
@@ -829,7 +916,18 @@ class DialogBox(Widget):
                                     modal: true,
                                     buttons: {
                                         "Ok": function(){
-                                            //---> logic to call ajax <--
+                                            //Call the OK pressed callback or endpoint
+                                            $.ajax({
+                                                url: '/%s',
+                                                type: 'get',
+                                                dataType: 'json',
+                                                success: function(status){},
+                                                error: function(err_status){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                                }
+                                            });
                                             $(this).dialog('close');
                                         }
                                     },
@@ -850,7 +948,7 @@ class DialogBox(Widget):
                                 });
                             });
                         </script>
-                    """ % (self._name, url)
+                    """ % (self._name, ok_pressed_url, before_close_url)
         return script
 
     def render(self):
