@@ -3,12 +3,12 @@ import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
 # from widgets4py.layouts import SimpleGridLayout
-from widgets4py.app_ui import TextBox  # , Button, CheckBox, Color, Date
+from widgets4py.app_ui import TextBox, Button  # , CheckBox, Color, Date
 # from widgets4py.app_ui import DateTimeLocal, Email, File, Image, Month
 # from widgets4py.app_ui import Number, Password, Radio, Range
 from widgets4py.app_ui import Form, Label, DropDown
 from widgets4py.jquery_ui import Accordion, Section, RadioButtonGroup
-from widgets4py.jquery_ui import CheckBoxGroup, DialogBox
+from widgets4py.jquery_ui import CheckBoxGroup, DialogBox, DialogTypes
 from multiprocessing import Process
 
 
@@ -50,6 +50,7 @@ class PageTest:
                  'cb3': ['CheckBox3', False],
                  }
     dlg = None
+    dlg_btn = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -107,13 +108,20 @@ class PageTest:
                                     app=app, onclick_callback=self.rbg_clicked)
         self.cbg = CheckBoxGroup('cbg', "CheckBox Group", self.cbg_items,
                                  app=app, onclick_callback=self.cbg_clicked)
-        self.dlg = DialogBox('dlg', 'My Dialog')
+        self.dlg = DialogBox('dlg', 'My Dialog', DialogTypes.DEFAULT, app=app)
+        self.dlg_btn = Button('dlg_btn', "Open Dialog", app=app, onclick_callback=self.open_dialog)
         pg.add(self.acrd)
         pg.add(self.rbg)
         pg.add(self.cbg)
         pg.add(self.dlg)
+        pg.add(self.dlg_btn)
         content = pg.render()
         return content
+
+    def open_dialog(self):
+        print("Open dialog btn clicked")
+        self.dlg.open()
+        return "success"
 
     def cbg_clicked(self):
         print("CBG Clicked: " + str(self.cbg.get_value()))

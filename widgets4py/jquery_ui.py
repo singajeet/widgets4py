@@ -610,10 +610,11 @@ class DialogBox(Widget):
     _dialog_type = None
     _height = None
     _width = None
+    _onbefore_close = None
 
     def __init__(self, name, title, dlg_type, desc=None, prop=None, style=None, attr=None,
                  disabled=False, required=False, onclick_callback=None, app=None, css_cls=None,
-                 height=400, width=350):
+                 height=400, width=350, onbefore_close=None):
         """Default constructor of the Label widget class
 
             Args:
@@ -632,6 +633,7 @@ class DialogBox(Widget):
                                         MODAL_FORM, MODAL_MESSAGE
                 width (int, optional): Width of the dialog box, used in dialog type = MODAL_CONFIRM,
                                         MODAL_FORM, MODAL_MESSAGE
+                onbefore_close (func): Callback function that will be called before dialog is closed
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
@@ -642,6 +644,7 @@ class DialogBox(Widget):
         self._dialog_type = dlg_type
         self._height = height
         self._width = width
+        self._onbefore_close = onbefore_close
         self.add_property('title', title)
 
     def open(self):
@@ -654,69 +657,99 @@ class DialogBox(Widget):
         """
         self._command = "close"
 
+    def _onbefore_close_event(self):
+        self._command = "close"
+        if self._onbefore_close is not None:
+            return json.dumps({'result': self._onbefore_close()})
+        else:
+            return json.dumps({'result': ''})
+
     def _sync_properties(self):
         return json.dumps({'title': self._title,
                            'command': self._command
                            })
 
     def _attach_polling(self):
-        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
-        script = """<script>
-                        (function %s_poll(){
-                            setTimeout(function(){
-                                $.ajax({
-                                    url: '/%s',
-                                    success: function(props){
-                                        selector = $('#%s');
-                                        if (props.command == 'open'){
-                                            var isOpen = selector.dialog('isOpen');
-                                            if (!isOpen){
-                                                selector.dialog('open');
-                                            }
-                                        }else if (props.command == 'close'){
-                                            var isOpen = selector.dialog('isOpen');
-                                            if (isOpen){
-                                                selector.dialog('close');
-                                            }
-                                        }
-                                        if (props.title != selector.dialog('option', 'title')){
-                                            selector.dialog('option', 'title', props.title);
-                                        }
-                                        //poll again
-                                        %s_poll();
-                                    },
-                                    error: function(err_status){
-                                                                alertify.error("Status Code: "
-                                                                + err_status.status + "<br />" + "Error Message:"
-                                                                + err_status.statusText);
-                                                            },
-                                    dataType: "json"
-                                });
-                            },10000);
-                        })();
-                    </script>
-                """ % (url, url, self._name, url)
-        found = False
-        for rule in self._app.url_map.iter_rules():
-            if rule.endpoint == url:
-                found = True
-        if not found:
-            self._app.add_url_rule('/' + url, url,
-                                   self._sync_properties)
+        script = ""
+        if self._app is not None:
+            url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+            script = """<script>
+            (function %s_poll(){
+                setTimeout(function(){
+                $.ajax({
+                    url: '/%s',
+                    success: function(props){
+                        selector = $('#%s');
+                        if (props.command == 'open'){
+                            var isOpen = selector.dialog('isOpen');
+                            if (!isOpen){
+                                selector.dialog('open');
+                            }
+                        }else if (props.command == 'close'){
+                            var isOpen = selector.dialog('isOpen');
+                            if (isOpen){
+                                selector.dialog('close');
+                            }
+                        }
+                        if (props.title != selector.dialog('option', 'title')){
+                            selector.dialog('option', 'title', props.title);
+                        }
+                        //poll again
+                        %s_poll();
+                    },
+                    error: function(err_status){
+                        alertify.error("Status Code: "
+                        + err_status.status + "<br />" + "Error Message:"
+                        + err_status.statusText);
+                    },
+                    dataType: "json"
+                });
+                },10000);
+            })();
+            </script>
+            """ % (url, url, self._name, url)
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._sync_properties)
         return script
 
     def _attach_script(self, dlg_type):
+        if self._app is not None:
+            url = str(__name__ + "_" + self._name + "_onbefore_close").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + url, url, self._onbefore_close_event)
         script = ""
         if dlg_type == DialogTypes.DEFAULT:
             script = """<script>
                             $(function(){
                                 $("#%s").dialog({
                                     autoOpen: false,
-                                    resizable: true
+                                    resizable: true,
+                                    beforeClose: function(event, ui){
+                                        $.ajax({
+                                            url: '/%s',
+                                            type: 'get',
+                                            dataType: "json",
+                                            success: function(status){},
+                                            error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            }
+                                        });
+                                    }
                                 });
                             });
                         </script>
-                    """ % (self._name)
+                    """ % (self._name, url)
         elif dlg_type == DialogTypes.MODAL_CONFIRM:
             script = """<script>
                             $(function(){
@@ -734,11 +767,24 @@ class DialogBox(Widget):
                                         "Cancel": function(){
                                             $(this).dialog('close');
                                         }
+                                    },
+                                    beforeClose: function(event, ui){
+                                        $.ajax({
+                                            url: '/%s',
+                                            type: 'get',
+                                            dataType: "json",
+                                            success: function(status){},
+                                            error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            }
+                                        });
                                     }
                                 });
                             });
                         </script>
-                    """ % (self._name, self._height, self._width)
+                    """ % (self._name, self._height, self._width, url)
         elif dlg_type == DialogTypes.MODAL_FORM:
             script = """<script>
                             $(function(){
@@ -756,11 +802,25 @@ class DialogBox(Widget):
                                         "Cancel": function(){
                                             $(this).dialog('close');
                                         }
+                                    },
+                                    beforeClose: function(event, ui){
+                                        $.ajax({
+                                            url: '/%s',
+                                            type: 'get',
+                                            dataType: "json",
+                                            success: function(status){},
+                                            error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            }
+                                        });
                                     }
+
                                 });
                             });
                         </script>
-                    """ % (self._name, self._height, self._width)
+                    """ % (self._name, self._height, self._width, url)
         elif dlg_type == DialogTypes.MODAL_MESSAGE:
             script = """<script>
                             $(function(){
@@ -772,11 +832,25 @@ class DialogBox(Widget):
                                             //---> logic to call ajax <--
                                             $(this).dialog('close');
                                         }
+                                    },
+                                    beforeClose: function(event, ui){
+                                        $.ajax({
+                                            url: '/%s',
+                                            type: 'get',
+                                            dataType: "json",
+                                            success: function(status){},
+                                            error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            }
+                                        });
                                     }
+
                                 });
                             });
                         </script>
-                    """ % (self._name, self._height, self._width)
+                    """ % (self._name, url)
         return script
 
     def render(self):
@@ -784,6 +858,6 @@ class DialogBox(Widget):
         for widget in self._child_widgets:
             content += "\n" + widget.render()
         content += self._render_post_content('div')
-        content += content + "\n" + self._attach_script(self._dialog_type)
+        content += "\n" + self._attach_script(self._dialog_type)
         self._widget_content = content + "\n" + self._attach_polling()
         return self._widget_content
