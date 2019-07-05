@@ -8,7 +8,7 @@ from widgets4py.app_ui import TextBox  # , Button, CheckBox, Color, Date
 # from widgets4py.app_ui import Number, Password, Radio, Range
 from widgets4py.app_ui import Form, Label, DropDown
 from widgets4py.jquery_ui import Accordion, Section, RadioButtonGroup
-from widgets4py.jquery_ui import CheckBoxGroup
+from widgets4py.jquery_ui import CheckBoxGroup, DialogBox
 from multiprocessing import Process
 
 
@@ -49,6 +49,7 @@ class PageTest:
                  'cb2': ['CheckBox2', False],
                  'cb3': ['CheckBox3', False],
                  }
+    dlg = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -106,9 +107,11 @@ class PageTest:
                                     app=app, onclick_callback=self.rbg_clicked)
         self.cbg = CheckBoxGroup('cbg', "CheckBox Group", self.cbg_items,
                                  app=app, onclick_callback=self.cbg_clicked)
+        self.dlg = DialogBox('dlg', 'My Dialog')
         pg.add(self.acrd)
         pg.add(self.rbg)
         pg.add(self.cbg)
+        pg.add(self.dlg)
         content = pg.render()
         return content
 

@@ -4,6 +4,7 @@ Date: 06/25/2019
 """
 from widgets4py.base import Widget
 from flask import request, json
+from enum import Enum
 
 
 class Section(Widget):
@@ -577,4 +578,212 @@ class CheckBoxGroup(RadioButtonGroup):
         self._widget_content = content + "\n</fieldset>"\
                                        + self._attach_script() + "\n"\
                                        + self._attach_polling()
+        return self._widget_content
+
+
+class DialogTypes(Enum):
+    """Various types are supported by DialogBox which are shown below. One of the type
+    needs to be passed to object of `DialogBox` while creating it. Below are the
+    supported dialog types:
+
+        1. Default
+        2. Modal Confirmation
+        3. Modal Form
+        4. Modal Message
+    """
+    DEFAULT = 0
+    MODAL_CONFIRM = 1
+    MODAL_FORM = 2
+    MODAL_MESSAGE = 3
+
+
+class DialogBox(Widget):
+    """Class to shown dialog boxes which is on overlay position within the viewport.
+     It has a title bar and a content area, and can be moved, resized and closed with the 'x' icon by default.
+     """
+
+    _title = None
+    _app = None
+    _onclick_callback = None
+    _disabled = None
+    _command = None
+    _dialog_type = None
+    _height = None
+    _width = None
+
+    def __init__(self, name, title, dlg_type, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, required=False, onclick_callback=None, app=None, css_cls=None,
+                 height=400, width=350):
+        """Default constructor of the Label widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the button widget
+                dlg_type (DialogType): The type of the dialog box that needs to be created
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                disabled (Boolean, optional): Enabled or Disabled state of widget
+                onclick_callback (function, optional): A function to be called back on onclick event
+                app (Flask, optional): An instance of Flask class
+                css_cls (list, optional): An list of CSS class names to be added to current widget
+                height (int, optional): Height of the dialog box, used in dialog type = MODAL_CONFIRM,
+                                        MODAL_FORM, MODAL_MESSAGE
+                width (int, optional): Width of the dialog box, used in dialog type = MODAL_CONFIRM,
+                                        MODAL_FORM, MODAL_MESSAGE
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
+        self._title = title
+        self._app = app
+        self._onclick_callback = onclick_callback
+        self._disabled = disabled
+        self._dialog_type = dlg_type
+        self._height = height
+        self._width = width
+        self.add_property('title', title)
+
+    def open(self):
+        """Opens the dialog box
+        """
+        self._command = "open"
+
+    def close(self):
+        """Closes the dialog box
+        """
+        self._command = "close"
+
+    def _sync_properties(self):
+        return json.dumps({'title': self._title,
+                           'command': self._command
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: '/%s',
+                                    success: function(props){
+                                        selector = $('#%s');
+                                        if (props.command == 'open'){
+                                            var isOpen = selector.dialog('isOpen');
+                                            if (!isOpen){
+                                                selector.dialog('open');
+                                            }
+                                        }else if (props.command == 'close'){
+                                            var isOpen = selector.dialog('isOpen');
+                                            if (isOpen){
+                                                selector.dialog('close');
+                                            }
+                                        }
+                                        if (props.title != selector.dialog('option', 'title')){
+                                            selector.dialog('option', 'title', props.title);
+                                        }
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
+
+    def _attach_script(self, dlg_type):
+        script = ""
+        if dlg_type == DialogTypes.DEFAULT:
+            script = """<script>
+                            $(function(){
+                                $("#%s").dialog({
+                                    autoOpen: false,
+                                    resizable: true
+                                });
+                            });
+                        </script>
+                    """ % (self._name)
+        elif dlg_type == DialogTypes.MODAL_CONFIRM:
+            script = """<script>
+                            $(function(){
+                                $("#%s").dialog({
+                                    autoOpen: false,
+                                    resizable: false,
+                                    height: %d,
+                                    width: %d,
+                                    modal: true,
+                                    buttons: {
+                                        "Ok": function(){
+                                            //---> logic to call ajax <--
+                                            $(this).dialog('close');
+                                        },
+                                        "Cancel": function(){
+                                            $(this).dialog('close');
+                                        }
+                                    }
+                                });
+                            });
+                        </script>
+                    """ % (self._name, self._height, self._width)
+        elif dlg_type == DialogTypes.MODAL_FORM:
+            script = """<script>
+                            $(function(){
+                                $("#%s").dialog({
+                                    autoOpen: false,
+                                    resizable: true,
+                                    height: %d,
+                                    width: %d,
+                                    modal: true,
+                                    buttons: {
+                                        "Ok": function(){
+                                            //---> logic to call ajax <--
+                                            $(this).dialog('close');
+                                        },
+                                        "Cancel": function(){
+                                            $(this).dialog('close');
+                                        }
+                                    }
+                                });
+                            });
+                        </script>
+                    """ % (self._name, self._height, self._width)
+        elif dlg_type == DialogTypes.MODAL_MESSAGE:
+            script = """<script>
+                            $(function(){
+                                $("#%s").dialog({
+                                    autoOpen: false,
+                                    modal: true,
+                                    buttons: {
+                                        "Ok": function(){
+                                            //---> logic to call ajax <--
+                                            $(this).dialog('close');
+                                        }
+                                    }
+                                });
+                            });
+                        </script>
+                    """ % (self._name, self._height, self._width)
+        return script
+
+    def render(self):
+        content = self._render_pre_content('div')
+        for widget in self._child_widgets:
+            content += "\n" + widget.render()
+        content += self._render_post_content('div')
+        content += content + "\n" + self._attach_script(self._dialog_type)
+        self._widget_content = content + "\n" + self._attach_polling()
         return self._widget_content
