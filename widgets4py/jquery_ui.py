@@ -1085,14 +1085,27 @@ class Menu(Widget):
                 </style>
                 """
         elif self._menu_type == MenuTypes.HORIZONTAL:
-            css = """<style>#%s {
-                                    position: fixed;
-                                    top: 0;
-                                    left: 0;
-                                    width: 100\\%
-                                }
+            css = """<style>
+                    #%s {
+                      position: fixed;
+                      top: 0;
+                      left: 0;
+                      width: 100%%;
+                    }
 
-                            %s %s %s %s
+                    #%s > li {
+                      display: inline-block;
+                    }
+                    #%s > li > ul > li {
+                      display: block;
+                    }
+
+                    #%s > li > div > span.ui-icon-caret-1-e {
+                      background:url(https://www.drupal.org/files/issues/ui-icons-222222-256x240.png) no-repeat -64px -16px !important;  /*  # noqa */
+                    }
+                    #%s ul li div span.ui-icon-caret-1-e {
+                      background:url(https://www.drupal.org/files/issues/ui-icons-222222-256x240.png) no-repeat -32px -16px !important;
+                    }
                 </style>
             """ % (self._name, self._name, self._name, self._name, self._name)
         return css

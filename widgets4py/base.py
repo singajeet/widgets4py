@@ -443,7 +443,7 @@ class Page(Widget):
         for sc in self._scripts:
             script_content += sc + "\n"
         content += (self._jquery_section % script_content)
-        content += "\n<div style='height:100%;width:100%' class='ui-widget'>"
+        content += "\n<div style='height:100%;width:100%;margin-top: 40px;' class='ui-widget'>"
         for widget in self._child_widgets:
             content += widget.render()
         content += "\n</div>\n</body>\n</html>"
