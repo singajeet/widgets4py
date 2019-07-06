@@ -992,12 +992,47 @@ class MenuItem(Widget):
         self._icon = icon
         self._menu_clicked_callback = menu_clicked_callback
         self._app = app
+        self._attach_onclick()
+
+    def _attach_onclick(self):
+        if self._app is not None and self._menu_clicked_callback is not None:
+            url = str(__name__ + "_" + self._name).replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            ajax = """$.ajax({
+                                url: "/%s",
+                                dataType: "json",
+                                data: {
+                                    "title": $("#%s").text(),
+                                    "name": "%s"
+                                    },
+                                type: "get",
+                                success: function(status){alertify.success("Action completed successfully!");},
+                                error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);}
+                                                });
+            """ % (url, self._name, self._name)
+            self.add_property('onclick', ajax)
+            if not found:
+                self._app.add_url_rule("/" + url, url, self._process_menu_clicked_callback)
+
+    def _process_menu_clicked_callback(self):
+        if self._menu_clicked_callback is not None:
+            return json.dumps({'result': self._menu_clicked_callback()})
+        return json.dumps({'result': ''})
 
     def render(self):
         """Renders the menuitem and returns the content to parent widget
         """
         content = self._render_pre_content('li')
-        content += "<div>" + self._title + "</div>"
+        if self._icon is None:
+            content += "<div>" + self._title + "</div>"
+        else:
+            content += "<div><span class='ui-icon " + self._icon + "'></span>" + self._title + "</div>"
         content += self._render_post_content('li')
         self._widget_content = content
         return self._widget_content

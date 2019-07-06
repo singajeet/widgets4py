@@ -124,12 +124,16 @@ class PageTest:
         pg.add(self.dlg)
         pg.add(self.dlg_btn)
         self.menu = Menu('menu', menu_type=MenuTypes.HORIZONTAL)
-        self.m_menu_itm1 = MenuItem('m_menu_itm1', 'Item1')
-        self.m_menu_itm2 = MenuItem('m_menu_itm2', 'Item2')
+        self.m_menu_itm1 = MenuItem('m_menu_itm1', 'Item1', app=app,
+                                    menu_clicked_callback=self.menu_clicked, icon='ui-icon-disk')
+        self.m_menu_itm2 = MenuItem('m_menu_itm2', 'Item2', app=app,
+                                    menu_clicked_callback=self.menu_clicked, icon='ui-icon-zoomin')
         self.m_submenu_itm3 = SubMenu('m_submenu_itm3', 'Item3')
-        self.m_menu_itm4 = MenuItem('m_menu_itm4', 'Item4')
-        self.sm_menu_itm1 = MenuItem('sm_menu_itm1', 'SubItem1')
-        self.sm_menu_itm2 = MenuItem('sm_menu_itm2', 'SubItem2')
+        self.m_menu_itm4 = MenuItem('m_menu_itm4', 'Item4', app=app, menu_clicked_callback=self.menu_clicked)
+        self.sm_menu_itm1 = MenuItem('sm_menu_itm1', 'SubItem1', app=app,
+                                     menu_clicked_callback=self.menu_clicked, icon='ui-icon-play')
+        self.sm_menu_itm2 = MenuItem('sm_menu_itm2', 'SubItem2', app=app,
+                                     menu_clicked_callback=self.menu_clicked, icon='ui-icon-stop')
         self.m_submenu_itm3.add(self.sm_menu_itm1)
         self.m_submenu_itm3.add(self.sm_menu_itm2)
         self.menu.add(self.m_menu_itm1)
@@ -139,6 +143,10 @@ class PageTest:
         pg.add(self.menu)
         content = pg.render()
         return content
+
+    def menu_clicked(self):
+        print("Menu clicked")
+        return "success"
 
     def open_dialog(self):
         print("Open dialog btn clicked")
