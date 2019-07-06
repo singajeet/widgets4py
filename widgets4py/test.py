@@ -9,6 +9,7 @@ from widgets4py.app_ui import TextBox, Button  # , CheckBox, Color, Date
 from widgets4py.app_ui import Form, Label, DropDown
 from widgets4py.jquery_ui import Accordion, Section, RadioButtonGroup
 from widgets4py.jquery_ui import CheckBoxGroup, DialogBox, DialogTypes
+from widgets4py.jquery_ui import Menu, MenuItem, SubMenu, MenuTypes
 from multiprocessing import Process
 
 
@@ -51,6 +52,13 @@ class PageTest:
                  }
     dlg = None
     dlg_btn = None
+    menu = None
+    m_menu_itm1 = None
+    m_menu_itm2 = None
+    m_submenu_item3 = None
+    m_menu_item4 = None
+    sm_menu_item1 = None
+    sm_menu_item2 = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -115,6 +123,20 @@ class PageTest:
         pg.add(self.cbg)
         pg.add(self.dlg)
         pg.add(self.dlg_btn)
+        self.menu = Menu('menu', menu_type=MenuTypes.HORIZONTAL)
+        self.m_menu_itm1 = MenuItem('m_menu_itm1', 'Item1')
+        self.m_menu_itm2 = MenuItem('m_menu_itm2', 'Item2')
+        self.m_submenu_itm3 = SubMenu('m_submenu_itm3', 'Item3')
+        self.m_menu_itm4 = MenuItem('m_menu_itm4', 'Item4')
+        self.sm_menu_itm1 = MenuItem('sm_menu_itm1', 'SubItem1')
+        self.sm_menu_itm2 = MenuItem('sm_menu_itm2', 'SubItem2')
+        self.m_submenu_itm3.add(self.sm_menu_itm1)
+        self.m_submenu_itm3.add(self.sm_menu_itm2)
+        self.menu.add(self.m_menu_itm1)
+        self.menu.add(self.m_menu_itm2)
+        self.menu.add(self.m_submenu_itm3)
+        self.menu.add(self.m_menu_itm4)
+        pg.add(self.menu)
         content = pg.render()
         return content
 

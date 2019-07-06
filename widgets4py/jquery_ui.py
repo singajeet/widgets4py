@@ -735,7 +735,7 @@ class DialogBox(Widget):
                                        self._sync_properties)
         return script
 
-    def _attach_script(self, dlg_type):
+    def _attach_script(self, dlg_type):  # noqa
         if self._app is not None:
             before_close_url = str(__name__ + "_" + self._name + "_onbefore_close").replace('.', '_')
             ok_pressed_url = str(__name__ + "_" + self._name + "_onok_pressed").replace('.', '_')
@@ -958,4 +958,180 @@ class DialogBox(Widget):
         content += self._render_post_content('div')
         content += "\n" + self._attach_script(self._dialog_type)
         self._widget_content = content + "\n" + self._attach_polling()
+        return self._widget_content
+
+
+class MenuItem(Widget):
+    """A menuitem represents the action item that is clickable or
+    executable. A menuitem can have label, icon or submenus.
+    Seperator's are built using dash or space as item
+    """
+    _title = None
+    _icon = None
+    _menu_clicked_callback = None
+    _app = None
+
+    def __init__(self, name, title, icon=None, desc=None, prop=None, style=None, attr=None,
+                 menu_clicked_callback=None, app=None, css_cls=None):
+        """Default constructor of the Menuitem widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the Checkbox button group
+                icon (string, optional): whether to show icon or not, default is None
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                menu_clicked_callback (function, optional): A function to be called back on onclick event
+                app (Flask, optional): An instance of Flask class
+                css_cls (list, optional): An list of CSS class names to be added to current widget
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
+        self._title = title
+        self._icon = icon
+        self._menu_clicked_callback = menu_clicked_callback
+        self._app = app
+
+    def render(self):
+        """Renders the menuitem and returns the content to parent widget
+        """
+        content = self._render_pre_content('li')
+        content += "<div>" + self._title + "</div>"
+        content += self._render_post_content('li')
+        self._widget_content = content
+        return self._widget_content
+
+
+class SubMenu(MenuItem):
+    """SubMenu is an MenuItem with title and further have its child menuitems which appears as
+    dropdown panel.
+    """
+
+    def __init__(self, name, title, icon=None, desc=None, prop=None, style=None, attr=None,
+                 menu_clicked_callback=None, app=None, css_cls=None):
+        """Default constructor of the Menuitem widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the Checkbox button group
+                icon (string, optional): whether to show icon or not, default is None
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                menu_clicked_callback (function, optional): A function to be called back on onclick event
+                app (Flask, optional): An instance of Flask class
+                css_cls (list, optional): An list of CSS class names to be added to current widget
+        """
+        MenuItem.__init__(self, name, title, icon=icon, desc=desc, prop=prop, style=style, attr=attr,
+                          menu_clicked_callback=menu_clicked_callback, app=app, css_cls=css_cls)
+
+    def render(self):
+        content = self._render_pre_content('li')
+        content += "<div>" + self._title + "</div>"
+        content += "<ul>"
+        for widget in self._child_widgets:
+            content += widget.render()
+        content += "</ul>\n</li>"
+        self._widget_content = content
+        return self._widget_content
+
+
+class MenuTypes(Enum):
+    """Different type of menu layout"""
+    VERTICAL = 0
+    HORIZONTAL = 1
+
+
+class Menu(Widget):
+    """The root of the menu used to layout menu in the desired position and uses various options to
+    customize the menu. This is the class that will init the menu system and renders to its parent
+    widget
+    """
+
+    _app = None
+    _menu_type = None
+
+    def __init__(self, name, menu_type=None, desc=None, prop=None, style=None, attr=None,
+                 app=None, css_cls=None):
+        """Default constructor of the Menu widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                menu_type (MenuTypes): Specify which menu type to render, default is vertical
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                app (Flask, optional): An instance of Flask class
+                css_cls (list, optional): An list of CSS class names to be added to current widget
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
+        self._app = app
+        if menu_type is None:
+            self._menu_type = MenuTypes.VERTICAL
+        else:
+            self._menu_type = menu_type
+
+    def _attach_css(self):
+        css = ""
+        if self._menu_type == MenuTypes.VERTICAL:
+            css = """<style>
+                    .ui-menu {
+                        width: 200px;
+                    }
+                </style>
+                """
+        elif self._menu_type == MenuTypes.HORIZONTAL:
+            css = """<style>#%s {
+                                    position: fixed;
+                                    top: 0;
+                                    left: 0;
+                                    width: 100\\%
+                                }
+
+                            %s %s %s %s
+                </style>
+            """ % (self._name, self._name, self._name, self._name, self._name)
+        return css
+
+    def _attach_script(self):
+        script = ""
+        if self._menu_type == MenuTypes.VERTICAL:
+            script = """<script>
+                            $(function(){
+                                $('#%s').menu();
+                            });
+                        </script>
+                    """ % (self._name)
+        elif self._menu_type == MenuTypes.HORIZONTAL:
+            script = """<script>$(function() {
+                            $('#%s').menu();
+
+                            $('#%s').menu({
+                                position: { my: 'left top', at: 'left bottom' },
+                                blur: function() {
+                                            $(this).menu('option', 'position', { my: 'left top', at: 'left bottom' });
+                                },
+                                focus: function(e, ui) {
+                                if ($('#%s').get(0) !== $(ui).get(0).item.parent().get(0)) {
+                                    $(this).menu('option', 'position', { my: 'left top', at: 'right top' });
+                                    }
+                                },
+                            });
+                        });
+                    </script>
+                    """ % (self._name, self._name, self._name)
+        return script
+
+    def render(self):
+        """Renders the menu and all its child submenu and menuitems
+        """
+        content = self._render_pre_content('ul')
+        for widget in self._child_widgets:
+            content += widget.render()
+        content += self._render_post_content('ul')
+        self._widget_content = content + "\n" + self._attach_script() + "\n" + self._attach_css()
         return self._widget_content
