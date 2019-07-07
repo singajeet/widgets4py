@@ -82,6 +82,23 @@ class Section(Widget):
                 self._disabled = True if dsbld == "true" else False
         return json.dumps({"result": self._onclick_callback()})
 
+    def on_click(self, onclick_callback, app=None):
+        """Adds an event handler to on_click event of the widget. The event handler can be
+        a method or function. If no app is associated with current widget, it should be
+        linked by passing `app` param
+
+            Args:
+                onclick_callback (function): The function/callback that will be called for this event
+                app (Flask, optional): An instance of Flask app, though this param is optional, it is
+                                        required to have events work properly. So, it should be passed
+                                        during creation of widget in the constructor or should be
+                                        passed in this function
+        """
+        if app is not None:
+            self._app = app
+        self._onclick_callback = onclick_callback
+        self._attach_onclick()
+
     def render(self):
         content = "<h3 id='" + self._name + "_h3' "\
             + "onclick='" + self._attach_onclick() + "' >"\
@@ -261,9 +278,25 @@ class RadioButtonGroup(Widget):
         self._disabled_buttons = {}
 
     def set_disable(self, btn, state):
+        """Sets whether the passed radio button should be set as disabled or not
+
+            Args:
+                btn (string): Name of the radio button that exists in this group
+                state (boolean): True or False
+        """
         if self._disabled_buttons is None:
             self._disabled_buttons = {}
         self._disabled_buttons[btn] = state
+
+    def get_disable(self, btn):
+        """Returns the state of the radio button passed as parameter
+
+            Args:
+                btn (string): Name of the radio button that exists in the ths group
+            Returns:
+                boolean: True or False based on current state
+        """
+        return self._disabled_buttons[btn]
 
     def _attach_script(self):
         script = """<script>
@@ -314,6 +347,24 @@ class RadioButtonGroup(Widget):
             if val is not None:
                 self._value = val
         return json.dumps({"result": self._onclick_callback()})
+
+    def on_click(self, onclick_callback, app=None):
+        """Adds an event handler to on_click event of the widget. The event handler can be
+        a method or function. If no app is associated with current widget, it should be
+        linked by passing `app` param
+
+            Args:
+                onclick_callback (function): The function/callback that will be called for this event
+                app (Flask, optional): An instance of Flask app, though this param is optional, it is
+                                        required to have events work properly. So, it should be passed
+                                        during creation of widget in the constructor or should be
+                                        passed in this function
+        """
+        if app is not None:
+            self._app = app
+        self._onclick_callback = onclick_callback
+        for item in self._items:
+            self._attach_onclick(item)
 
     def set_value(self, val):
         """Set the value of RadioButtonGroup widget's value to the one passed as parameter
@@ -452,6 +503,24 @@ class CheckBoxGroup(RadioButtonGroup):
                     </script>
                 """ % (self._name, "true" if self._show_icon else "false")
         return script
+
+    def on_click(self, onclick_callback, app=None):
+        """Adds an event handler to on_click event of the widget. The event handler can be
+        a method or function. If no app is associated with current widget, it should be
+        linked by passing `app` param
+
+            Args:
+                onclick_callback (function): The function/callback that will be called for this event
+                app (Flask, optional): An instance of Flask app, though this param is optional, it is
+                                        required to have events work properly. So, it should be passed
+                                        during creation of widget in the constructor or should be
+                                        passed in this function
+        """
+        if app is not None:
+            self._app = app
+        self._onclick_callback = onclick_callback
+        for item in self._items:
+            self._attach_onclick(item)
 
     def _attach_onclick(self, item):
         ajax = ""
@@ -735,6 +804,57 @@ class DialogBox(Widget):
                                        self._sync_properties)
         return script
 
+    def on_before_close(self, onbefore_close_callback, app=None):
+        """Adds an event handler to on_click event of the widget. The event handler can be
+        a method or function. If no app is associated with current widget, it should be
+        linked by passing `app` param
+
+            Args:
+                onbefore_close_callback (function): The function/callback that will be
+                                                    called for this event
+                app (Flask, optional): An instance of Flask app, though this param is optional, it is
+                                        required to have events work properly. So, it should be passed
+                                        during creation of widget in the constructor or should be
+                                        passed in this function
+        """
+        if app is not None:
+            self._app = app
+        self._onbefore_close_callback = onbefore_close_callback
+
+    def on_ok_pressed(self, onok_pressed_callback, app=None):
+        """Adds an event handler to on_click event of the widget. The event handler can be
+        a method or function. If no app is associated with current widget, it should be
+        linked by passing `app` param
+
+            Args:
+                onok_pressed_callback (function): The function/callback that will be
+                                                    called for this event
+                app (Flask, optional): An instance of Flask app, though this param is optional, it is
+                                        required to have events work properly. So, it should be passed
+                                        during creation of widget in the constructor or should be
+                                        passed in this function
+        """
+        if app is not None:
+            self._app = app
+        self._onok_pressed_callback = onok_pressed_callback
+
+    def on_cancel_pressed(self, oncancel_pressed_callback, app=None):
+        """Adds an event handler to on_click event of the widget. The event handler can be
+        a method or function. If no app is associated with current widget, it should be
+        linked by passing `app` param
+
+            Args:
+                oncancel_pressed_callback (function): The function/callback that will be
+                                                        called for this event
+                app (Flask, optional): An instance of Flask app, though this param is optional, it is
+                                        required to have events work properly. So, it should be passed
+                                        during creation of widget in the constructor or should be
+                                        passed in this function
+        """
+        if app is not None:
+            self._app = app
+        self._oncancel_pressed_callback = oncancel_pressed_callback
+
     def _attach_script(self, dlg_type):  # noqa
         if self._app is not None:
             before_close_url = str(__name__ + "_" + self._name + "_onbefore_close").replace('.', '_')
@@ -970,9 +1090,10 @@ class MenuItem(Widget):
     _icon = None
     _menu_clicked_callback = None
     _app = None
+    _disabled = None
 
     def __init__(self, name, title, icon=None, desc=None, prop=None, style=None, attr=None,
-                 menu_clicked_callback=None, app=None, css_cls=None):
+                 menu_clicked_callback=None, app=None, css_cls=None, disabled=None):
         """Default constructor of the Menuitem widget class
 
             Args:
@@ -992,7 +1113,59 @@ class MenuItem(Widget):
         self._icon = icon
         self._menu_clicked_callback = menu_clicked_callback
         self._app = app
+        self._disabled = disabled
+        if disabled:
+            self.add_property('class', 'ui-state-disabled')
         self._attach_onclick()
+
+    def set_enabled(self, val):
+        """Sets the menu item enabled or disabled based on the value passed as parameter
+
+            Args:
+                val (boolean): True or False to widget enabled or disabled
+        """
+        self._disabled = val
+
+    def get_enabled(self):
+        """Gets the state of MenuItem widget i.e., whether it is enabled or disabled
+
+            Returns:
+                boolean: True or False
+        """
+        return self._disabled
+
+    def set_title(self, val):
+        """Sets the title of the MenuItem widget as the value passed as parameter
+
+            Args:
+                val (string): title that needs to be set on MenuItem
+        """
+        self._title = val
+
+    def get_title(self):
+        """Returns the value of the title of current MenuItem
+
+            Returns:
+                string: The title of the MenuItem widget
+        """
+        return self._title
+
+    def set_icon(self, val):
+        """Sets the icon to be used on the MenuItem. The passed value should be a valid
+        jquery-ui icon style class e.g., ui-icon-stop
+
+            Args:
+                val (string): A valid jquery-ui icon class name
+        """
+        self._icon = val
+
+    def get_icon(self):
+        """Returns the name of the jquery-ui icon style class used for current widget
+
+            Returns:
+                string: Jquey-UI icon style class name
+        """
+        return self._icon
 
     def _attach_onclick(self):
         if self._app is not None and self._menu_clicked_callback is not None:
@@ -1005,8 +1178,9 @@ class MenuItem(Widget):
                                 url: "/%s",
                                 dataType: "json",
                                 data: {
-                                    "title": $("#%s").text(),
-                                    "name": "%s"
+                                    "name": "%s",
+                                    "title": "%s",
+                                    "disabled": %s
                                     },
                                 type: "get",
                                 success: function(status){alertify.success("Action completed successfully!");},
@@ -1015,15 +1189,100 @@ class MenuItem(Widget):
                                                 + err_status.status + "<br />" + "Error Message:"
                                                 + err_status.statusText);}
                                                 });
-            """ % (url, self._name, self._name)
+            """ % (url, self._name, self._title, "true" if self._disabled else "false")
             self.add_property('onclick', ajax)
             if not found:
                 self._app.add_url_rule("/" + url, url, self._process_menu_clicked_callback)
 
+    def on_menu_clicked(self, menu_clicked_callback, app=None):
+        """Adds an event handler to on_click event of the widget. The event handler can be
+        a method or function. If no app is associated with current widget, it should be
+        linked by passing `app` param
+
+            Args:
+                menu_clicked_callback (function): The function/callback that will be
+                                                    called for this event
+                app (Flask, optional): An instance of Flask app, though this param is optional, it is
+                                        required to have events work properly. So, it should be passed
+                                        during creation of widget in the constructor or should be
+                                        passed in this function
+        """
+        if app is not None:
+            self._app = app
+        self._menu_clicked_callback = menu_clicked_callback
+        self._attach_onclick()
+
     def _process_menu_clicked_callback(self):
+        if request.args.__len__() > 0:
+            tit = request.args['title']
+            if tit is not None:
+                self._title = tit
+            dsbld = request.args['disabled']
+            if dsbld is not None:
+                self._disabled = True if dsbld == "true" else False
         if self._menu_clicked_callback is not None:
             return json.dumps({'result': self._menu_clicked_callback()})
         return json.dumps({'result': ''})
+
+    def _sync_properties(self):
+        return json.dumps({'title': self._title,
+                           'disabled': self._disabled if self._disabled is not None else False,
+                           'icon': self._icon
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    success: function(props){
+                                        selector = $('#%s');
+                                        //Sets the title of MenuItem
+                                        selector.text(props.title);
+                                        //Set disable or enable
+                                        if(props.disabled){
+                                            if(!selector.hasClass('ui-state-disabled')){
+                                                selector.addClass('ui-state-disabled');
+                                            }
+                                        } else {
+                                            if(selector.hasClass('ui-state-disabled')){
+                                                selector.removeClass('ui-state-disabled');
+                                            }
+                                        }
+                                        if(props.icon != undefined && props.icon != ""){
+                                            icon_selector = $('#%s_icon');
+                                            if(icon_selector != undefined){
+                                                if(!icon_selector.hasClass(props.icon)){
+                                                    icon_selector.addClass(props.icon);
+                                                }
+                                                //icon_selector.attr('class', 'ui-icon ' + props.icon);
+                                            }
+                                        }
+
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, self._name, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
 
     def render(self):
         """Renders the menuitem and returns the content to parent widget
@@ -1032,9 +1291,11 @@ class MenuItem(Widget):
         if self._icon is None:
             content += "<div>" + self._title + "</div>"
         else:
-            content += "<div><span class='ui-icon " + self._icon + "'></span>" + self._title + "</div>"
+            content += "<div><span id='" + (self._name + "_icon")\
+                       + "' class='ui-icon " + self._icon + "'></span>"\
+                       + self._title + "</div>"
         content += self._render_post_content('li')
-        self._widget_content = content
+        self._widget_content = content + "\n" + self._attach_polling()
         return self._widget_content
 
 
