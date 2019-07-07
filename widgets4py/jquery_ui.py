@@ -540,7 +540,7 @@ class CheckBoxGroup(RadioButtonGroup):
                         url: "/%s",
                         dataType: "json",
                         type: "get",
-                        data: {"value": id},
+                        data: {"key": id},
                         success: function(status){alertify.success("Action completed successfully!");},
                         error: function(err_status){
                                                     alertify.error("Status Code: "
@@ -556,16 +556,16 @@ class CheckBoxGroup(RadioButtonGroup):
 
     def _process_onclick_callback(self):
         if request.args.__len__() > 0:
-            val = request.args['value']
-            if val is not None:
+            key = request.args['key']
+            if key is not None:
                 if self._value is not None:
-                    existing_val = self._value.get(val)
+                    existing_val = self._value.get(key)
                     if existing_val is not None:
-                        self._value[val] = not self._value.get(val)
+                        self._value[key] = not self._value.get(key)
                     else:
-                        self._value[val] = True
+                        self._value[key] = True
                 else:
-                    self._value = {val: True}
+                    self._value = {key: True}
         return json.dumps({"result": self._onclick_callback()})
 
     def _sync_properties(self):
@@ -587,7 +587,7 @@ class CheckBoxGroup(RadioButtonGroup):
                                             id = props.name + "_chk_" + check;
                                             selector = $("#" + id);
                                             if(selector != undefined){
-                                                selector.prop('checked', checks.get(check));
+                                                selector.prop('checked', checks[check]);
                                                 $('input[name^="' + props.name + '_chk"]').checkboxradio('refresh');
                                             }
                                         }
@@ -1118,7 +1118,7 @@ class MenuItem(Widget):
             self.add_property('class', 'ui-state-disabled')
         self._attach_onclick()
 
-    def set_enabled(self, val):
+    def set_disabled(self, val):
         """Sets the menu item enabled or disabled based on the value passed as parameter
 
             Args:
@@ -1126,7 +1126,7 @@ class MenuItem(Widget):
         """
         self._disabled = val
 
-    def get_enabled(self):
+    def get_disabled(self):
         """Gets the state of MenuItem widget i.e., whether it is enabled or disabled
 
             Returns:
@@ -1240,7 +1240,7 @@ class MenuItem(Widget):
                                     success: function(props){
                                         selector = $('#%s');
                                         //Sets the title of MenuItem
-                                        selector.text(props.title);
+                                        //selector.text(props.title);
                                         //Set disable or enable
                                         if(props.disabled){
                                             if(!selector.hasClass('ui-state-disabled')){
@@ -1255,9 +1255,8 @@ class MenuItem(Widget):
                                             icon_selector = $('#%s_icon');
                                             if(icon_selector != undefined){
                                                 if(!icon_selector.hasClass(props.icon)){
-                                                    icon_selector.addClass(props.icon);
+                                                    icon_selector.addClass(props.icon)
                                                 }
-                                                //icon_selector.attr('class', 'ui-icon ' + props.icon);
                                             }
                                         }
 

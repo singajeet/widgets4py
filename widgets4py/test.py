@@ -146,6 +146,7 @@ class PageTest:
 
     def menu_clicked(self):
         print("Menu clicked")
+        self.m_menu_itm4.set_disabled(True)
         return "success"
 
     def open_dialog(self):
