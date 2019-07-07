@@ -97,7 +97,7 @@ class Section(Widget):
         if app is not None:
             self._app = app
         self._onclick_callback = onclick_callback
-        self._attach_onclick()
+        self.add_property('onclick', self._attach_onclick())
 
     def render(self):
         content = "<h3 id='" + self._name + "_h3' "\
@@ -1442,4 +1442,192 @@ class Menu(Widget):
             content += widget.render()
         content += self._render_post_content('ul')
         self._widget_content = content + "\n" + self._attach_script() + "\n" + self._attach_css()
+        return self._widget_content
+
+
+class Slider(Widget):
+    """Slider class to render an slider widget on a page. This class provides
+    the callback functionality whenever value is changed in the slider through
+    mouse drag operation. The latest value of slider can be captured in the
+    callback function
+    """
+
+    _value = None
+    _app = None
+    _onclick_callback = None
+    _slider_changed_callback = None
+    _disabled = None
+    _orientation = None
+    _max = None
+    _app = None
+
+    def __init__(self, name, value=None, orientation=None, max=None, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, onclick_callback=None, slider_changed_callback=None, app=None, css_cls=None):
+        """Default constructor of the Label widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the button widget
+                value (int): Initial value of the slider
+                orientation (string): Horizontal or Vertical
+                max (int): Maximum value of the slider
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                disabled (Boolean, optional): Enabled or Disabled state of widget
+                required (Boolean, optional): Widget is required to be filled-in or not
+                onclick_callback (function, optional): A function to be called back on onclick event
+                slider_changed_callback (function, optional): Called whenever value of slider changes
+                app (Flask, optional): An instance of Flask class
+                css_cls (list, optional): An list of CSS class names to be added to current widget
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
+        if value is None:
+            self._value = 0
+        else:
+            self._value = value
+        self._app = app
+        self._slider_changed_callback = slider_changed_callback
+        self._onclick_callback = onclick_callback
+        self._disabled = disabled
+        if orientation is None:
+            self._orientation = "horizontal"
+        else:
+            self._orientation = orientation
+        if max is None:
+            self._max = 100
+        else:
+            self._max = max
+        self.add_property('onclick', self._attach_onclick())
+
+    def _attach_onclick(self):
+        ajax = ""
+        if self._app is not None and self._onclick_callback is not None:
+            url = str(__name__ + "_" + self._name).replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            ajax = """
+                var val = $("#%s").slider('value')
+                $.ajax({
+                    url: "/%s",
+                    dataType: "json",
+                    data: {"value":  val},
+                    type: "get",
+                    success: function(status){alertify.success("Action completed successfully!");},
+                    error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                            }
+                });
+            """ % (self._name, url)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_onclick_callback)
+        return ajax
+
+    def _process_onclick_callback(self):
+        if request.args.__len__() > 0:
+            val = request.args['value']
+            if val is not None:
+                self._value = val
+        return json.dumps({"result": self._onclick_callback()})
+
+    def on_click(self, onclick_callback, app=None):
+        """Adds an event handler to on_click event of the widget. The event handler can be
+        a method or function. If no app is associated with current widget, it should be
+        linked by passing `app` param
+
+            Args:
+                onclick_callback (function): The function/callback that will be called for this event
+                app (Flask, optional): An instance of Flask app, though this param is optional, it is
+                                        required to have events work properly. So, it should be passed
+                                        during creation of widget in the constructor or should be
+                                        passed in this function
+        """
+        if app is not None:
+            self._app = app
+        self._onclick_callback = onclick_callback
+        self.add_property('onclick', self._attach_onclick())
+
+    def _attach_script(self):
+        script = ""
+        if self._app is not None:
+            url = str(__name__ + "_" + self._name + "_slider_changed").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            script = """<script>
+                        $(function(){
+                            var handle = $('#%s_handle');
+                            $('#%s').slider({
+                                orientation: "%s",
+                                max: %d,
+                                value: %d,
+                                change: refreshValue,
+                                create: function() {
+                                    handle.text( $( this ).slider( "value" ) );
+                                },
+                                slide: function( event, ui ) {
+                                    handle.text( ui.value );
+                                }
+                            });
+                            function refreshValue(){
+                                $.ajax({
+                                    url: "/%s",
+                                    type: "get",
+                                    data: {'value', $('#%s').slider('value')}
+                                    dataType: "json",
+                                    success: function(status){},
+                                    error: function(err_status){
+                                                alertify.error("Status Code: "
+                                                + err_status.status + "<br />" + "Error Message:"
+                                                + err_status.statusText);
+                                    }
+                                });
+                            }
+                        });
+                    </script>
+                """ % (self._name, self._name, self._orientation, self._max, self._value, url, self._name)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_slider_changed_callback)
+        return script
+
+    def _process_slider_changed_callbac(self):
+        if request.args.__len__() > 0:
+            val = request.args['value']
+            if val is not None:
+                self._value = val
+        if self._slider_changed_callback is not None:
+            return json.dumps({'result': self._slider_changed_callback()})
+        return json.dumps({'result': ''})
+
+    def _attach_css(self):
+        css = """<style>
+                    #%s_handle {
+                        width: 3em;
+                        height: 1.6em;
+                        top: 50%;
+                        margin-top: -.8em;
+                        text-align: center;
+                        line-height: 1.6em;
+                    }
+                </style>
+            """ % (self._name)
+        return css
+
+    def render(self):
+        """Renders the slider widget under parent widget
+        """
+        content = self._attach_css() + "\n"
+        content += self._render_pre_content('div')
+        content += "<div id='" + self._name + "_handle' class='ui-slider-handle'></div>"
+        content += self._render_post_content('div')
+        self._widget_content = content + "\n" + self._attach_script()
         return self._widget_content
