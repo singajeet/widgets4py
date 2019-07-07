@@ -1602,6 +1602,22 @@ class Slider(Widget):
         """
         return self._max
 
+    def set_disabled(self, val):
+        """Sets the slider widget to disabled mode
+
+            Args:
+                val (boolean): true or false as required
+        """
+        self._disabled = val
+
+    def get_disabled(self):
+        """Returns the disabled state of the slider widget
+
+            Returns:
+                boolean: true or false
+        """
+        return self._disabled
+
     def _attach_script(self):
         script = ""
         if self._app is not None:
@@ -1671,6 +1687,61 @@ class Slider(Widget):
             """ % (self._name)
         return css
 
+    def _sync_properties(self):
+        return json.dumps({'value': self._value,
+                           'orientation': self._orientation,
+                           'max': self._max,
+                           'disabled': self._disabled
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    success: function(props){
+                                        selector = $('#%s');
+                                        //fill up the values
+                                        if(props.value != undefined){
+                                            var existing_val = selector.slider('option', 'value');
+                                            if(existing_val != props.value){
+                                                selector.slider('option', 'value', props.value);
+                                            }
+                                        }
+                                        if(props.max != undefined){
+                                            selector.slider('option', 'max', props.max);
+                                        }
+                                        if(props.orientation != undefined){
+                                            selector.slider('option', 'orientation', props.orientation);
+                                        }
+                                        if(props.disabled != undefined){
+                                            selector.slider('option', 'disabled', props.disabled);
+                                        }
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
+
     def render(self):
         """Renders the slider widget under parent widget
         """
@@ -1678,5 +1749,5 @@ class Slider(Widget):
         content += self._render_pre_content('div')
         content += "<div id='" + self._name + "_handle' class='ui-slider-handle'></div>"
         content += self._render_post_content('div')
-        self._widget_content = content + "\n" + self._attach_script()
+        self._widget_content = content + "\n" + self._attach_script() + "\n" + self._attach_polling()
         return self._widget_content
