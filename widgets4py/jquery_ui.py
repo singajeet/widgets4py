@@ -1554,6 +1554,54 @@ class Slider(Widget):
         self._onclick_callback = onclick_callback
         self.add_property('onclick', self._attach_onclick())
 
+    def set_value(self, val):
+        """Sets the initial value of the slider
+
+            Args:
+                val (int): An initial value of the slider
+        """
+        self._value = val
+
+    def get_value(self):
+        """Returns the current value of the slider
+
+            Returns:
+                int: current value of the slider
+        """
+        return self._value
+
+    def set_orientation(self, val):
+        """Sets the orientation of the slider either Horizontally or vertically
+
+            Args:
+                val (string): valid values are "horizontal" and "vartical"
+        """
+        self._orientation = val
+
+    def get_orientation(self):
+        """Returns the value of orientation of the slider
+
+            Returns:
+                string: horizontal or vertical
+        """
+        return self._orientation
+
+    def set_max(self, val):
+        """Sets the maximum value of the slider till it can reach
+
+            Args:
+                val (int): Maximum value of the slider
+        """
+        self._max = val
+
+    def get_max(self):
+        """Returns the maximum value of the slider
+
+            Returns:
+                int: Maximum value of slider
+        """
+        return self._max
+
     def _attach_script(self):
         script = ""
         if self._app is not None:
@@ -1576,12 +1624,13 @@ class Slider(Widget):
                                 slide: function( event, ui ) {
                                     handle.text( ui.value );
                                 }
-                            });
+                             });
                             function refreshValue(){
+                                var val = $("#%s").slider("value");
                                 $.ajax({
                                     url: "/%s",
                                     type: "get",
-                                    data: {'value', $('#%s').slider('value')}
+                                    data: {"value": val},
                                     dataType: "json",
                                     success: function(status){},
                                     error: function(err_status){
@@ -1593,13 +1642,13 @@ class Slider(Widget):
                             }
                         });
                     </script>
-                """ % (self._name, self._name, self._orientation, self._max, self._value, url, self._name)
+                """ % (self._name, self._name, self._orientation, self._max, self._value, self._name, url)
             if not found:
                 self._app.add_url_rule('/' + url, url,
                                        self._process_slider_changed_callback)
         return script
 
-    def _process_slider_changed_callbac(self):
+    def _process_slider_changed_callback(self):
         if request.args.__len__() > 0:
             val = request.args['value']
             if val is not None:
@@ -1613,7 +1662,7 @@ class Slider(Widget):
                     #%s_handle {
                         width: 3em;
                         height: 1.6em;
-                        top: 50%;
+                        top: 50%%;
                         margin-top: -.8em;
                         text-align: center;
                         line-height: 1.6em;
