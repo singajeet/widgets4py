@@ -53,12 +53,12 @@ class Section(Widget):
                 if rule.endpoint == url:
                     found = True
             ajax = """
-                var heading = $("#%s_h3").text()
+                var val = $("#%s_h3").text();
                 $.ajax({
                     url: "/%s",
-                    dataType: "json",
-                    data: {"title":  heading},
                     type: "get",
+                    dataType: "json",
+                    data: {"title":  val},
                     success: function(status){alertify.success("Action completed successfully!");},
                     error: function(err_status){
                                                 alertify.error("Status Code: "
@@ -77,9 +77,9 @@ class Section(Widget):
             tit = request.args['title']
             if tit is not None:
                 self._title = tit
-            dsbld = request.args['disabled']
-            if dsbld is not None:
-                self._disabled = True if dsbld == "true" else False
+            # dsbld = request.args['disabled']
+            # if dsbld is not None:
+            #     self._disabled = True if dsbld == "true" else False
         return json.dumps({"result": self._onclick_callback()})
 
     def on_click(self, onclick_callback, app=None):
