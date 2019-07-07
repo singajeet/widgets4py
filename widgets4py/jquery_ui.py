@@ -1751,3 +1751,67 @@ class Slider(Widget):
         content += self._render_post_content('div')
         self._widget_content = content + "\n" + self._attach_script() + "\n" + self._attach_polling()
         return self._widget_content
+
+
+class Spinner(Widget):
+    """A spinner is enhanced version of a text input for entering numeric values, with up/down
+    buttons and arrow key handling. It provides the functionality to show currency and decimal
+    digits too
+    """
+
+    _value = None
+    _currency = None
+    _disabled = None
+    _min = None
+    _max = None
+    _step = None
+    _start = None
+    _number_format = None
+    _onclick_callback = None
+    _onspinner_changed_callback = None
+    _app = None
+
+    def __init__(self, name, value=None, min=None, max=None, step=None, start=None,
+                 number_format=None, currency=None, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, onclick_callback=None, spinner_changed_callback=None, app=None, css_cls=None):
+        """Default constructor of the Label widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                value (string): current value of the spinner widget
+                min (int): Minium value of the spinner
+                max (int): Maximum value of the spinner
+                step (int): Value of spinner will be incremented or decremented with number of steps
+                start (int): Starting value of the spinner
+                number_format (string): The number format specifier
+                currency (string): Currency that will be shown inside spinner if specified
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                disabled (Boolean, optional): Enabled or Disabled state of widget
+                onclick_callback (function, optional): A function to be called back on onclick event
+                spinner_changed_callback (function, optional): Called whenever value of slider changes
+                app (Flask, optional): An instance of Flask class
+                css_cls (list, optional): An list of CSS class names to be added to current widget
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
+        if value is not None:
+            self._value = value
+        else:
+            self._value = 0
+        self._currency = currency
+        self._disabled = disabled if disabled is not None else False
+        self._min = min if min is not None else 0
+        self._max = max if max is not None else 100
+        self._step = step if step is not None else 1
+        self._start = start if start is not None else 0
+        self._number_format = number_format if number_format is not None else 'n'
+        self._onclick_callback = onclick_callback
+        self._onspinner_changed_callback = spinner_changed_callback
+        self._app = app
+
+        @property
+        def value(self):
+            return self._value
