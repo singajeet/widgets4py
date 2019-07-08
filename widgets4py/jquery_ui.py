@@ -2028,3 +2028,88 @@ class Spinner(Widget):
         content += "\n" + self._attach_polling()
         self._widget_content = content
         return content
+
+
+class TabSection(Widget):
+    """Defines a section or panel in the Tab widget. A tab widget can have multiple
+    sections associated with respective heading. By clicking on the header, a panel
+    becomes active display's its content on top of other panels which goes behind
+    the active panel virtually
+    """
+
+    _header = None
+    _disabled = None
+
+    def __init__(self, name, header, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, css_cls=None):
+        """Default constructor of the TabSection widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                header (string): Current value of the spinner
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                disabled (Boolean, optional): Enabled or Disabled state of widget
+                css_cls (list, optional): An list of CSS class names to be added to current widget
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
+        self._header = header
+        self._disabled = disabled
+
+    def render(self):
+        """Renders the panel or tab section to its parent tab widget"""
+        content = self._render_pre_content('div')
+        for widget in self._child_widgets:
+            content += widget.render()
+        content += self._render_post_content('div')
+        self._widget_content = content
+        return self._widget_content
+
+
+class Tab(Widget):
+    """A tab widget to display multiple panel at the same place stacked over each other.
+    A panel is made active and visible by clicking on the headers of the panel or section
+    """
+
+    _collapsible = None
+    _open_on_mouseover = None
+    _sortable = None
+    _orientation = None
+
+    def __init__(self, name, desc=None, prop=None, style=None, attr=None,
+                 app=False, css_cls=None, collapsible=None, open_on_mouseover=None,
+                 sortable=None, orientation=None):
+        """Default constructor of the TabSection widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                header (string): Current value of the spinner
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                app (Flask, optional): An instance of Flask app
+                css_cls (list, optional): An list of CSS class names to be added to current widget
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
+        self._collapsible = collapsible
+        self._open_on_mouseover = open_on_mouseover
+        self._sortable = sortable
+        self._orientation = orientation
+
+        def render(self):
+            content = self._render_pre_content('div')
+            content += "\n" + "<ul>"
+            for widget in self._child_widgets:
+                content += "\n" + "<li><a href='" + widget._name + "'>" + widget.header
+                content += "</a></li>"
+            content += "</ul>"
+            for widget in self._child_widgets:
+                content += "\n" + widget.render()
+            content += self._render_post_content('div')
+            self._widget_content = content
+            return self._widget_content
