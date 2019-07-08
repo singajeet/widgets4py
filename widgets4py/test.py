@@ -145,10 +145,14 @@ class PageTest:
         pg.add(self.menu)
         self.sld = Slider('sld', slider_changed_callback=self.slider_changed, app=app)
         pg.add(self.sld)
-        self.spn = Spinner('spn')
+        self.spn = Spinner('spn', app=app, onchange_callback=self.spinner_changed, number_format="C")
         pg.add(self.spn)
         content = pg.render()
         return content
+
+    def spinner_changed(self):
+        print("Spinner Changed: " + self.spn.value)
+        return "success"
 
     def slider_changed(self):
         print("Slider Changed: " + str(self.sld.get_value()))

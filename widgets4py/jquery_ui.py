@@ -1648,7 +1648,7 @@ class Slider(Widget):
                                     type: "get",
                                     data: {"value": val},
                                     dataType: "json",
-                                    success: function(status){},
+                                    success: function(status){alertify("Action completed successfully!");},
                                     error: function(err_status){
                                                 alertify.error("Status Code: "
                                                 + err_status.status + "<br />" + "Error Message:"
@@ -1754,11 +1754,14 @@ class Slider(Widget):
 
 
 class Spinner(Widget):
-    """The spinner widget"""
+    """The spinner widget enhances a text input for entring numeric values, with up/down
+    buttons and arrow key handling. Spinner supports the functionality to have min & max
+    fixed value, the starting point of the spinner, value of step for incremeting or
+    decrementing the spinner's value and so on.
+    """
 
     _name = None
     _app = None
-    _onclick_callback = None
     _disabled = None
     _min = None
     _max = None
@@ -1769,10 +1772,9 @@ class Spinner(Widget):
     _onchange_callback = None
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 disabled=False, onclick_callback=None, app=None, css_cls=None,
-                 min=None, max=None, start=None, step=None, number_format=None,
-                 onchange_callback=None):
-        """Default constructor of the Label widget class
+                 disabled=False, app=None, css_cls=None, min=None, max=None, start=None, step=None,
+                 number_format=None, onchange_callback=None):
+        """Default constructor of the Spinner widget class
 
             Args:
                 name (string): name of the widget for internal use
@@ -1782,7 +1784,6 @@ class Spinner(Widget):
                 style (dict, optional): dict of objects to be added as style elements to HTML tag
                 attr (list, optional): list of objects to be added as attributes of HTML tag
                 disabled (Boolean, optional): Enabled or Disabled state of widget
-                onclick_callback (function, optional): A function to be called back on onclick event
                 app (Flask, optional): An instance of Flask class
                 css_cls (list, optional): An list of CSS class names to be added to current widget
                 min (int, optional): Minimum value of the spinner widget. Default=0
@@ -1795,7 +1796,6 @@ class Spinner(Widget):
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self._app = app
-        self._onclick_callback = onclick_callback
         self._onchange_callback = onchange_callback
         self._disabled = disabled
         if value is not None:
@@ -1822,10 +1822,162 @@ class Spinner(Widget):
             self._number_format = number_format
         else:
             self._number_format = "n"
+        if disabled is not None:
+            self._disabled = disabled
+        else:
+            self._disabled = False
+
+    @property
+    def value(self):
+        """The current value of the spinner widget"""
+        return self._value
+
+    @value.setter
+    def value(self, val):
+        self._value = val
+
+    @property
+    def min(self):
+        """The minium value allowed for the spinner widget
+        Default value is 0
+        """
+        return self._min
+
+    @min.setter
+    def min(self, val):
+        self._min = val
+
+    @property
+    def max(self):
+        """The maximum value of spinner widget. Once it is reached, the number
+        will not increment anymore
+        Default value is 100
+        """
+        return self._max
+
+    @max.setter
+    def max(self, val):
+        self._max = val
+
+    @property
+    def start(self):
+        """Starting value of the spinner widget. NOTE: It is NOT same as `min`
+        Default value is 0
+        """
+        return self._start
+
+    @start.setter
+    def start(self, val):
+        self._start = val
+
+    @property
+    def step(self):
+        """The value by which spinner widget will incr/decr its value
+        Default value is 1
+        """
+        return self._step
+
+    @step.setter
+    def step(self, val):
+        self._step = val
+
+    @property
+    def number_format(self):
+        """Number format to be used by spinner widget
+        Default value is "n"
+        """
+        return self._number_format
+
+    @number_format.setter
+    def number_format(self, val):
+        self._number_format = val
+
+    @property
+    def disabled(self):
+        """Whether to enable or disable the spinner widget"""
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+
+    def _sync_properties(self):
+        return json.dumps({'min': self._min,
+                           'max': self._max,
+                           'start': self._start,
+                           'step': self._step,
+                           'numberFormat': self._number_format,
+                           'value': self._value,
+                           'disabled': self._disabled
+                           })
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    success: function(props){
+                                        selector = $('#%s');
+                                        //fill up the values
+                                        if(props.value != undefined){
+                                            var existing_val = selector.spinner('value');
+                                            if(existing_val != props.value){
+                                                selector.spinner('value', props.value);
+                                            }
+                                        }
+                                        if(props.max != undefined){
+                                            selector.spinner('option', 'max', props.max);
+                                        }
+                                        if(props.min != undefined){
+                                            selector.spinner('option', 'min', props.min);
+                                        }
+                                        if(props.start != undefined){
+                                            selector.spinner('option', 'start', props.start);
+                                        }
+                                        if(props.step != undefined){
+                                            selector.spinner('option', 'step', props.step);
+                                        }
+                                        if(props.numberFormat != undefined){
+                                            selector.spinner('option', 'numberFormat', props.numberFormat);
+                                        }
+                                        if(props.disabled != undefined){
+                                            selector.spinner('option', 'disabled', props.disabled);
+                                        }
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._sync_properties)
+        return script
 
     def _attach_script(self):
         script = ""
-        script = """
+        found = False
+        if self._app is not None:
+            url = str(__name__ + "_" + self._name + "_spinner_changed").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            script = """
                     <script>
                         $(function(){
                             $("#%s").spinner({
@@ -1838,16 +1990,41 @@ class Spinner(Widget):
                             });
                             var selector = $("#%s");
                             function refreshValue(){
-                                alert(selector.val());
+                                $.ajax({
+                                    url: "/%s",
+                                    type: "get",
+                                    dataType: "json",
+                                    data: {"value": selector.val()},
+                                    success: function(status){alertify("Action completed successfully!");},
+                                    error: function(err_status){
+                                            alertify.error("Status Code: "
+                                            + err_status.status + "<br />" + "Error Message:"
+                                            + err_status.statusText);
+                                    }
+                                });
                             }
                         });
                     </script>
                 """ % (self._name, self._min, self._max, self._start, self._step,
-                       self._number_format, self._name)
+                       self._number_format, self._name, url)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_spinner_changed_callback)
         return script
+
+    def _process_spinner_changed_callback(self):
+        if request.args.__len__() > 0:
+            val = request.args["value"]
+            if val is not None:
+                self._value = val
+        if self._onchange_callback is not None:
+            return json.dumps({'result': self._onchange_callback()})
+        return json.dumps({'result': ''})
 
     def render(self):
         content = self._render_pre_content('input')
         content += self._render_post_content('input')
         content += "\n" + self._attach_script()
+        content += "\n" + self._attach_polling()
+        self._widget_content = content
         return content
