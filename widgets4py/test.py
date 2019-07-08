@@ -9,7 +9,7 @@ from widgets4py.app_ui import TextBox, Button  # , CheckBox, Color, Date
 from widgets4py.app_ui import Form, Label, DropDown
 from widgets4py.jquery_ui import Accordion, Section, RadioButtonGroup
 from widgets4py.jquery_ui import CheckBoxGroup, DialogBox, DialogTypes
-from widgets4py.jquery_ui import Menu, MenuItem, SubMenu, MenuTypes, Slider
+from widgets4py.jquery_ui import Menu, MenuItem, SubMenu, MenuTypes, Slider, Spinner
 from multiprocessing import Process
 
 
@@ -60,6 +60,7 @@ class PageTest:
     sm_menu_item1 = None
     sm_menu_item2 = None
     sld = None
+    spn = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -144,6 +145,8 @@ class PageTest:
         pg.add(self.menu)
         self.sld = Slider('sld', slider_changed_callback=self.slider_changed, app=app)
         pg.add(self.sld)
+        self.spn = Spinner('spn')
+        pg.add(self.spn)
         content = pg.render()
         return content
 
