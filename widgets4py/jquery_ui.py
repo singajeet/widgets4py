@@ -2111,10 +2111,12 @@ class Tab(Widget):
     _tab_activated_callback = None
     _value = None
     _app = None
+    _disabled = None
 
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
                  app=None, css_cls=None, collapsible=None, open_on_mouseover=None,
-                 sortable=None, v_orient=None, tab_activated_callback=None):
+                 sortable=None, v_orient=None, tab_activated_callback=None,
+                 disabled=None):
         """Default constructor of the TabSection widget class
 
             Args:
@@ -2152,6 +2154,17 @@ class Tab(Widget):
             self._v_orient = "false"
         self._tab_activated_callback = tab_activated_callback
         self._app = app
+        self._disabled = disabled
+
+    @property
+    def value(self):
+        """Value or Index of the selected section or panel under Tab widget
+        """
+        return self._value
+
+    @value.setter
+    def value(self, val):
+        self._value = val
 
     def _attach_script(self):
         script = ""
@@ -2186,17 +2199,19 @@ class Tab(Widget):
                             }""" % (self._name, self._collapsible, self._open_on_mouseover, self._sortable,
                                     self._v_orient)
         if self._app is not None and self._tab_activated_callback is not None:
-            script += """\nfunction tabActivated(event, ui){
+            script += """function tabActivated(event, ui){
+                            $.ajax({
                                 url: "/%s",
                                 type: "get",
                                 dataType: "json",
-                                data: {'value', ui.newTab},
+                                data: {'value': selector.tabs("option", "active")},
                                 success: function(){alertify("Done!");},
                                 error: function(err_status){
                                         alertify.error("Status Code: "
                                         + err_status.status + "<br />" + "Error Message:"
                                         + err_status.statusText);
                                     }
+                                });
                             }
                         });
                     </script>
@@ -2234,6 +2249,67 @@ class Tab(Widget):
                 """
         return css
 
+    def _sync_properties(self):
+        return json.dumps({'collapsible': True if self._collapsible == "true" else False,
+                           'open_on_mouseover': self._open_on_mouseover,
+                           'sortable': True if self._sortable == "true" else False,
+                           'value': self._value,
+                           'disabled': self._disabled
+                           })
+
+    def _attach_polling(self):
+        script = ""
+        if self._app is not None:
+            url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+            script = """<script>
+                        (function %s_poll(){
+                            setTimeout(function(){
+                                $.ajax({
+                                    url: "/%s",
+                                    success: function(props){
+                                        selector = $('#%s');
+                                        //fill up the values
+                                        if(props.value != undefined){
+                                            var existing_val = selector.tabs('option', 'active');
+                                            if(existing_val != props.value){
+                                                selector.tabs('option', 'active', props.value);
+                                            }
+                                        }
+                                        if(props.collapsible != undefined){
+                                            selector.tabs('option', 'collapsible', props.max);
+                                        }
+                                        if(props.open_on_mouseover != undefined){
+                                            selector.tabs('option', 'event', props.open_on_mouseover);
+                                        }
+                                        if(props.sortable != undefined){
+                                            selector.tabs('option', 'sortable', props.sortable);
+                                        }
+                                        if(props.disabled != undefined){
+                                            selector.tabs('option', 'disabled', props.disabled);
+                                        }
+                                        //poll again
+                                        %s_poll();
+                                    },
+                                    error: function(err_status){
+                                                                alertify.error("Status Code: "
+                                                                + err_status.status + "<br />" + "Error Message:"
+                                                                + err_status.statusText);
+                                                            },
+                                    dataType: "json"
+                                });
+                            },10000);
+                        })();
+                    </script>
+                """ % (url, url, self._name, url)
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._sync_properties)
+        return script
+
     def render(self):
         content = self._attach_css() + "\n"
         content += self._render_pre_content('div')
@@ -2245,5 +2321,5 @@ class Tab(Widget):
         for widget in self._child_widgets:
             content += "\n" + widget.render()
         content += self._render_post_content('div')
-        self._widget_content = content + self._attach_script()
+        self._widget_content = content + self._attach_script() + "\n" + self._attach_polling()
         return self._widget_content

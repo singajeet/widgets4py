@@ -151,7 +151,7 @@ class PageTest:
         pg.add(self.sld)
         self.spn = Spinner('spn', app=app, onchange_callback=self.spinner_changed, number_format="C")
         pg.add(self.spn)
-        self.tab = Tab('tab', sortable=True)
+        self.tab = Tab('tab', app=app, tab_activated_callback=self.tab_clicked)
         self.tab_sec1 = TabSection('tab_sec1', 'Tab1')
         self.tab_sec2 = TabSection('tab_sec2', 'Tab2')
         self.tab.add(self.tab_sec1)
@@ -159,6 +159,10 @@ class PageTest:
         pg.add(self.tab)
         content = pg.render()
         return content
+
+    def tab_clicked(self):
+        print("Tab clicked: " + self.tab.value)
+        return "success"
 
     def spinner_changed(self):
         print("Spinner Changed: " + self.spn.value)
