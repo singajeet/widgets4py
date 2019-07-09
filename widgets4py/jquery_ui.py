@@ -1912,8 +1912,10 @@ class Spinner(Widget):
                            })
 
     def _attach_polling(self):
-        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
-        script = """<script>
+        script = ""
+        if self._app is not None:
+            url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+            script = """<script>
                         (function %s_poll(){
                             setTimeout(function(){
                                 $.ajax({
@@ -1959,25 +1961,25 @@ class Spinner(Widget):
                         })();
                     </script>
                 """ % (url, url, self._name, url)
-        found = False
-        for rule in self._app.url_map.iter_rules():
-            if rule.endpoint == url:
-                found = True
-        if not found:
-            self._app.add_url_rule('/' + url, url,
-                                   self._sync_properties)
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._sync_properties)
         return script
 
     def _attach_script(self):
         script = ""
-        found = False
+        found = True
         if self._app is not None:
             url = str(__name__ + "_" + self._name + "_spinner_changed").replace('.', '_')
             found = False
             for rule in self._app.url_map.iter_rules():
                 if rule.endpoint == url:
                     found = True
-            script = """
+        script = """
                     <script>
                         $(function(){
                             $("#%s").spinner({
@@ -1988,6 +1990,10 @@ class Spinner(Widget):
                                 numberFormat: "%s",
                                 stop: refreshValue
                             });
+                """ % (self._name, self._min, self._max, self._start, self._step,
+                       self._number_format)
+        if self._app is not None:
+            script += """
                             var selector = $("#%s");
                             function refreshValue(){
                                 $.ajax({
@@ -2005,11 +2011,16 @@ class Spinner(Widget):
                             }
                         });
                     </script>
-                """ % (self._name, self._min, self._max, self._start, self._step,
-                       self._number_format, self._name, url)
-            if not found:
-                self._app.add_url_rule('/' + url, url,
-                                       self._process_spinner_changed_callback)
+                """ % (self._name, url)
+        else:
+            script += """
+                        function refreshValue(){}
+                        });
+                        </script>
+                    """
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._process_spinner_changed_callback)
         return script
 
     def _process_spinner_changed_callback(self):
@@ -2059,6 +2070,25 @@ class TabSection(Widget):
         self._header = header
         self._disabled = disabled
 
+    @property
+    def name(self):
+        """The name or id of the widget. This is used internally and is a required
+        field"""
+        return self._name
+
+    @name.setter
+    def name(self, val):
+        self._name = val
+
+    @property
+    def header(self):
+        """Header text of the tab panel section"""
+        return self._header
+
+    @header.setter
+    def header(self, val):
+        self._header = val
+
     def render(self):
         """Renders the panel or tab section to its parent tab widget"""
         content = self._render_pre_content('div')
@@ -2077,11 +2107,14 @@ class Tab(Widget):
     _collapsible = None
     _open_on_mouseover = None
     _sortable = None
-    _orientation = None
+    _v_orient = None
+    _tab_activated_callback = None
+    _value = None
+    _app = None
 
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 app=False, css_cls=None, collapsible=None, open_on_mouseover=None,
-                 sortable=None, orientation=None):
+                 app=None, css_cls=None, collapsible=None, open_on_mouseover=None,
+                 sortable=None, v_orient=None, tab_activated_callback=None):
         """Default constructor of the TabSection widget class
 
             Args:
@@ -2093,23 +2126,124 @@ class Tab(Widget):
                 attr (list, optional): list of objects to be added as attributes of HTML tag
                 app (Flask, optional): An instance of Flask app
                 css_cls (list, optional): An list of CSS class names to be added to current widget
+                collapsible (boolean, optional): Whether the active panel should collapse on re-click or not
+                open_on_mouseover (boolean, optional): Whether tab should be active on mouse hover instead of click
+                sortable (boolean, optional): If true, allows to sort tabs using drag & drop
+                v_orient (boolean, optional): Whether to render headers vertically instead of horizontally
+                tab_activated_callback (callable, optional): Calls the function when an tab is activated
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
-        self._collapsible = collapsible
-        self._open_on_mouseover = open_on_mouseover
-        self._sortable = sortable
-        self._orientation = orientation
+        if collapsible is not None and collapsible:
+            self._collapsible = "true"
+        else:
+            self._collapsible = "false"
+        if open_on_mouseover is not None and open_on_mouseover:
+            self._open_on_mouseover = "mouseover"
+        else:
+            self._open_on_mouseover = "click"
+        if sortable is not None and sortable:
+            self._sortable = "true"
+        else:
+            self._sortable = "false"
+        if v_orient is not None and v_orient:
+            self._v_orient = "true"
+        else:
+            self._v_orient = "false"
+        self._tab_activated_callback = tab_activated_callback
+        self._app = app
 
-        def render(self):
-            content = self._render_pre_content('div')
-            content += "\n" + "<ul>"
-            for widget in self._child_widgets:
-                content += "\n" + "<li><a href='" + widget._name + "'>" + widget.header
-                content += "</a></li>"
-            content += "</ul>"
-            for widget in self._child_widgets:
-                content += "\n" + widget.render()
-            content += self._render_post_content('div')
-            self._widget_content = content
-            return self._widget_content
+    def _attach_script(self):
+        script = ""
+        found = True
+        if self._app is not None:
+            url = str(__name__ + "_" + self._name + "_tab_activated").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+        script = """<script>
+                        $(function(){
+                            var selector = $("#%s");
+                            selector.tabs({
+                                collapsible: %s,
+                                event: "%s",
+                                activate: tabActivated
+                            });
+                            var sortable = %s
+                            if(sortable){
+                                selector.find( ".ui-tabs-nav" ).sortable({
+                                    axis: "x",
+                                    stop: function() {
+                                    selector.tabs( "refresh" );
+                                    }
+                                });
+                            }
+                            var v_orient = %s
+                            if(v_orient){
+                                selector.tabs().addClass( "ui-tabs-vertical ui-helper-clearfix" );
+                                selector.removeClass( "ui-corner-top" ).addClass( "ui-corner-left" );
+                            }""" % (self._name, self._collapsible, self._open_on_mouseover, self._sortable,
+                                    self._v_orient)
+        if self._app is not None and self._tab_activated_callback is not None:
+            script += """\nfunction tabActivated(event, ui){
+                                url: "/%s",
+                                type: "get",
+                                dataType: "json",
+                                data: {'value', ui.newTab},
+                                success: function(){alertify("Done!");},
+                                error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                            }
+                        });
+                    </script>
+                """ % (url)
+        else:
+            script += """
+                            function tabActivated(event, ui){}
+                            });</script>
+                        """
+        if not found:
+            self._app.add_url_rule('/' + url, url,
+                                   self._process_tab_activated_callback)
+        return script
+
+    def _process_tab_activated_callback(self):
+        if request.args.__len__() > 0:
+            val = request.args['value']
+            if val is not None:
+                self._value = val
+        if self._tab_activated_callback is not None:
+            return json.dumps({'result': self._tab_activated_callback()})
+        return json.dumps({'result': ''})
+
+    def _attach_css(self):
+        css = ""
+        if self._v_orient == "true":
+            css = """<style>
+                `       .ui-tabs-vertical { width: 55em; }
+                        .ui-tabs-vertical .ui-tabs-nav { padding: .2em .1em .2em .2em; float: left; width: 12em; }
+                        .ui-tabs-vertical .ui-tabs-nav li { clear: left; width: 100%; border-bottom-width: 1px !important; border-right-width: 0 !important; margin: 0 -1px .2em 0; }  /*  # noqa */
+                        .ui-tabs-vertical .ui-tabs-nav li a { display:block; }
+                        .ui-tabs-vertical .ui-tabs-nav li.ui-tabs-active { padding-bottom: 0; padding-right: .1em; border-right-width: 1px; }
+                        .ui-tabs-vertical .ui-tabs-panel { padding: 1em; float: right; width: 40em;}
+                    </style>
+                """
+        return css
+
+    def render(self):
+        content = self._attach_css() + "\n"
+        content += self._render_pre_content('div')
+        content += "\n" + "<ul>"
+        for widget in self._child_widgets:
+            content += "\n" + "<li><a href='" + widget.name + "'>" + widget.header
+            content += "</a></li>"
+        content += "</ul>"
+        for widget in self._child_widgets:
+            content += "\n" + widget.render()
+        content += self._render_post_content('div')
+        self._widget_content = content + self._attach_script()
+        return self._widget_content

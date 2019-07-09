@@ -10,6 +10,7 @@ from widgets4py.app_ui import Form, Label, DropDown
 from widgets4py.jquery_ui import Accordion, Section, RadioButtonGroup
 from widgets4py.jquery_ui import CheckBoxGroup, DialogBox, DialogTypes
 from widgets4py.jquery_ui import Menu, MenuItem, SubMenu, MenuTypes, Slider, Spinner
+from widgets4py.jquery_ui import TabSection, Tab
 from multiprocessing import Process
 
 
@@ -61,6 +62,9 @@ class PageTest:
     sm_menu_item2 = None
     sld = None
     spn = None
+    tab = None
+    tab_sec1 = None
+    tab_sec2 = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -147,6 +151,12 @@ class PageTest:
         pg.add(self.sld)
         self.spn = Spinner('spn', app=app, onchange_callback=self.spinner_changed, number_format="C")
         pg.add(self.spn)
+        self.tab = Tab('tab', sortable=True)
+        self.tab_sec1 = TabSection('tab_sec1', 'Tab1')
+        self.tab_sec2 = TabSection('tab_sec2', 'Tab2')
+        self.tab.add(self.tab_sec1)
+        self.tab.add(self.tab_sec2)
+        pg.add(self.tab)
         content = pg.render()
         return content
 
