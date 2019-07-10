@@ -162,7 +162,7 @@ class PageTest:
 
     def tab_clicked(self):
         print("Tab clicked: " + self.tab.value)
-        return "success"         
+        return "success"
 
     def spinner_changed(self):
         print("Spinner Changed: " + self.spn.value)

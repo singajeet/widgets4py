@@ -394,6 +394,7 @@ class Page(Widget):
             self.add_js('https://code.jquery.com/jquery-3.4.1.min.js')
             self.add_js('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js')
             self.add_js('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/alertify.min.js')
+            self.add_js('http://code.jquery.com/jquery-2.1.1.min.js')
 
     def add_js(self, path):
         """Adds an reference to javascript file to the page. The JS file could from the available
@@ -438,7 +439,12 @@ class Page(Widget):
             js_content += "<script src='" + jsp + "'></script>\n"
         content += css_content
         content += js_content
-        content += "\n</head>\n<body style='width: 100%; height: 100%'>"
+        content += """  <script>
+                            var $2 = jQuery.noConflict();
+                        </script>
+                    </head>
+                    <body style='width: 100%; height: 100%'>
+                    """
         script_content = ""
         for sc in self._scripts:
             script_content += sc + "\n"
