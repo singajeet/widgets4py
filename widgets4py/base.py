@@ -390,10 +390,12 @@ class Page(Widget):
             self.add_css('https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css')
             self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/alertify.min.css')
             self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/themes/bootstrap.min.css')
+            self.add_css('http://w2ui.com/src/w2ui-1.5.rc1.min.css')
         if self._jquery_js:
             self.add_js('https://code.jquery.com/jquery-3.4.1.min.js')
             self.add_js('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js')
             self.add_js('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/alertify.min.js')
+            self.add_js('http://w2ui.com/src/w2ui-1.5.rc1.min.js')
             self.add_js('http://code.jquery.com/jquery-2.1.1.min.js')
 
     def add_js(self, path):
