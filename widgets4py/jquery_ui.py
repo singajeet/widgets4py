@@ -2133,28 +2133,49 @@ class Tab(Widget):
                 sortable (boolean, optional): If true, allows to sort tabs using drag & drop
                 v_orient (boolean, optional): Whether to render headers vertically instead of horizontally
                 tab_activated_callback (callable, optional): Calls the function when an tab is activated
+                disabled: True or False to disable the whole tab widget or list of panel indices
+                to disable individual tabs
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
-        if collapsible is not None and collapsible:
-            self._collapsible = "true"
+        if collapsible is not None:
+            self._collapsible = collapsible
         else:
-            self._collapsible = "false"
+            self._collapsible = False
         if open_on_mouseover is not None and open_on_mouseover:
             self._open_on_mouseover = "mouseover"
         else:
             self._open_on_mouseover = "click"
-        if sortable is not None and sortable:
-            self._sortable = "true"
+        if sortable is not None:
+            self._sortable = sortable
         else:
-            self._sortable = "false"
-        if v_orient is not None and v_orient:
-            self._v_orient = "true"
+            self._sortable = False
+        if v_orient is not None:
+            self._v_orient = v_orient
         else:
-            self._v_orient = "false"
+            self._v_orient = False
         self._tab_activated_callback = tab_activated_callback
         self._app = app
-        self._disabled = disabled
+        if disabled is not None:
+            self._disabled = disabled
+        else:
+            self._disabled = False
+
+    @property
+    def collapsible(self):
+        return self._collapsible
+    
+    @collapsible.setter
+    def collapsible(self, val):
+        self._collapsible = val
+
+    @property
+    def open_on_mouseover(self):
+        return self._open_on_mouseover
+    
+    @open_on_mouseover.setter
+    def open_on_mouseover(self, val):
+        self._open_on_mouseover = val
 
     @property
     def value(self):
@@ -2196,7 +2217,8 @@ class Tab(Widget):
                             if(v_orient){
                                 selector.tabs().addClass( "ui-tabs-vertical ui-helper-clearfix" );
                                 selector.removeClass( "ui-corner-top" ).addClass( "ui-corner-left" );
-                            }""" % (self._name, self._collapsible, self._open_on_mouseover, self._sortable,
+                            }""" % (self._name, json.dumps(self._collapsible),
+                                    self._open_on_mouseover, json.dumps(self._sortable),
                                     self._v_orient)
         if self._app is not None and self._tab_activated_callback is not None:
             script += """function tabActivated(event, ui){
@@ -2250,9 +2272,9 @@ class Tab(Widget):
         return css
 
     def _sync_properties(self):
-        return json.dumps({'collapsible': True if self._collapsible == "true" else False,
+        return json.dumps({'collapsible': self._collapsible,
                            'open_on_mouseover': self._open_on_mouseover,
-                           'sortable': True if self._sortable == "true" else False,
+                           'sortable': self._sortable,
                            'value': self._value,
                            'disabled': self._disabled
                            })
@@ -2276,7 +2298,7 @@ class Tab(Widget):
                                             }
                                         }
                                         if(props.collapsible != undefined){
-                                            selector.tabs('option', 'collapsible', props.max);
+                                            selector.tabs('option', 'collapsible', props.collapsible);
                                         }
                                         if(props.open_on_mouseover != undefined){
                                             selector.tabs('option', 'event', props.open_on_mouseover);
