@@ -3,14 +3,15 @@ import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
 # from widgets4py.layouts import SimpleGridLayout
-from widgets4py.app_ui import TextBox, Button  # , CheckBox, Color, Date
+# from widgets4py.app_ui import TextBox, Button  # , CheckBox, Color, Date
 # from widgets4py.app_ui import DateTimeLocal, Email, File, Image, Month
 # from widgets4py.app_ui import Number, Password, Radio, Range
-from widgets4py.app_ui import Form, Label, DropDown
-from widgets4py.jquery_ui import Accordion, Section, RadioButtonGroup
-from widgets4py.jquery_ui import CheckBoxGroup, DialogBox, DialogTypes
-from widgets4py.jquery_ui import Menu, MenuItem, SubMenu, MenuTypes, Slider, Spinner
-from widgets4py.jquery_ui import TabSection, Tab
+# from widgets4py.app_ui import Form, Label, DropDown
+# from widgets4py.jquery_ui import Accordion, Section, RadioButtonGroup
+# from widgets4py.jquery_ui import CheckBoxGroup, DialogBox, DialogTypes
+# from widgets4py.jquery_ui import Menu, MenuItem, SubMenu, MenuTypes, Slider, Spinner
+# from widgets4py.jquery_ui import TabSection, Tab
+from widgets4py.w2ui import GridColumn, GridColumnCollection, GridRecord, GridRecordCollection, Grid
 from multiprocessing import Process
 
 
@@ -19,7 +20,7 @@ app = Flask(__name__)
 
 class PageTest:
 
-    txt = None
+    # txt = None
     # btn = None
     # btn1 = None
     # clr = None
@@ -34,45 +35,67 @@ class PageTest:
     # passwd = None
     # rd = None
     # rng = None
-    lbl1 = None
-    lbl2 = None
-    dd = None
-    frm = None
-    sec1 = None
-    sec2 = None
-    acrd = None
-    rbg = None
-    rbg_items = {'rd1': ['Radio1', False],
-                 'rd2': ['Radio2', False],
-                 'rd3': ['Radio3', False]
-                 }
-    cbg = None
-    cbg_items = {'cb1': ['CheckBox1', False],
-                 'cb2': ['CheckBox2', False],
-                 'cb3': ['CheckBox3', False],
-                 }
-    dlg = None
-    dlg_btn = None
-    menu = None
-    m_menu_itm1 = None
-    m_menu_itm2 = None
-    m_submenu_item3 = None
-    m_menu_item4 = None
-    sm_menu_item1 = None
-    sm_menu_item2 = None
-    sld = None
-    spn = None
-    tab = None
-    tab_sec1 = None
-    tab_sec2 = None
+    # lbl1 = None
+    # lbl2 = None
+    # dd = None
+    # frm = None
+    # sec1 = None
+    # sec2 = None
+    # acrd = None
+    # rbg = None
+    # rbg_items = {'rd1': ['Radio1', False],
+    #              'rd2': ['Radio2', False],
+    #              'rd3': ['Radio3', False]
+    #              }
+    # cbg = None
+    # cbg_items = {'cb1': ['CheckBox1', False],
+    #              'cb2': ['CheckBox2', False],
+    #              'cb3': ['CheckBox3', False],
+    #              }
+    # dlg = None
+    # dlg_btn = None
+    # menu = None
+    # m_menu_itm1 = None
+    # m_menu_itm2 = None
+    # m_submenu_item3 = None
+    # m_menu_item4 = None
+    # sm_menu_item1 = None
+    # sm_menu_item2 = None
+    # sld = None
+    # spn = None
+    # tab = None
+    # tab_sec1 = None
+    # tab_sec2 = None
+    g_col1 = None
+    g_col2 = None
+    g_column_coll = None
+    g_rec1 = None
+    g_rec2 = None
+    g_record_coll = None
+    grid = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
-        self.frm = Form('frm', app=app, submit_callback=self.form_submitted)
+        self.g_col1 = GridColumn('fname', 'First Name', 50)
+        self.g_col2 = GridColumn('lname', 'Last Name', 50)
+        self.g_column_coll = GridColumnCollection()
+        self.g_column_coll.add(self.g_col1)
+        self.g_column_coll.add(self.g_col2)
+        self.g_rec1 = GridRecord()
+        self.g_rec1.add_cell("fname", "Ajeet")
+        self.g_rec1.add_cell("lname", "Singh")
+        self.g_rec2 = GridRecord()
+        self.g_rec2.add_cell("fname", "Armin")
+        self.g_rec2.add_cell("lname", "Kaur")
+        self.g_record_coll = GridRecordCollection()
+        self.g_record_coll.add(self.g_rec1)
+        self.g_record_coll.add(self.g_rec2)
+        self.grid = Grid('grid', 'My Table', self.g_column_coll, row_collection=self.g_record_coll)
+        # self.frm = Form('frm', app=app, submit_callback=self.form_submitted)
         # sg = SimpleGridLayout("Grid", 8, 2)
         # self.btn = Button('btn', 'Push', app=app, onclick_callback=self.change_btn_title)
         # self.btn1 = Button('btn1', 'Populate', app=app, onclick_callback=self.populate_text)
-        self.txt = TextBox('txt', app=app, onchange_callback=self.text_changed)
+        # self.txt = TextBox('txt', app=app, onchange_callback=self.text_changed)
         # self.chk = CheckBox('chk', "Checkbox text", app=app, onclick_callback=self.checkbox_clicked)
         # self.clr = Color('clr', app=app, onchange_callback=self.color_changed)
         # self.dt = Date('dt', min="2019-01-01", max="2020-12-31", app=app, onchange_callback=self.date_changed)
@@ -102,61 +125,62 @@ class PageTest:
         # sg.add(self.rd)
         # sg.add(self.rng)
         # pg.add(sg)
-        self.lbl1 = Label('lbl1', 'TextBox Label:', self.txt)
-        self.dd = DropDown('dd', app=app, onchange_callback=self.dd_changed)
-        self.dd.add_option('a', 'A', False)
-        self.dd.add_option('b', 'B', False)
-        self.dd.add_option('c', 'C', False)
-        self.lbl2 = Label('lbl2', 'DropDown Label:', self.dd, app=app, onclick_callback=self.lbl_clicked)
-        self.frm.add(self.lbl1)
-        self.frm.add(self.txt)
-        self.frm.add(self.lbl2)
-        self.frm.add(self.dd)
-        pg.add(self.frm)
-        self.acrd = Accordion('acrd', collapsible=True)
-        self.sec1 = Section('sec1', 'Section1', app=app, onclick_callback=self.section_clicked)
-        self.sec2 = Section('sec2', 'Section2', app=app, onclick_callback=self.section_clicked)
-        self.acrd.add(self.sec1)
-        self.acrd.add(self.sec2)
-        self.rbg = RadioButtonGroup('rbg', "RadioBtn Group", self.rbg_items,
-                                    app=app, onclick_callback=self.rbg_clicked)
-        self.cbg = CheckBoxGroup('cbg', "CheckBox Group", self.cbg_items,
-                                 app=app, onclick_callback=self.cbg_clicked)
-        self.dlg = DialogBox('dlg', 'My Dialog', DialogTypes.MODAL_CONFIRM, app=app)
-        self.dlg_btn = Button('dlg_btn', "Open Dialog", app=app, onclick_callback=self.open_dialog)
-        pg.add(self.acrd)
-        pg.add(self.rbg)
-        pg.add(self.cbg)
-        pg.add(self.dlg)
-        pg.add(self.dlg_btn)
-        self.menu = Menu('menu', menu_type=MenuTypes.HORIZONTAL)
-        self.m_menu_itm1 = MenuItem('m_menu_itm1', 'Item1', app=app,
-                                    menu_clicked_callback=self.menu_clicked, icon='ui-icon-disk')
-        self.m_menu_itm2 = MenuItem('m_menu_itm2', 'Item2', app=app,
-                                    menu_clicked_callback=self.menu_clicked, icon='ui-icon-zoomin')
-        self.m_submenu_itm3 = SubMenu('m_submenu_itm3', 'Item3')
-        self.m_menu_itm4 = MenuItem('m_menu_itm4', 'Item4', app=app, menu_clicked_callback=self.menu_clicked)
-        self.sm_menu_itm1 = MenuItem('sm_menu_itm1', 'SubItem1', app=app,
-                                     menu_clicked_callback=self.menu_clicked, icon='ui-icon-play')
-        self.sm_menu_itm2 = MenuItem('sm_menu_itm2', 'SubItem2', app=app,
-                                     menu_clicked_callback=self.menu_clicked, icon='ui-icon-stop')
-        self.m_submenu_itm3.add(self.sm_menu_itm1)
-        self.m_submenu_itm3.add(self.sm_menu_itm2)
-        self.menu.add(self.m_menu_itm1)
-        self.menu.add(self.m_menu_itm2)
-        self.menu.add(self.m_submenu_itm3)
-        self.menu.add(self.m_menu_itm4)
-        pg.add(self.menu)
-        self.sld = Slider('sld', slider_changed_callback=self.slider_changed, app=app)
-        pg.add(self.sld)
-        self.spn = Spinner('spn', app=app, onchange_callback=self.spinner_changed, number_format="C")
-        pg.add(self.spn)
-        self.tab = Tab('tab', app=app, tab_activated_callback=self.tab_clicked)
-        self.tab_sec1 = TabSection('tab_sec1', 'Tab1')
-        self.tab_sec2 = TabSection('tab_sec2', 'Tab2')
-        self.tab.add(self.tab_sec1)
-        self.tab.add(self.tab_sec2)
-        pg.add(self.tab)
+        # self.lbl1 = Label('lbl1', 'TextBox Label:', self.txt)
+        # self.dd = DropDown('dd', app=app, onchange_callback=self.dd_changed)
+        # self.dd.add_option('a', 'A', False)
+        # self.dd.add_option('b', 'B', False)
+        # self.dd.add_option('c', 'C', False)
+        # self.lbl2 = Label('lbl2', 'DropDown Label:', self.dd, app=app, onclick_callback=self.lbl_clicked)
+        # self.frm.add(self.lbl1)
+        # self.frm.add(self.txt)
+        # self.frm.add(self.lbl2)
+        # self.frm.add(self.dd)
+        # pg.add(self.frm)
+        # self.acrd = Accordion('acrd', collapsible=True)
+        # self.sec1 = Section('sec1', 'Section1', app=app, onclick_callback=self.section_clicked)
+        # self.sec2 = Section('sec2', 'Section2', app=app, onclick_callback=self.section_clicked)
+        # self.acrd.add(self.sec1)
+        # self.acrd.add(self.sec2)
+        # self.rbg = RadioButtonGroup('rbg', "RadioBtn Group", self.rbg_items,
+        #                             app=app, onclick_callback=self.rbg_clicked)
+        # self.cbg = CheckBoxGroup('cbg', "CheckBox Group", self.cbg_items,
+        #                          app=app, onclick_callback=self.cbg_clicked)
+        # self.dlg = DialogBox('dlg', 'My Dialog', DialogTypes.MODAL_CONFIRM, app=app)
+        # self.dlg_btn = Button('dlg_btn', "Open Dialog", app=app, onclick_callback=self.open_dialog)
+        # pg.add(self.acrd)
+        # pg.add(self.rbg)
+        # pg.add(self.cbg)
+        # pg.add(self.dlg)
+        # pg.add(self.dlg_btn)
+        # self.menu = Menu('menu', menu_type=MenuTypes.HORIZONTAL)
+        # self.m_menu_itm1 = MenuItem('m_menu_itm1', 'Item1', app=app,
+        #                             menu_clicked_callback=self.menu_clicked, icon='ui-icon-disk')
+        # self.m_menu_itm2 = MenuItem('m_menu_itm2', 'Item2', app=app,
+        #                             menu_clicked_callback=self.menu_clicked, icon='ui-icon-zoomin')
+        # self.m_submenu_itm3 = SubMenu('m_submenu_itm3', 'Item3')
+        # self.m_menu_itm4 = MenuItem('m_menu_itm4', 'Item4', app=app, menu_clicked_callback=self.menu_clicked)
+        # self.sm_menu_itm1 = MenuItem('sm_menu_itm1', 'SubItem1', app=app,
+        #                              menu_clicked_callback=self.menu_clicked, icon='ui-icon-play')
+        # self.sm_menu_itm2 = MenuItem('sm_menu_itm2', 'SubItem2', app=app,
+        #                              menu_clicked_callback=self.menu_clicked, icon='ui-icon-stop')
+        # self.m_submenu_itm3.add(self.sm_menu_itm1)
+        # self.m_submenu_itm3.add(self.sm_menu_itm2)
+        # self.menu.add(self.m_menu_itm1)
+        # self.menu.add(self.m_menu_itm2)
+        # self.menu.add(self.m_submenu_itm3)
+        # self.menu.add(self.m_menu_itm4)
+        # pg.add(self.menu)
+        # self.sld = Slider('sld', slider_changed_callback=self.slider_changed, app=app)
+        # pg.add(self.sld)
+        # self.spn = Spinner('spn', app=app, onchange_callback=self.spinner_changed, number_format="C")
+        # pg.add(self.spn)
+        # self.tab = Tab('tab', app=app, tab_activated_callback=self.tab_clicked)
+        # self.tab_sec1 = TabSection('tab_sec1', 'Tab1')
+        # self.tab_sec2 = TabSection('tab_sec2', 'Tab2')
+        # self.tab.add(self.tab_sec1)
+        # self.tab.add(self.tab_sec2)
+        # pg.add(self.tab)
+        pg.add(self.grid)
         content = pg.render()
         return content
 

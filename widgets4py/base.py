@@ -395,8 +395,8 @@ class Page(Widget):
             self.add_js('https://code.jquery.com/jquery-3.4.1.min.js')
             self.add_js('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js')
             self.add_js('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/alertify.min.js')
-            self.add_js('http://w2ui.com/src/w2ui-1.5.rc1.min.js')
             self.add_js('http://code.jquery.com/jquery-2.1.1.min.js')
+            self.add_js('http://w2ui.com/src/w2ui-1.5.rc1.min.js')
 
     def add_js(self, path):
         """Adds an reference to javascript file to the page. The JS file could from the available
