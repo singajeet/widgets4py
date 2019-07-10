@@ -2109,14 +2109,14 @@ class Tab(Widget):
     _sortable = None
     _v_orient = None
     _tab_activated_callback = None
-    _value = None
     _app = None
     _disabled = None
+    _selected_index = None
 
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
                  app=None, css_cls=None, collapsible=None, open_on_mouseover=None,
                  sortable=None, v_orient=None, tab_activated_callback=None,
-                 disabled=None):
+                 disabled=None, selected_index=None):
         """Default constructor of the TabSection widget class
 
             Args:
@@ -2133,8 +2133,9 @@ class Tab(Widget):
                 sortable (boolean, optional): If true, allows to sort tabs using drag & drop
                 v_orient (boolean, optional): Whether to render headers vertically instead of horizontally
                 tab_activated_callback (callable, optional): Calls the function when an tab is activated
-                disabled: True or False to disable the whole tab widget or list of panel indices
-                to disable individual tabs
+                disabled (boolean, optional): True or False to disable the whole tab widget or list
+                of panel indices to disable individual tabs
+                selected_index (int, optional): Index of the selected tab in the widget
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
@@ -2160,11 +2161,15 @@ class Tab(Widget):
             self._disabled = disabled
         else:
             self._disabled = False
+        if selected_index is not None:
+            self._selected_index = selected_index
+        else:
+            self._selected_index = 0
 
     @property
     def collapsible(self):
         return self._collapsible
-    
+
     @collapsible.setter
     def collapsible(self, val):
         self._collapsible = val
@@ -2172,20 +2177,20 @@ class Tab(Widget):
     @property
     def open_on_mouseover(self):
         return self._open_on_mouseover
-    
+
     @open_on_mouseover.setter
     def open_on_mouseover(self, val):
         self._open_on_mouseover = val
 
     @property
-    def value(self):
+    def selected_index(self):
         """Value or Index of the selected section or panel under Tab widget
         """
-        return self._value
+        return self._selected_index
 
-    @value.setter
-    def value(self, val):
-        self._value = val
+    @selected_index.setter
+    def selected_index(self, val):
+        self._selected_index = val
 
     def _attach_script(self):
         script = ""
@@ -2226,7 +2231,7 @@ class Tab(Widget):
                                 url: "/%s",
                                 type: "get",
                                 dataType: "json",
-                                data: {'value': selector.tabs("option", "active")},
+                                data: {'selected_index': selector.tabs("option", "active")},
                                 success: function(){alertify("Done!");},
                                 error: function(err_status){
                                         alertify.error("Status Code: "
@@ -2250,9 +2255,9 @@ class Tab(Widget):
 
     def _process_tab_activated_callback(self):
         if request.args.__len__() > 0:
-            val = request.args['value']
+            val = request.args['selected_index']
             if val is not None:
-                self._value = val
+                self._selected_index = val
         if self._tab_activated_callback is not None:
             return json.dumps({'result': self._tab_activated_callback()})
         return json.dumps({'result': ''})
@@ -2275,7 +2280,7 @@ class Tab(Widget):
         return json.dumps({'collapsible': self._collapsible,
                            'open_on_mouseover': self._open_on_mouseover,
                            'sortable': self._sortable,
-                           'value': self._value,
+                           'selected_index': self._selected_index,
                            'disabled': self._disabled
                            })
 
@@ -2291,10 +2296,10 @@ class Tab(Widget):
                                     success: function(props){
                                         selector = $('#%s');
                                         //fill up the values
-                                        if(props.value != undefined){
+                                        if(props.selected_index != undefined){
                                             var existing_val = selector.tabs('option', 'active');
-                                            if(existing_val != props.value){
-                                                selector.tabs('option', 'active', props.value);
+                                            if(existing_val != props.selected_index){
+                                                selector.tabs('option', 'active', props.selected_index);
                                             }
                                         }
                                         if(props.collapsible != undefined){
