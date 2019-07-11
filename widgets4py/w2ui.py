@@ -216,6 +216,27 @@ class GridRecord:
         return content
 
 
+class SummaryGridRecord(GridRecord):
+    """Renders an summary row at the end of the grid. The cell names should be same as
+    available in `GridRecord' but its content should have the summary details. For example,
+    if GridRecord have the following columns {'fname': 'Jane', lname: 'Doe', qty: 1000},
+    the summary record can have the following structure {'fname': 'Total', qty: '1000'}
+
+    The cell value can have HTML included to format it e.g., {'fname': '<span>Total</span>'}
+    """
+
+    def render(self):
+        """Renders the summary record at the last of the Grid widget"""
+        content = "{ w2ui: { summary: true },\n"
+        for cell in self._cells:
+            if type(self._cells.get(cell)) == int:
+                content += cell + ": " + str(self._cells.get(cell)) + ", "
+            else:
+                content += cell + ": '" + self._cells.get(cell) + "', "
+        content += "}"
+        return content
+
+
 class GridRecordCollection:
     """A collection of rows or records of an Grid. All records should be added to
     this class in order to be rendered under an Grid Widget
@@ -277,6 +298,135 @@ class GridRecordCollection:
         return content
 
 
+class GridSearch:
+    """Defines an search option for the Grid widget. It contains the information of
+    field name, caption, type, etc to define an search option for the Grid
+    """
+
+    _field = None
+    _caption = None
+    _type = None
+    _options = None
+
+    def __init__(self, field, caption, ftype, options=None):
+        """Default constructor parameters
+
+            field (string): Name of the existing field in the Grid widget
+            caption (string): A title of the field used for search
+            type (string): type of the field that will be used to search
+            options (dict): shows a predefined options to select in the search toolbar
+                            e.g., ['ABC', 'DEF', 'GHI']
+        """
+        self._field = field
+        self._caption = caption
+        self._ftype = ftype
+        self._options = options
+
+        @property
+        def field(self):
+            """Field name that will be used in the search"""
+            return self._field
+
+        @field.setter
+        def field(self, val):
+            self._field = val
+
+        @property
+        def caption(self):
+            """Caption of the field that is used in the search box"""
+            return self._caption
+
+        @caption.setter
+        def caption(self, val):
+            self._caption = val
+
+        @property
+        def ftype(self):
+            """Type (eg int, text, list, etc) of the field used in search"""
+            return self._ftype
+
+        @ftype.setter
+        def ftype(self, val):
+            self._ftype = val
+
+        @property
+        def options(self):
+            """Predefined options list to be used with an field for selection"""
+            return self._options
+
+        @options.setter
+        def options(self, val):
+            self._options = val
+
+        def render(self):
+            """Renders the search options to be included in the grid"""
+            content = "{"
+            content += " field: %s, caption: %s, type: %s" % (self._field,
+                                                              self._caption, self._type)
+            if self._options is not None:
+                content += ", options: { items: " + str(self._options) + "}"
+            content += "}"
+            return content
+
+
+class GridSearchCollection:
+    """A collection of search options of an Grid. All options should be added to
+    this class in order to be rendered under an Grid Widget
+    """
+
+    _searches = None
+    _counter = None
+
+    def __init__(self, searches=None):
+        """Default constructor of this class with below parameters
+
+            Args:
+                searches (list): A list of searches to be rendered in Grid widget
+        """
+        if searches is not None:
+            self._searches = searches
+        else:
+            self._searches = []
+        self._counter = 1
+
+    @property
+    def searches(self):
+        return self._searches
+
+    @searches.setter
+    def searches(self, val):
+        self._searches = val
+
+    @property
+    def count(self):
+        """Returns the number of searches available in the collection"""
+        return self._searches.__len__()
+
+    def add(self, search):
+        """Adds an search option in the collection
+
+            Args:
+                search (GridSearch): A gird search option to be added
+        """
+        self._searches.append(search)
+
+    def remove(self, search):
+        """Removes an search option from the collection
+
+            Args:
+                search: Search to be removed from the collection
+        """
+        self._searches.pop(search)
+
+    def render(self):
+        """Function to render all searches in the JavaScript list format"""
+        content = "["
+        for search in self._searches:
+            content += search.render() + ",\n"
+        content += "]"
+        return content
+
+
 class Grid(Widget):
     """A class to render W2UI grid and attach its event to server side events
     .This class works a wrapper of JavaScript and generates JS code to render
@@ -286,6 +436,7 @@ class Grid(Widget):
     _header = None
     _column_collection = None
     _row_collection = None
+    _search_collection = None
     _data_url = None
     _tool_bar = None
     _footer = None
@@ -299,12 +450,13 @@ class Grid(Widget):
     _multi_select = None
     _line_numbers = None
     _queue = None
+    _multi_search = None
 
     def __init__(self, name, header, column_collection, row_collection=None, desc=None,
                  prop=None, style=None, attr=None, disabled=False, onclick_callback=None,
                  app=None, css_cls=None, data_url=None, data_load_callback=None,
                  toolbar=None, footer=None, sort_on=None, sort_dir=None, select_column=None,
-                 multi_select=None, line_numbers=None):
+                 multi_select=None, line_numbers=None, search_collection=None, multi_search=None):
         """Default constructor of the Button widget class
 
             Args:
@@ -329,12 +481,15 @@ class Grid(Widget):
                 select_column (boolean): Allows to select a column or not
                 multi_select (boolean): Allows to select multiple records or not
                 line_numbers (boolean): Shows line number in each row or record
+                search_collection (GridSearchCollection): A list of search option
+                multi_search (boolean): Wether to all multi field search or not
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self._header = header
         self._column_collection = column_collection
         self._row_collection = row_collection
+        self._search_collection = search_collection
         self.add_style("width", "100%")
         self.add_style("height", "100%")
         self._app = app
@@ -370,6 +525,10 @@ class Grid(Widget):
             self._line_numbers = line_numbers
         else:
             self._line_numbers = False
+        if multi_search is not None:
+            self._multi_search = multi_search
+        else:
+            self._multi_search = False
         self._queue = []
 
     def _attach_script(self):
@@ -390,14 +549,19 @@ class Grid(Widget):
                                     lineNumbers: %s
                                 },
                                 multiSelect: %s,
-                                sortData: [{field: '%s', direction: '%s'}]
+                                sortData: [{field: '%s', direction: '%s'}],
+                                multiSearch: %s
+                                %s  //searches placeholder
                             });
                         });
                     </script>
                 """ % (self._name, self._name, self._header, self._column_collection.render(),
                        self._row_collection.render() if self._row_collection is not None else "",
-                       json.dumps(self._tool_bar), json.dumps(self._footer), json.dumps(self._select_column),
-                       json.dumps(self._line_numbers), json.dumps(self._multi_select), self._sort_on, self._sort_dir)
+                       json.dumps(self._tool_bar), json.dumps(self._footer),
+                       json.dumps(self._select_column), json.dumps(self._line_numbers),
+                       json.dumps(self._multi_select), self._sort_on, self._sort_dir,
+                       json.dumps(self._multi_search),
+                       (", searches: " + self._search_collection if self._search_collection is not None else ""))
         elif self._data_url is not None and self._data_load_callback is None:
             script = """
                     <script>
@@ -415,14 +579,18 @@ class Grid(Widget):
                                     lineNumbers: %s
                                 },
                                 multiSelect: %s
-                                sortData: [{field: '%s', direction: '%s'}]
+                                sortData: [{field: '%s', direction: '%s'}],
+                                multiSearch: %s
+                                %s  //searches placeholder
                             });
                         });
                     </script>
                     """ % (self._name, self._name, self._header, self._column_collection.render(),
                            self._data_url, json.dumps(self._tool_bar), json.dumps(self._footer),
                            json.dumps(self._select_column), json.dumps(self._line_numbers),
-                           json.dumps(self._multi_select), self._sort_on, self._sort_dir)
+                           json.dumps(self._multi_select), self._sort_on, self._sort_dir,
+                           json.dumps(self._multi_search),
+                           (", searches: " + self._search_collection if self._search_collection is not None else ""))
         elif self._data_url is None and self._data_load_callback is not None:
             url = str(__name__ + "_" + self._name + "_data_load").replace('.', '_')
             found = False
@@ -445,14 +613,18 @@ class Grid(Widget):
                                     lineNumbers: %s
                                 },
                                 multiSelect: %s,
-                                sortData: [{field: '%s', direction: '%s'}]
+                                sortData: [{field: '%s', direction: '%s'}],
+                                multiSearch: %s
+                                %s  //searches placeholder
                             });
                         });
                     </script>
                     """ % (self._name, self._name, self._header, self._column_collection.render(),
                            url, json.dumps(self._tool_bar), json.dumps(self._footer),
                            json.dumps(self._select_column), json.dumps(self._line_numbers),
-                           json.dumps(self._multi_select), self._sort_on, self._sort_dir)
+                           json.dumps(self._multi_select), self._sort_on, self._sort_dir,
+                           json.dumps(self._multi_search),
+                           (", searches: " + self._search_collection if self._search_collection is not None else ""))
             if not found:
                 self._app.add_url_rule('/' + url, url,
                                        self._process_data_load_callback)
@@ -484,28 +656,76 @@ class Grid(Widget):
         record.add_cell('recid', rec_count + 1)
         self._queue.append({'cmd': 'ADD-RECORD', 'arg0': record.render()})
 
+    def select_all_records(self):
+        """Selects all the records available in the Grid Widget"""
+        self._queue.append({'cmd': 'SELECT-ALL'})
+
+    def unselect_all_records(self):
+        """Selects all the records available in the Grid Widget"""
+        self._queue.append({'cmd': 'UNSELECT-ALL'})
+
+    def select_records(self, records):
+        """Selects all the records available in the Grid Widget
+
+            Args:
+                records (string): A comma seperated string containing records to select
+                                    e.g., "2,3,5" or "5"
+        """
+        self._queue.append({'cmd': 'SELECT', 'arg0': records})
+
+    def unselect_records(self, records):
+        """Selects all the records available in the Grid Widget
+
+            Args:
+                records (string): A comma seperated string containing records to select
+                                    e.g., "2,3,5" or "5"
+        """
+        self._queue.append({'cmd': 'UNSELECT', 'arg0': records})
+
     def _sync_properties(self):
-        cmd = self._queue.pop()
-        if cmd['cmd'] == "HIDE":
+        if self._queue.__len__() > 0:
+            cmd = self._queue.pop()
             return json.dumps(cmd)
-        if cmd['cmd'] == "ADD-RECORD":
-            return json.dumps(cmd)
+        return json.dumps({'result': ''})
+        # if cmd['cmd'] == "HIDE":
+        #     return json.dumps(cmd)
+        # if cmd['cmd'] == "ADD-RECORD":
+        #     return json.dumps(cmd)
 
     def _attach_polling(self):
+        if self._app is None:
+            return
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
         script = """<script>
                     (function %s_poll(){
                         setTimeout(function(){
                             $.ajax({
                                 url: "/%s",
+                                dataType: "json",
                                 success: function(props){
                                     selector = $("#%s");
                                     if(selector != undefined){
-                                        if(props.cmd == "HIDE"){
-                                            w2ui.grid.toggleColumn(props.arg0);
-                                        }
-                                        if(props.cmd == "ADD-RECORD"){
-                                            w2ui.['%s'].add(props.arg0);
+                                        if(props.cmd != undefined){
+                                            if(props.cmd == "HIDE"){
+                                                w2ui.grid.toggleColumn(props.arg0);
+                                            }
+                                            if(props.cmd == "ADD-RECORD"){
+                                                w2ui['%s'].add(props.arg0);
+                                            }
+                                            if(props.cmd == "SELECT-ALL"){
+                                                w2ui.grid.selectAll();
+                                            }
+                                            if(props.cmd == "UNSELECT-ALL"){
+                                                w2ui.grid.selectNone();
+                                            }
+                                            if(props.cmd == "SELECT"){
+                                                w2ui.grid.select(props.arg0);
+                                            }
+                                            if(props.cmd == "UNSELECT"){
+                                                w2ui.grid.unselect(props.arg0);
+                                            }
+                                        } else {
+                                            alertify.warning("No command to process");
                                         }
                                     }
                                 },
@@ -513,13 +733,14 @@ class Grid(Widget):
                                     alertify.error("Status Code: "
                                     + err_status.status + "<br />" + "Error Message:"
                                     + err_status.statusText);
-                                },
-                                dataType: "json"
+                                }
                             });
+                            
+                            %s_poll();
                         }, 10000);
                     })();
                     </script>
-                """ % (url, url, self._name, self._name)
+                """ % (url, url, self._name, self._name, url)  # self._name, self._name, url)
         found = False
         for rule in self._app.url_map.iter_rules():
             if rule.endpoint == url:
