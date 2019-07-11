@@ -92,7 +92,7 @@ class PageTest:
         self.g_record_coll.add(self.g_rec2)
         self.grid = Grid('grid', 'My Table', self.g_column_coll, row_collection=self.g_record_coll,
                          toolbar=True, footer=True, line_numbers=True, select_column=True,
-                         multi_select=True, app=app)
+                         multi_select=True, app=app, toolbarAdd=True, toolbarDelete=True)
         # self.frm = Form('frm', app=app, submit_callback=self.form_submitted)
         # sg = SimpleGridLayout("Grid", 8, 2)
         # self.btn = Button('btn', 'Push', app=app, onclick_callback=self.change_btn_title)

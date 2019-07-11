@@ -625,7 +625,19 @@ class Grid(Widget):
                                     toolbarSave: %s,
                                     toolbarEdit: %s
                                 },
-                                multiSelect: %s
+                                multiSelect: %s,
+                                onAdd: function (event) {
+                                    w2alert('add');
+                                },
+                                onEdit: function (event) {
+                                    w2alert('edit');
+                                },
+                                onDelete: function (event) {
+                                    console.log('delete has default behavior');
+                                },
+                                onSave: function (event) {
+                                    w2alert('save');
+                                },
                                 sortData: [{field: '%s', direction: '%s'}],
                                 multiSearch: %s
                                 %s  //searches placeholder
@@ -666,6 +678,18 @@ class Grid(Widget):
                                     toolbarEdit: %s
                                 },
                                 multiSelect: %s,
+                                onAdd: function (event) {
+                                    w2alert('add');
+                                },
+                                onEdit: function (event) {
+                                    w2alert('edit');
+                                },
+                                onDelete: function (event) {
+                                    console.log('delete has default behavior');
+                                },
+                                onSave: function (event) {
+                                    w2alert('save');
+                                },
                                 sortData: [{field: '%s', direction: '%s'}],
                                 multiSearch: %s
                                 %s  //searches placeholder
