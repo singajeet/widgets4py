@@ -20,18 +20,26 @@ class GridColumn:
     _field_name = None
     _caption = None
     _size = None
+    _render = None
+    _attributes = None
+    _sortable = None
 
-    def __init__(self, field_name, caption, size):
+    def __init__(self, field_name, caption, size, render=None, attributes=None, sortable=None):
         """Below are the parameters of this class
 
             Args:
                 field_name (string): A technical name of the column
                 caption (string): Caption to be displayed in Grid's header
                 size (int): Size of the column in percentage %% of total grid width
+                render (string): A format string to render cell contents like, money, date,etc
+                attributes (string): A key value pair to format the row eg, align=center
         """
         self._field_name = field_name
         self._caption = caption
         self._size = size
+        self._render = render
+        self._attributes = attributes
+        self._sortable = sortable
 
     @property
     def field_name(self):
@@ -61,10 +69,43 @@ class GridColumn:
     def size(self, val):
         self._size = val
 
+    @property
+    def attributes(self):
+        """Attributes to format whole column of the grid"""
+        return self._attributes
+
+    @attributes.setter
+    def attributes(self, val):
+        self._attributes = val
+
+    @property
     def render(self):
-        content = """{ field: '%s', caption: '%s', size: '%d%%'}"""
+        """Render value to format the whole column"""
+        return self._render
+
+    @render.setter
+    def render(self, val):
+        self._render = val
+
+    @property
+    def sortable(self):
+        """Whether the current column is sortable or not"""
+        return self._sortable
+
+    @sortable.setter
+    def sortable(self, val):
+        self._sortable = val
+
+    def render(self):
+        content = """{ field: '%s', caption: '%s', size: '%d%%'"""
         content = content % (self._field_name, self._caption, self._size)
-        print("GridColumn => " + content)
+        if self._attributes is not None:
+            content += ", attr: '" + self._attributes + "'"
+        if self._render is not None:
+            content += ", render: '" + self._render + "'"
+        if self._sortable is not None:
+            content += ", sortable: " + json.dumps(self._sortable)
+        content += "}"
         return content
 
 
@@ -87,7 +128,6 @@ class GridColumnCollection:
             Args:
                 column (GridColumn): An instance of GridColumn class
         """
-        print("GridColumnCollection: Adding Column...")
         self._columns.append(column)
 
     def remove(self, column):
@@ -113,7 +153,6 @@ class GridColumnCollection:
         for col in self._columns:
             content += col.render() + ",\n"
         content += "]"
-        print("GridColumnCollection =>" + content)
         return content
 
 
@@ -123,8 +162,9 @@ class GridRecord:
     and renders it in JavaScript format"""
 
     _cells = None
+    _style = None
 
-    def __init__(self, cells=None):
+    def __init__(self, cells=None, style=None):
         """Below are the parameters of this class
 
             Args:
@@ -134,10 +174,10 @@ class GridRecord:
             self._cells = cells
         else:
             self._cells = {}
+        self._style = style
 
     def add_cell(self, column_name, value):
         """Helps in adding cells one by one in the current record"""
-        print("GridRecord: Added Cell => " + column_name + ", " + (str(value) if type(value) == int else value))
         self._cells[column_name] = value
 
     def remove_cell(self, column_name):
@@ -153,6 +193,15 @@ class GridRecord:
     def record(self, val):
         self._cells = val
 
+    @property
+    def style(self):
+        """The style for the whole row or record"""
+        return self._style
+
+    @style.setter
+    def style(self, val):
+        self._style = val
+
     def render(self):
         """Renders the record in JavaScript format and returns to parent widget"""
         content = "{"
@@ -161,8 +210,9 @@ class GridRecord:
                 content += cell + ": " + str(self._cells.get(cell)) + ", "
             else:
                 content += cell + ": '" + self._cells.get(cell) + "', "
+        if self._style is not None:
+            content += "w2ui: { style: '" + self._style + "'}"
         content += "}"
-        print("GridRecord => " + content)
         return content
 
 
@@ -200,7 +250,6 @@ class GridRecordCollection:
             Args:
                 record (GridRecord): A gird record or row to be added
         """
-        print("GridRecordCollection: Adding record... at " + str(self._counter))
         record.add_cell('recid', self._counter)
         self._counter += 1
         self._records.append(record)
@@ -220,7 +269,6 @@ class GridRecordCollection:
         for rec in self._records:
             content += rec.render() + ",\n"
         content += "]"
-        print("GridRecordCollection => " + content)
         return content
 
 
@@ -233,10 +281,24 @@ class Grid(Widget):
     _header = None
     _column_collection = None
     _row_collection = None
+    _data_url = None
+    _tool_bar = None
+    _footer = None
+    _sort_on = None
+    _sort_dir = None
+    _data_load_callback = None
+    _app = None
+    _onclick_callback = None
+    _disabled = None
+    _select_column = None
+    _multi_select = None
+    _line_numbers = None
 
     def __init__(self, name, header, column_collection, row_collection=None, desc=None,
-                 prop=None, style=None, attr=None, disabled=False, required=False,
-                 onclick_callback=None, app=None, css_cls=None):
+                 prop=None, style=None, attr=None, disabled=False, onclick_callback=None,
+                 app=None, css_cls=None, data_url=None, data_load_callback=None,
+                 toolbar=None, footer=None, sort_on=None, sort_dir=None, select_column=None,
+                 multi_select=None, line_numbers=None):
         """Default constructor of the Button widget class
 
             Args:
@@ -249,10 +311,18 @@ class Grid(Widget):
                 style (dict): dict of objects to be added as style elements to HTML tag
                 attr (list): list of objects to be added as attributes of HTML tag
                 disabled (Boolean): Enabled or Disabled state of widget
-                required (Boolean): Widget is required to be filled-in or not
                 onclick_callback (function): A function to be called back on onclick event
                 app (Flask): An instance of Flask class
                 css_cls (list): An list of CSS class names to be added to current widget
+                data_url (string): A URL to fetch records to be shown in grid
+                data_load_callback (callable): A callback to get the data in GridRecordCollection
+                toolbar (Boolean): Whether to show toolbar for the grid or not
+                footer (boolean): Whether to show footer in the grid or not
+                sort_on (string): The field name on which sorting should be done
+                sort_dir (string): Whether to sort in ASC or DSC order
+                select_column (boolean): Allows to select a column or not
+                multi_select (boolean): Allows to select multiple records or not
+                line_numbers (boolean): Shows line number in each row or record
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
@@ -261,22 +331,131 @@ class Grid(Widget):
         self._row_collection = row_collection
         self.add_style("width", "100%")
         self.add_style("height", "100%")
+        self._app = app
+        self._disabled = disabled
+        self._onclick_callback = onclick_callback
+        self._data_url = data_url
+        self._data_load_callback = data_load_callback
+        if toolbar is not None:
+            self._tool_bar = toolbar
+        else:
+            self._tool_bar = False
+        if footer is not None:
+            self._footer = footer
+        else:
+            self._footer = False
+        if sort_on is not None:
+            self._sort_on = sort_on
+        else:
+            self._sort_on = 'recid'
+        if sort_dir is not None:
+            self._sort_dir = sort_dir
+        else:
+            self._sort_dir = 'ASC'
+        if select_column is not None:
+            self._select_column = select_column
+        else:
+            self._select_column = True
+        if multi_select is not None:
+            self._multi_select = multi_select
+        else:
+            self._multi_select = False
+        if line_numbers is not None:
+            self._line_numbers = line_numbers
+        else:
+            self._line_numbers = False
 
     def _attach_script(self):
-        script = """
+        script = ""
+        if self._data_url is None and self._data_load_callback is None:
+            script = """
                     <script>
                         $2(function(){
                             $2('#%s').w2grid({
                                 name: '%s',
                                 header: '%s',
                                 columns: %s,
-                                records: %s
+                                records: %s,
+                                show: {
+                                    toolbar: %s,
+                                    footer: %s,
+                                    selectColumn: %s,
+                                    lineNumbers: %s
+                                },
+                                multiSelect: %s,
+                                sortData: [{field: '%s', direction: '%s'}]
                             });
                         });
                     </script>
                 """ % (self._name, self._name, self._header, self._column_collection.render(),
-                       self._row_collection.render() if self._row_collection is not None else "")
+                       self._row_collection.render() if self._row_collection is not None else "",
+                       json.dumps(self._tool_bar), json.dumps(self._footer), json.dumps(self._select_column),
+                       json.dumps(self._line_numbers), json.dumps(self._multi_select), self._sort_on, self._sort_dir)
+        elif self._data_url is not None and self._data_load_callback is None:
+            script = """
+                    <script>
+                        $2(function(){
+                            $2('#%s').w2grid({
+                                name: '%s',
+                                header: '%s',
+                                columns: %s,
+                                method: "GET",
+                                url: '%s',
+                                show: {
+                                    toolbar: %s,
+                                    footer: %s,
+                                    selectColumn: %s,
+                                    lineNumbers: %s
+                                },
+                                multiSelect: %s
+                                sortData: [{field: '%s', direction: '%s'}]
+                            });
+                        });
+                    </script>
+                    """ % (self._name, self._name, self._header, self._column_collection.render(),
+                           self._data_url, json.dumps(self._tool_bar), json.dumps(self._footer),
+                           json.dumps(self._select_column), json.dumps(self._line_numbers),
+                           json.dumps(self._multi_select), self._sort_on, self._sort_dir)
+        elif self._data_url is None and self._data_load_callback is not None:
+            url = str(__name__ + "_" + self._name + "_data_load").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            script = """
+                    <script>
+                        $2(function(){
+                            $2('#%s').w2grid({
+                                name: '%s',
+                                header: '%s',
+                                columns: %s,
+                                method: "GET",
+                                url: '%s',
+                                show: {
+                                    toolbar: %s,
+                                    footer: %s,
+                                    selectColumn: %s,
+                                    lineNumbers: %s
+                                },
+                                multiSelect: %s,
+                                sortData: [{field: '%s', direction: '%s'}]
+                            });
+                        });
+                    </script>
+                    """ % (self._name, self._name, self._header, self._column_collection.render(),
+                           url, json.dumps(self._tool_bar), json.dumps(self._footer),
+                           json.dumps(self._select_column), json.dumps(self._line_numbers),
+                           json.dumps(self._multi_select), self._sort_on, self._sort_dir)
+            if not found:
+                self._app.add_url_rule('/' + url, url,
+                                       self._process_data_load_callback)
         return script
+
+    def _process_data_load_callback(self):
+        record_collection = self._data_load_callback()
+        result = "{\n'total': " + record_collection.records.__len__() + ",\n"
+        result += "'records': " + record_collection.render()
+        return result
 
     def render(self):
         content = self._render_pre_content('div')
