@@ -244,6 +244,11 @@ class GridRecordCollection:
     def records(self, val):
         self._records = val
 
+    @property
+    def count(self):
+        """Returns the number of records available in the collection"""
+        return self._records.__len__()
+
     def add(self, record):
         """Adds an row or record in the collection
 
@@ -293,6 +298,7 @@ class Grid(Widget):
     _select_column = None
     _multi_select = None
     _line_numbers = None
+    _queue = None
 
     def __init__(self, name, header, column_collection, row_collection=None, desc=None,
                  prop=None, style=None, attr=None, disabled=False, onclick_callback=None,
@@ -364,6 +370,7 @@ class Grid(Widget):
             self._line_numbers = line_numbers
         else:
             self._line_numbers = False
+        self._queue = []
 
     def _attach_script(self):
         script = ""
@@ -453,12 +460,76 @@ class Grid(Widget):
 
     def _process_data_load_callback(self):
         record_collection = self._data_load_callback()
+        self._row_collection = record_collection
         result = "{\n'total': " + record_collection.records.__len__() + ",\n"
         result += "'records': " + record_collection.render()
         return result
 
+    def toggle_column(self, col_name):
+        """Toggles the visibility of an column in the grid
+
+            Args:
+                col_name: Name of the column that needs to be toggled
+        """
+        self._queue.append({'cmd': 'HIDE', 'arg0': col_name})
+
+    def add_record(self, record):
+        """Adds an record to the grid
+
+            Args:
+                record (GridRecord): An record of GridRecord type
+        """
+        rec_count = self._row_collection.count
+        self._row_collection.add(record)
+        record.add_cell('recid', rec_count + 1)
+        self._queue.append({'cmd': 'ADD-RECORD', 'arg0': record.render()})
+
+    def _sync_properties(self):
+        cmd = self._queue.pop()
+        if cmd['cmd'] == "HIDE":
+            return json.dumps(cmd)
+        if cmd['cmd'] == "ADD-RECORD":
+            return json.dumps(cmd)
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                    (function %s_poll(){
+                        setTimeout(function(){
+                            $.ajax({
+                                url: "/%s",
+                                success: function(props){
+                                    selector = $("#%s");
+                                    if(selector != undefined){
+                                        if(props.cmd == "HIDE"){
+                                            w2ui.grid.toggleColumn(props.arg0);
+                                        }
+                                        if(props.cmd == "ADD-RECORD"){
+                                            w2ui.['%s'].add(props.arg0);
+                                        }
+                                    }
+                                },
+                                error: function(err_status){
+                                    alertify.error("Status Code: "
+                                    + err_status.status + "<br />" + "Error Message:"
+                                    + err_status.statusText);
+                                },
+                                dataType: "json"
+                            });
+                        }, 10000);
+                    })();
+                    </script>
+                """ % (url, url, self._name, self._name)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url, self._sync_properties)
+        return script
+
     def render(self):
         content = self._render_pre_content('div')
         content += self._render_post_content('div') + "\n"
-        content += self._attach_script()
+        content += self._attach_script() + "\n" + self._attach_polling()
         return content
