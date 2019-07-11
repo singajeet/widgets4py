@@ -439,6 +439,10 @@ class Grid(Widget):
     _search_collection = None
     _data_url = None
     _tool_bar = None
+    _toolbarAdd = None
+    _toolbarDelete = None
+    _toolbarSave = None
+    _toolbarEdit = None
     _footer = None
     _sort_on = None
     _sort_dir = None
@@ -456,7 +460,8 @@ class Grid(Widget):
                  prop=None, style=None, attr=None, disabled=False, onclick_callback=None,
                  app=None, css_cls=None, data_url=None, data_load_callback=None,
                  toolbar=None, footer=None, sort_on=None, sort_dir=None, select_column=None,
-                 multi_select=None, line_numbers=None, search_collection=None, multi_search=None):
+                 multi_select=None, line_numbers=None, search_collection=None, multi_search=None,
+                 toolbarAdd=None, toolbarDelete=None, toolbarSave=None, toolbarEdit=None):
         """Default constructor of the Button widget class
 
             Args:
@@ -483,6 +488,10 @@ class Grid(Widget):
                 line_numbers (boolean): Shows line number in each row or record
                 search_collection (GridSearchCollection): A list of search option
                 multi_search (boolean): Wether to all multi field search or not
+                toolbarAdd (boolean): Show or hide the Add button in toolbar
+                toolbarDelete (boolean): Show or hide the Delete button in toolbar
+                toolbarSave (boolean): Show or hide the Save button in toolbar
+                toolbarEdit (boolean): Show or hide the Edit button in toolbar
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
@@ -530,6 +539,22 @@ class Grid(Widget):
         else:
             self._multi_search = False
         self._queue = []
+        if toolbarAdd is not None:
+            self._toolbarAdd = toolbarAdd
+        else:
+            self._toolbarAdd = False
+        if toolbarDelete is not None:
+            self._toolbarDelete = toolbarDelete
+        else:
+            self._toolbarDelete = False
+        if toolbarSave is not None:
+            self._toolbarSave = toolbarSave
+        else:
+            self._toolbarSave = False
+        if toolbarEdit is not None:
+            self._toolbarEdit = toolbarEdit
+        else:
+            self._toolbarEdit = False
 
     def _attach_script(self):
         script = ""
@@ -546,9 +571,25 @@ class Grid(Widget):
                                     toolbar: %s,
                                     footer: %s,
                                     selectColumn: %s,
-                                    lineNumbers: %s
+                                    lineNumbers: %s,
+                                    toolbarAdd: %s,
+                                    toolbarDelete: %s,
+                                    toolbarSave: %s,
+                                    toolbarEdit: %s
                                 },
                                 multiSelect: %s,
+                                onAdd: function (event) {
+                                    w2alert('add');
+                                },
+                                onEdit: function (event) {
+                                    w2alert('edit');
+                                },
+                                onDelete: function (event) {
+                                    console.log('delete has default behavior');
+                                },
+                                onSave: function (event) {
+                                    w2alert('save');
+                                },
                                 sortData: [{field: '%s', direction: '%s'}],
                                 multiSearch: %s
                                 %s  //searches placeholder
@@ -559,6 +600,8 @@ class Grid(Widget):
                        self._row_collection.render() if self._row_collection is not None else "",
                        json.dumps(self._tool_bar), json.dumps(self._footer),
                        json.dumps(self._select_column), json.dumps(self._line_numbers),
+                       json.dumps(self._toolbarAdd), json.dumps(self._toolbarDelete),
+                       json.dumps(self._toolbarSave), json.dumps(self._toolbarEdit),
                        json.dumps(self._multi_select), self._sort_on, self._sort_dir,
                        json.dumps(self._multi_search),
                        (", searches: " + self._search_collection if self._search_collection is not None else ""))
@@ -576,7 +619,11 @@ class Grid(Widget):
                                     toolbar: %s,
                                     footer: %s,
                                     selectColumn: %s,
-                                    lineNumbers: %s
+                                    lineNumbers: %s,
+                                    toolbarAdd: %s,
+                                    toolbarDelete: %s,
+                                    toolbarSave: %s,
+                                    toolbarEdit: %s
                                 },
                                 multiSelect: %s
                                 sortData: [{field: '%s', direction: '%s'}],
@@ -588,6 +635,8 @@ class Grid(Widget):
                     """ % (self._name, self._name, self._header, self._column_collection.render(),
                            self._data_url, json.dumps(self._tool_bar), json.dumps(self._footer),
                            json.dumps(self._select_column), json.dumps(self._line_numbers),
+                           json.dumps(self._toolbarAdd), json.dumps(self._toolbarDelete),
+                           json.dumps(self._toolbarSave), json.dumps(self._toolbarEdit),
                            json.dumps(self._multi_select), self._sort_on, self._sort_dir,
                            json.dumps(self._multi_search),
                            (", searches: " + self._search_collection if self._search_collection is not None else ""))
@@ -610,7 +659,11 @@ class Grid(Widget):
                                     toolbar: %s,
                                     footer: %s,
                                     selectColumn: %s,
-                                    lineNumbers: %s
+                                    lineNumbers: %s,
+                                    toolbarAdd: %s,
+                                    toolbarDelete: %s,
+                                    toolbarSave: %s,
+                                    toolbarEdit: %s
                                 },
                                 multiSelect: %s,
                                 sortData: [{field: '%s', direction: '%s'}],
@@ -622,6 +675,8 @@ class Grid(Widget):
                     """ % (self._name, self._name, self._header, self._column_collection.render(),
                            url, json.dumps(self._tool_bar), json.dumps(self._footer),
                            json.dumps(self._select_column), json.dumps(self._line_numbers),
+                           json.dumps(self._toolbarAdd), json.dumps(self._toolbarDelete),
+                           json.dumps(self._toolbarSave), json.dumps(self._toolbarEdit),
                            json.dumps(self._multi_select), self._sort_on, self._sort_dir,
                            json.dumps(self._multi_search),
                            (", searches: " + self._search_collection if self._search_collection is not None else ""))
@@ -735,12 +790,11 @@ class Grid(Widget):
                                     + err_status.statusText);
                                 }
                             });
-                            
                             %s_poll();
                         }, 10000);
                     })();
                     </script>
-                """ % (url, url, self._name, self._name, url)  # self._name, self._name, url)
+                """ % (url, url, self._name, self._name, url)
         found = False
         for rule in self._app.url_map.iter_rules():
             if rule.endpoint == url:
