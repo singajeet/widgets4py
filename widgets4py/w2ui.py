@@ -443,6 +443,14 @@ class Grid(Widget):
     _toolbarDelete = None
     _toolbarSave = None
     _toolbarEdit = None
+    _toolbar_add_client_script = None
+    _toolbar_add_callback = None
+    _toolbar_delete_client_script = None
+    _toolbar_delete_callback = None
+    _toolbar_save_client_sceipt = None
+    _toolbar_save_callback = None
+    _toolbar_delete_client_callback = None
+    _toolbar_delete_callback = None
     _footer = None
     _sort_on = None
     _sort_dir = None
@@ -455,13 +463,21 @@ class Grid(Widget):
     _line_numbers = None
     _queue = None
     _multi_search = None
+    _toolbar_add_url = None
+    _toolbar_delete_url = None
+    _toolbar_save_url = None
+    _toolbar_edit_url = None
 
-    def __init__(self, name, header, column_collection, row_collection=None, desc=None,
+    def __init__(self, name, header, column_collection, row_collection=None, desc=None,  # noqa
                  prop=None, style=None, attr=None, disabled=False, onclick_callback=None,
                  app=None, css_cls=None, data_url=None, data_load_callback=None,
                  toolbar=None, footer=None, sort_on=None, sort_dir=None, select_column=None,
                  multi_select=None, line_numbers=None, search_collection=None, multi_search=None,
-                 toolbarAdd=None, toolbarDelete=None, toolbarSave=None, toolbarEdit=None):
+                 toolbarAdd=None, toolbarDelete=None, toolbarSave=None, toolbarEdit=None,
+                 toolbar_add_client_script=None, toolbar_add_callback=None,
+                 toolbar_delete_client_script=None, toolbar_delete_callback=None,
+                 toolbar_save_client_script=None, toolbar_save_callback=None,
+                 toolbar_edit_client_script=None, toolbar_edit_callback=None):
         """Default constructor of the Button widget class
 
             Args:
@@ -492,6 +508,14 @@ class Grid(Widget):
                 toolbarDelete (boolean): Show or hide the Delete button in toolbar
                 toolbarSave (boolean): Show or hide the Save button in toolbar
                 toolbarEdit (boolean): Show or hide the Edit button in toolbar
+                toolbar_add_client_script (string): JS script to be added for execution at client
+                toolbar_add_callback (callable): It will be called at server side when add button is clicked
+                toolbar_delete_client_script (string): JS script to be added for execution at client
+                toolbar_delete_callback (callable): It will be called at server side when delete button is clicked
+                toolbar_save_client_script (string): JS script to be added for execution at client
+                toolbar_save_callback (callable): It will be called at server side when save button is clicked
+                toolbar_edit_client_script (string): JS script to be added for execution at client
+                toolbar_edit_callback (callable): It will be called at server side when edit button is clicked
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
@@ -555,8 +579,17 @@ class Grid(Widget):
             self._toolbarEdit = toolbarEdit
         else:
             self._toolbarEdit = False
+        self._toolbar_add_client_script = toolbar_add_client_script
+        self._toolbar_add_callback = toolbar_add_callback
+        self._toolbar_delete_client_script = toolbar_delete_client_script
+        self._toolbar_delete_callback = toolbar_delete_callback
+        self._toolbar_save_client_script = toolbar_save_client_script
+        self._toolbar_save_callback = toolbar_save_callback
+        self._toolbar_edit_client_script = toolbar_edit_client_script
+        self._toolbar_edit_callback = toolbar_edit_callback
 
     def _attach_script(self):
+        self._load_toolbar_urls()
         script = ""
         if self._data_url is None and self._data_load_callback is None:
             script = """
@@ -579,16 +612,16 @@ class Grid(Widget):
                                 },
                                 multiSelect: %s,
                                 onAdd: function (event) {
-                                    w2alert('add');
+                                    %s
                                 },
                                 onEdit: function (event) {
-                                    w2alert('edit');
+                                    %s
                                 },
                                 onDelete: function (event) {
-                                    console.log('delete has default behavior');
+                                    %s
                                 },
                                 onSave: function (event) {
-                                    w2alert('save');
+                                    %s
                                 },
                                 sortData: [{field: '%s', direction: '%s'}],
                                 multiSearch: %s
@@ -602,7 +635,12 @@ class Grid(Widget):
                        json.dumps(self._select_column), json.dumps(self._line_numbers),
                        json.dumps(self._toolbarAdd), json.dumps(self._toolbarDelete),
                        json.dumps(self._toolbarSave), json.dumps(self._toolbarEdit),
-                       json.dumps(self._multi_select), self._sort_on, self._sort_dir,
+                       json.dumps(self._multi_select),
+                       self._toolbar_add_client_script,
+                       self._toolbar_edit_client_script,
+                       self._toolbar_delete_client_callback,
+                       self._toolbar_save_client_sceipt,
+                       self._sort_on, self._sort_dir,
                        json.dumps(self._multi_search),
                        (", searches: " + self._search_collection if self._search_collection is not None else ""))
         elif self._data_url is not None and self._data_load_callback is None:
@@ -627,16 +665,16 @@ class Grid(Widget):
                                 },
                                 multiSelect: %s,
                                 onAdd: function (event) {
-                                    w2alert('add');
+                                    %s
                                 },
                                 onEdit: function (event) {
-                                    w2alert('edit');
+                                    %s
                                 },
                                 onDelete: function (event) {
-                                    console.log('delete has default behavior');
+                                    %s
                                 },
                                 onSave: function (event) {
-                                    w2alert('save');
+                                    %s
                                 },
                                 sortData: [{field: '%s', direction: '%s'}],
                                 multiSearch: %s
@@ -649,7 +687,12 @@ class Grid(Widget):
                            json.dumps(self._select_column), json.dumps(self._line_numbers),
                            json.dumps(self._toolbarAdd), json.dumps(self._toolbarDelete),
                            json.dumps(self._toolbarSave), json.dumps(self._toolbarEdit),
-                           json.dumps(self._multi_select), self._sort_on, self._sort_dir,
+                           json.dumps(self._multi_select),
+                           self._toolbar_add_client_script,
+                           self._toolbar_edit_client_script,
+                           self._toolbar_delete_client_callback,
+                           self._toolbar_save_client_sceipt,
+                           self._sort_on, self._sort_dir,
                            json.dumps(self._multi_search),
                            (", searches: " + self._search_collection if self._search_collection is not None else ""))
         elif self._data_url is None and self._data_load_callback is not None:
@@ -679,16 +722,16 @@ class Grid(Widget):
                                 },
                                 multiSelect: %s,
                                 onAdd: function (event) {
-                                    w2alert('add');
+                                    %s
                                 },
                                 onEdit: function (event) {
-                                    w2alert('edit');
+                                    %s
                                 },
                                 onDelete: function (event) {
-                                    console.log('delete has default behavior');
+                                    %s
                                 },
                                 onSave: function (event) {
-                                    w2alert('save');
+                                    %s
                                 },
                                 sortData: [{field: '%s', direction: '%s'}],
                                 multiSearch: %s
@@ -701,7 +744,12 @@ class Grid(Widget):
                            json.dumps(self._select_column), json.dumps(self._line_numbers),
                            json.dumps(self._toolbarAdd), json.dumps(self._toolbarDelete),
                            json.dumps(self._toolbarSave), json.dumps(self._toolbarEdit),
-                           json.dumps(self._multi_select), self._sort_on, self._sort_dir,
+                           json.dumps(self._multi_select),
+                           self._toolbar_add_client_script,
+                           self._toolbar_edit_client_script,
+                           self._toolbar_delete_client_callback,
+                           self._toolbar_save_client_sceipt,
+                           self._sort_on, self._sort_dir,
                            json.dumps(self._multi_search),
                            (", searches: " + self._search_collection if self._search_collection is not None else ""))
             if not found:
@@ -709,12 +757,66 @@ class Grid(Widget):
                                        self._process_data_load_callback)
         return script
 
+    def _load_toolbar_urls(self):  # noqa
+            # Toolbar Add Url
+            self._toolbar_add_url = str(__name__ + "_" + self._name + "_toolbar_add").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == self._toolbar_add_url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + self._toolbar_add_url, self._toolbar_add_url,
+                                       self._process_toolbar_add_callback)
+            # Toolbar Delete Url
+            self._toolbar_delete_url = str(__name__ + "_" + self._name + "_toolbar_delete").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == self._toolbar_delete_url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + self._toolbar_delete_url, self._toolbar_delete_url,
+                                       self._process_toolbar_delete_callback)
+            # Toolbar Edit Url
+            self._toolbar_edit_url = str(__name__ + "_" + self._name + "_toolbar_edit").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == self._toolbar_edit_url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + self._toolbar_edit_url, self._toolbar_edit_url,
+                                       self._process_toolbar_edit_callback)
+            # Toolbar Save Url
+            self._toolbar_save_url = str(__name__ + "_" + self._name + "_toolbar_save").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == self._toolbar_save_url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + self._toolbar_save_url, self._toolbar_save_url,
+                                       self._process_toolbar_save_callback)
+
     def _process_data_load_callback(self):
         record_collection = self._data_load_callback()
         self._row_collection = record_collection
         result = "{\n'total': " + record_collection.records.__len__() + ",\n"
         result += "'records': " + record_collection.render()
         return result
+
+    def _process_toolbar_add_callback(self):
+        if self._toolbar_add_callback is not None:
+            self._toolbar_add_callback()
+
+    def _process_toolbar_edit_callback(self):
+        if self._toolbar_edit_callback is not None:
+            self._toolbar_edit_callback()
+
+    def _process_toolbar_delete_callback(self):
+        if self._toolbar_delete_callback is not None:
+            self._toolbar_delete_callback()
+
+    def _process_toolbar_save_callback(self):
+        if self._toolbar_save_callback is not None:
+            self._toolbar_save_callback()
 
     def toggle_column(self, col_name):
         """Toggles the visibility of an column in the grid
