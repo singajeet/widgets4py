@@ -12,6 +12,7 @@ from widgets4py.base import Page
 # from widgets4py.jquery_ui import Menu, MenuItem, SubMenu, MenuTypes, Slider, Spinner
 # from widgets4py.jquery_ui import TabSection, Tab
 from widgets4py.w2ui import GridColumn, GridColumnCollection, GridRecord, GridRecordCollection, Grid
+from widgets4py.w2ui import Toolbar, ToolbarButton, ToolbarSeparator
 from multiprocessing import Process
 
 
@@ -73,9 +74,21 @@ class PageTest:
     g_rec2 = None
     g_record_coll = None
     grid = None
+    tool_btn1 = None
+    tool_sep = None
+    tool_btn2 = None
+    toolbar = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
+        self.toolbar = Toolbar('MyBar')
+        self.tool_btn1 = ToolbarButton('tool_btn1', 'Button1', icon='fa-star')
+        self.tool_btn2 = ToolbarButton('tool_btn2', 'Button2', icon='fa-heart')
+        self.tool_sep = ToolbarSeparator('tool_sep', 'Sep')
+        self.toolbar.add(self.tool_btn1)
+        self.toolbar.add(self.tool_sep)
+        self.toolbar.add(self.tool_btn2)
+        pg.add(self.toolbar)
         self.g_col1 = GridColumn('fname', 'First Name', 50)
         self.g_col2 = GridColumn('lname', 'Last Name', 50)
         self.g_column_coll = GridColumnCollection()

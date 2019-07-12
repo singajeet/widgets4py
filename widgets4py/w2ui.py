@@ -934,3 +934,215 @@ class Grid(Widget):
         content += self._render_post_content('div') + "\n"
         content += self._attach_script() + "\n" + self._attach_polling()
         return content
+
+
+class ToolbarButton(Widget):
+    """Shows a simple button with text or icon or both"""
+
+    _name = None
+    _title = None
+    _icon = None
+    _type = None
+    _group = None
+
+    def __init__(self, name, title=None, icon=None, group=None):
+        """Default constructor parameters
+
+            Args:
+                name (string): An id or name of button to be used internally
+                title (string, optional): Title of the button, if not provided, icon parm should have value
+                icon (string, optional): Icon to be shown on the widget. If not provided, title should have some value
+                group (string, optional): used by widgets like radiobutton to group wiidgets together
+        """
+        self._name = name
+        self._title = title
+        self._icon = icon
+        self._type = "button"
+        self._group = group
+        if title is None and icon is None:
+            raise ValueError("Either Title or Icon param should have value")
+
+    @property
+    def name(self):
+        """Id or name of the widget"""
+        return self._name
+
+    @name.setter
+    def name(self, val):
+        self._name = val
+
+    @property
+    def title(self):
+        """Title of the widget"""
+        return self._title
+
+    @title.setter
+    def title(self, val):
+        self._title = val
+
+    @property
+    def icon(self):
+        """Icon to be used by the widget """
+        return self._icon
+
+    @icon.setter
+    def icon(self, val):
+        self._icon = val
+
+    @property
+    def group(self):
+        """Groups widget under one Group"""
+        return self._group
+
+    @group.setter
+    def group(self, val):
+        return self._group
+
+    def render(self):
+        """Renders the widget under parent widget"""
+        content = "{"
+        content += "type: '" + self._type + "', "
+        content += "id: '" + self._name + "', "
+        if self._title is not None:
+            content += "text: '" + self._title + "', "
+        if self._icon is not None:
+            content += "icon: '" + self._icon + "', "
+        if self._group is not None:
+            content += "group: '" + self._group + "', "
+        content += "}"
+        return content
+
+
+class ToolbarCheck(ToolbarButton):
+    """Adds an chexkbox widget to the toolbar """
+
+    def __init__(self, name, title=None, icon=None, group=None):
+        ToolbarButton.__init__(self, name, title, icon, group)
+        self._type = "check"
+
+
+class ToolbarRadio(ToolbarButton):
+    """Adds an Radio button widget to the toolbar """
+
+    def __init__(self, name, title=None, icon=None, group=None):
+        ToolbarButton.__init__(self, name, title, icon, group)
+        self._type = "radio"
+
+
+class ToolbarSeparator(ToolbarButton):
+    """Adds an separator widget to the toolbar """
+
+    def __init__(self, name, title=None, icon=None, group=None):
+        ToolbarButton.__init__(self, name, title, icon, group)
+        self._type = "break"
+
+
+class ToolbarSpacer(ToolbarButton):
+    """Adds an spacer widget to the toolbar """
+
+    def __init__(self, name, title=None, icon=None, group=None):
+        ToolbarButton.__init__(self, name, title, icon, group)
+        self._type = "spacer"
+
+
+class ToolbarMenu(ToolbarButton):
+    """Adds an menu widget and its subitems to toolbar
+    """
+
+    _count = None
+    _items = None
+
+    def __init__(self, name, title=None, icon=None, group=None, count=None, items=None):
+        ToolbarButton.__init__(self, name, title, icon, group)
+        if count is None:
+            if items is not None and items.__len__() > 0:
+                self._count = items.__len__()
+            else:
+                self._count = 0
+        else:
+            self._count = count
+        if items is not None:
+            self._items = items
+        else:
+            self._items = []
+        self._type = 'menu'
+
+    def add_item(self, text, icon=None, count=None, disabled=None):
+        item = "{ text: '" + text + "', "
+        if icon is not None:
+            item += "icon: '" + icon + "', "
+        if count is not None:
+            item += "count: " + count + ", "
+        if disabled is not None and disabled:
+            item += "disabled: true "
+        item += "}"
+        self._items.append(item)
+
+    def render(self):
+        content = "{ type: '" + self._type + "', "
+        content += "id: '" + self._name + "', "
+        if self._title is not None:
+            content += "text: '" + self._title + "', "
+        if self._icon is not None:
+            content += "icon: '" + self._icon + "', "
+        if self._count is not None:
+            content += "count: " + self._count + ", "
+        if self._items is not None:
+            content += "items: " + str(self._items)
+        content += "}"
+        return content
+
+
+class Toolbar(Widget):
+    """A toolbar having collection of buttons, chexkbox,
+    radio buttons, separaters, etc. An toolbar item can
+    have title or button or both
+    """
+
+    _onclick_callback = None
+    _onclick_client_script = None
+
+    def __init__(self, name, items=None, onclick_callback=None, onclick_client_script=None):
+        """
+            name (string): Name or Id for internal use
+            items (Widget): Child items like, ToolbarButton, ToolbarRadio, etc
+            onclick_callback (callable): will be called when mouse is clicked on any child item
+            onclick_client_script (string): JS to be called when mouse is clicked on any item
+        """
+        Widget.__init__(self, name)
+        if items is not None:
+            self._child_widgets = items
+        else:
+            self._child_widgets = []
+        self._onclick_callback = onclick_callback
+        if onclick_client_script is not None:
+            self._onclick_client_script = onclick_client_script
+        else:
+            self._onclick_client_script = ""
+
+    def _attach_script(self):
+        child_widgets = "[\n"
+        for child in self._child_widgets:
+            child_widgets += child.render() + ",\n"
+        child_widgets += "\n]"
+        script = """
+                <script>
+                    $2(function(){
+                        $2('#%s').w2toolbar({
+                            name: '%s',
+                            items: %s,
+                            onClick: function(event){
+                                %s
+                            }
+                        });
+                    });
+                </script>
+                """ % (self._name, self._name, child_widgets, self._onclick_client_script)
+        return script
+
+    def render(self):
+        content = self._render_pre_content('div')
+        content += self._render_post_content('div')
+        content += "\n" + self._attach_script()
+        self._widget_content = content
+        return self._widget_content
