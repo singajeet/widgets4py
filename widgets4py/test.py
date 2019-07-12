@@ -12,7 +12,7 @@ from widgets4py.base import Page
 # from widgets4py.jquery_ui import Menu, MenuItem, SubMenu, MenuTypes, Slider, Spinner
 # from widgets4py.jquery_ui import TabSection, Tab
 from widgets4py.w2ui import GridColumn, GridColumnCollection, GridRecord, GridRecordCollection, Grid
-from widgets4py.w2ui import Toolbar, ToolbarButton, ToolbarSeparator
+from widgets4py.w2ui import Toolbar, ToolbarButton, ToolbarSeparator, ToolbarCheck, ToolbarRadio, ToolbarMenu
 from multiprocessing import Process
 
 
@@ -78,6 +78,10 @@ class PageTest:
     tool_sep = None
     tool_btn2 = None
     toolbar = None
+    tool_rd1 = None
+    tool_rd2 = None
+    tool_chk1 = None
+    tool_menu = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -85,9 +89,19 @@ class PageTest:
         self.tool_btn1 = ToolbarButton('tool_btn1', 'Button1', icon='fa-star')
         self.tool_btn2 = ToolbarButton('tool_btn2', 'Button2', icon='fa-heart')
         self.tool_sep = ToolbarSeparator('tool_sep', 'Sep')
+        self.tool_rd1 = ToolbarRadio('tool_rd1', 'Radio1', group='A')
+        self.tool_rd2 = ToolbarRadio('tool_rd2', 'Radio2', group='A')
+        self.tool_chk1 = ToolbarCheck('tool_chk1', 'Checkbox')
+        self.tool_menu = ToolbarMenu('tool_menu', 'Menu', count=2)
+        self.tool_menu.add_item('itm1', 'Item1', count=1)
+        self.tool_menu.add_item('itm2', 'Item2', count=1)
         self.toolbar.add(self.tool_btn1)
         self.toolbar.add(self.tool_sep)
         self.toolbar.add(self.tool_btn2)
+        self.toolbar.add(self.tool_rd1)
+        self.toolbar.add(self.tool_rd2)
+        self.toolbar.add(self.tool_chk1)
+        self.toolbar.add(self.tool_menu)
         pg.add(self.toolbar)
         self.g_col1 = GridColumn('fname', 'First Name', 50)
         self.g_col2 = GridColumn('lname', 'Last Name', 50)

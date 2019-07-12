@@ -1072,13 +1072,17 @@ class ToolbarMenu(ToolbarButton):
         if icon is not None:
             item += "icon: '" + icon + "', "
         if count is not None:
-            item += "count: " + count + ", "
+            item += "count: " + str(count) + ", "
         if disabled is not None and disabled:
             item += "disabled: true "
         item += "}"
         self._items.append(item)
 
     def render(self):
+        items = "[\n"
+        for itm in self._items:
+            items += itm + ",\n"
+        items += "\n]"
         content = "{ type: '" + self._type + "', "
         content += "id: '" + self._name + "', "
         if self._title is not None:
@@ -1086,9 +1090,9 @@ class ToolbarMenu(ToolbarButton):
         if self._icon is not None:
             content += "icon: '" + self._icon + "', "
         if self._count is not None:
-            content += "count: " + self._count + ", "
+            content += "count: " + str(self._count) + ", "
         if self._items is not None:
-            content += "items: " + str(self._items)
+            content += "items: " + items
         content += "}"
         return content
 
