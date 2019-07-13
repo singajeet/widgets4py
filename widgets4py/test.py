@@ -13,7 +13,7 @@ from widgets4py.base import Page
 # from widgets4py.jquery_ui import TabSection, Tab
 from widgets4py.w2ui import GridColumn, GridColumnCollection, GridRecord, GridRecordCollection, Grid
 from widgets4py.w2ui import Toolbar, ToolbarButton, ToolbarSeparator, ToolbarCheck
-from widgets4py.w2ui import ToolbarRadio, ToolbarMenu, ToolbarMenuRadio, ToolbarMenuCheck
+from widgets4py.w2ui import ToolbarRadio, ToolbarMenu, ToolbarMenuRadio, ToolbarMenuCheck, ToolbarDropDown, ToolbarHTML
 from multiprocessing import Process
 
 
@@ -85,10 +85,12 @@ class PageTest:
     tool_menu = None
     tool_menu_rd = None
     tool_menu_chk = None
+    tool_dd = None
+    tool_html = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
-        self.toolbar = Toolbar('MyBar')
+        self.toolbar = Toolbar('MyBar', onclick_callback=self.toolbar_clicked, app=app)
         self.tool_btn1 = ToolbarButton('tool_btn1', 'Button1', icon='fa-star')
         self.tool_btn2 = ToolbarButton('tool_btn2', 'Button2', icon='fa-heart')
         self.tool_sep = ToolbarSeparator('tool_sep', 'Sep')
@@ -106,6 +108,8 @@ class PageTest:
         self.tool_menu_chk.add_item('ck1', 'Check1')
         self.tool_menu_chk.add_item('ck2', 'Check2')
         self.tool_menu_chk.add_item('ck3', 'Check3')
+        self.tool_dd = ToolbarDropDown('tool_dd', "<p>My name is Singh...Ajeet Singh!!", "Drop")
+        self.tool_html = ToolbarHTML('tool_html', '<span>Name:</span><input type="text" id="smid" />', title='abc')
         self.toolbar.add(self.tool_btn1)
         self.toolbar.add(self.tool_sep)
         self.toolbar.add(self.tool_btn2)
@@ -115,6 +119,8 @@ class PageTest:
         self.toolbar.add(self.tool_menu)
         self.toolbar.add(self.tool_menu_rd)
         self.toolbar.add(self.tool_menu_chk)
+        self.toolbar.add(self.tool_dd)
+        self.toolbar.add(self.tool_html)
         pg.add(self.toolbar)
         self.g_col1 = GridColumn('fname', 'First Name', 50)
         self.g_col2 = GridColumn('lname', 'Last Name', 50)
@@ -226,6 +232,10 @@ class PageTest:
         pg.add(self.grid)
         content = pg.render()
         return content
+
+    def toolbar_clicked(self):
+        print("Toolbar clicked on item: " + self.toolbar.clicked_item)
+        return "success"
 
     def tab_clicked(self):
         print("Tab clicked: " + self.tab.selected_index)

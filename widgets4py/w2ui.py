@@ -1438,8 +1438,8 @@ class ToolbarHTML(ToolbarDropDown):
     have any dropdown to show its content
     """
 
-    def __init__(self, name, html):
-        ToolbarDropDown.__init__(self, name, html, title=None, icon=None, group=None)
+    def __init__(self, name, html, title=None, icon=None):
+        ToolbarDropDown.__init__(self, name, html, title=title, icon=icon, group=None)
         self._type = 'html'
 
 
@@ -1451,13 +1451,16 @@ class Toolbar(Widget):
 
     _onclick_callback = None
     _onclick_client_script = None
+    _app = None
+    _clicked_item = None
 
-    def __init__(self, name, items=None, onclick_callback=None, onclick_client_script=None):
+    def __init__(self, name, items=None, onclick_callback=None, onclick_client_script=None, app=None):
         """
             name (string): Name or Id for internal use
             items (Widget): Child items like, ToolbarButton, ToolbarRadio, etc
             onclick_callback (callable): will be called when mouse is clicked on any child item
             onclick_client_script (string): JS to be called when mouse is clicked on any item
+            app (Flask): An instance of Flask app
         """
         Widget.__init__(self, name)
         if items is not None:
@@ -1469,8 +1472,18 @@ class Toolbar(Widget):
             self._onclick_client_script = onclick_client_script
         else:
             self._onclick_client_script = ""
+        self._app = app
 
     def _attach_script(self):
+        url = ""
+        if self._app is not None:
+            url = str(__name__ + "_" + self._name)
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + url, url, self._process_onclick_callback)
         child_widgets = "[\n"
         for child in self._child_widgets:
             child_widgets += child.render() + ",\n"
@@ -1483,12 +1496,39 @@ class Toolbar(Widget):
                             items: %s,
                             onClick: function(event){
                                 %s
+                                $2.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    data: {'target': event.target},
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){}
+                                });
                             }
                         });
                     });
                 </script>
-                """ % (self._name, self._name, child_widgets, self._onclick_client_script)
+                """ % (self._name, self._name, child_widgets, self._onclick_client_script, url)
         return script
+
+    def _process_onclick_callback(self):
+        if request.args.__len__() > 0:
+            val = request.args['target']
+            if val is not None:
+                self._clicked_item = val
+        if self._onclick_callback is not None:
+            return json.dumps({'result': self._onclick_callback()})
+        return json.dumps({'result': ''})
+
+    @property
+    def clicked_item(self):
+        """Contains the name / id of item where mouse was clicked (i.e., the item which received the mouse
+        click event)"""
+        return self._clicked_item
+
+    @clicked_item.setter
+    def clicked_item(self, val):
+        self._clicked_item = val
 
     def render(self):
         content = self._render_pre_content('div')
