@@ -447,7 +447,7 @@ class Grid(Widget):
     _toolbar_add_callback = None
     _toolbar_delete_client_script = None
     _toolbar_delete_callback = None
-    _toolbar_save_client_sceipt = None
+    _toolbar_save_client_script = None
     _toolbar_save_callback = None
     _toolbar_delete_client_callback = None
     _toolbar_delete_callback = None
@@ -457,6 +457,7 @@ class Grid(Widget):
     _data_load_callback = None
     _app = None
     _onclick_callback = None
+    _onclick_url = None
     _disabled = None
     _select_column = None
     _multi_select = None
@@ -579,13 +580,25 @@ class Grid(Widget):
             self._toolbarEdit = toolbarEdit
         else:
             self._toolbarEdit = False
-        self._toolbar_add_client_script = toolbar_add_client_script
+        if toolbar_add_client_script is not None:
+            self._toolbar_add_client_script = toolbar_add_client_script
+        else:
+            self._toolbar_add_client_script = ""
         self._toolbar_add_callback = toolbar_add_callback
-        self._toolbar_delete_client_script = toolbar_delete_client_script
+        if toolbar_delete_client_script is not None:
+            self._toolbar_delete_client_script = toolbar_delete_client_script
+        else:
+            self._toolbar_delete_client_script = ""
         self._toolbar_delete_callback = toolbar_delete_callback
-        self._toolbar_save_client_script = toolbar_save_client_script
+        if toolbar_save_client_script is not None:
+            self._toolbar_save_client_script = toolbar_save_client_script
+        else:
+            self._toolbar_save_client_script = ""
         self._toolbar_save_callback = toolbar_save_callback
-        self._toolbar_edit_client_script = toolbar_edit_client_script
+        if toolbar_edit_client_script is not None:
+            self._toolbar_edit_client_script = toolbar_edit_client_script
+        else:
+            self._toolbar_edit_client_script = ""
         self._toolbar_edit_callback = toolbar_edit_callback
 
     def _attach_script(self):
@@ -611,17 +624,84 @@ class Grid(Widget):
                                     toolbarEdit: %s
                                 },
                                 multiSelect: %s,
+                                onClick: function(event){
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
+                                },
                                 onAdd: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 onEdit: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 onDelete: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 onSave: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 sortData: [{field: '%s', direction: '%s'}],
                                 multiSearch: %s
@@ -636,10 +716,15 @@ class Grid(Widget):
                        json.dumps(self._toolbarAdd), json.dumps(self._toolbarDelete),
                        json.dumps(self._toolbarSave), json.dumps(self._toolbarEdit),
                        json.dumps(self._multi_select),
+                       self._onclick_url,
                        self._toolbar_add_client_script,
+                       self._toolbar_add_url,
                        self._toolbar_edit_client_script,
+                       self._toolbar_edit_url,
                        self._toolbar_delete_client_callback,
-                       self._toolbar_save_client_sceipt,
+                       self._toolbar_delete_url,
+                       self._toolbar_save_client_script,
+                       self._toolbar_save_url,
                        self._sort_on, self._sort_dir,
                        json.dumps(self._multi_search),
                        (", searches: " + self._search_collection if self._search_collection is not None else ""))
@@ -664,17 +749,84 @@ class Grid(Widget):
                                     toolbarEdit: %s
                                 },
                                 multiSelect: %s,
+                                onClick: function(event){
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
+                                },
                                 onAdd: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 onEdit: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 onDelete: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 onSave: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 sortData: [{field: '%s', direction: '%s'}],
                                 multiSearch: %s
@@ -688,10 +840,15 @@ class Grid(Widget):
                            json.dumps(self._toolbarAdd), json.dumps(self._toolbarDelete),
                            json.dumps(self._toolbarSave), json.dumps(self._toolbarEdit),
                            json.dumps(self._multi_select),
+                           self._onclick_url,
                            self._toolbar_add_client_script,
+                           self._toolbar_add_url,
                            self._toolbar_edit_client_script,
+                           self._toolbar_edit_url,
                            self._toolbar_delete_client_callback,
-                           self._toolbar_save_client_sceipt,
+                           self._toolbar_delete_url,
+                           self._toolbar_save_client_script,
+                           self._toolbar_save_url,
                            self._sort_on, self._sort_dir,
                            json.dumps(self._multi_search),
                            (", searches: " + self._search_collection if self._search_collection is not None else ""))
@@ -721,17 +878,84 @@ class Grid(Widget):
                                     toolbarEdit: %s
                                 },
                                 multiSelect: %s,
+                                onClick: function(event){
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
+                                },
                                 onAdd: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 onEdit: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 onDelete: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 onSave: function (event) {
                                     %s
+                                    //AJAX to fire callbacks
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        //data: {'data': event},
+                                        success: function(){},
+                                        error: function(){
+                                                    alertify.error("Status Code: "
+                                                    + err_status.status + "<br />" + "Error Message:"
+                                                    + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 sortData: [{field: '%s', direction: '%s'}],
                                 multiSearch: %s
@@ -745,10 +969,15 @@ class Grid(Widget):
                            json.dumps(self._toolbarAdd), json.dumps(self._toolbarDelete),
                            json.dumps(self._toolbarSave), json.dumps(self._toolbarEdit),
                            json.dumps(self._multi_select),
+                           self._onclick_url,
                            self._toolbar_add_client_script,
+                           self._toolbar_add_url,
                            self._toolbar_edit_client_script,
+                           self._toolbar_edit_url,
                            self._toolbar_delete_client_callback,
-                           self._toolbar_save_client_sceipt,
+                           self._toolbar_delete_url,
+                           self._toolbar_save_client_script,
+                           self._toolbar_save_url,
                            self._sort_on, self._sort_dir,
                            json.dumps(self._multi_search),
                            (", searches: " + self._search_collection if self._search_collection is not None else ""))
@@ -758,6 +987,15 @@ class Grid(Widget):
         return script
 
     def _load_toolbar_urls(self):  # noqa
+            # Toolbar Add Url
+            self._onclick_url = str(__name__ + "_" + self._name + "_grid_onclick").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == self._onclick_url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + self._onclick_url, self._onclick_url,
+                                       self._process_onclick_callback)
             # Toolbar Add Url
             self._toolbar_add_url = str(__name__ + "_" + self._name + "_toolbar_add").replace('.', '_')
             found = False
@@ -795,6 +1033,11 @@ class Grid(Widget):
                 self._app.add_url_rule('/' + self._toolbar_save_url, self._toolbar_save_url,
                                        self._process_toolbar_save_callback)
 
+    def _process_onclick_callback(self):
+        if self._onclick_callback is not None:
+            return json.dumps({'result': self._onclick_callback()})
+        return json.dumps({'result': ''})
+
     def _process_data_load_callback(self):
         record_collection = self._data_load_callback()
         self._row_collection = record_collection
@@ -804,19 +1047,23 @@ class Grid(Widget):
 
     def _process_toolbar_add_callback(self):
         if self._toolbar_add_callback is not None:
-            self._toolbar_add_callback()
+            return json.dumps({'result': self._toolbar_add_callback()})
+        return json.dumps({'result': ''})
 
     def _process_toolbar_edit_callback(self):
         if self._toolbar_edit_callback is not None:
-            self._toolbar_edit_callback()
+            return json.dumps({'result': self._toolbar_edit_callback()})
+        return json.dumps({'result': ''})
 
     def _process_toolbar_delete_callback(self):
         if self._toolbar_delete_callback is not None:
-            self._toolbar_delete_callback()
+            return json.dumps({'result': self._toolbar_delete_callback()})
+        return json.dumps({'result': ''})
 
     def _process_toolbar_save_callback(self):
         if self._toolbar_save_callback is not None:
-            self._toolbar_save_callback()
+            return json.dumps({'result': self._toolbar_save_callback()})
+        return json.dumps({'result': ''})
 
     def toggle_column(self, col_name):
         """Toggles the visibility of an column in the grid
@@ -1095,6 +1342,105 @@ class ToolbarMenu(ToolbarButton):
             content += "items: " + items
         content += "}"
         return content
+
+
+class ToolbarMenuRadio(ToolbarMenu):
+    """Adds an dropdown menu of radio buttons for selection. The selected radio button will
+    appear as the text of the dropdown menu
+    """
+
+    def __init__(self, name, title=None, icon=None, group=None, count=None, items=None):
+        ToolbarMenu.__init__(self, name, title, icon, group, count, items)
+        self._type = 'menu-radio'
+
+    def add_item(self, id, text, icon=None):
+        item = "{ id: '" + id + "', "
+        item += "text: '" + text + "', "
+        if icon is not None:
+            item += "icon: '" + icon + "', "
+        item += "}"
+        self._items.append(item)
+
+    def render(self):
+        items = "[\n"
+        for itm in self._items:
+            items += itm + ",\n"
+        items += "\n]"
+        content = "{ type: '" + self._type + "', "
+        content += "id: '" + self._name + "', "
+        if self._title is not None:
+            content += "text: '" + self._title + "', "
+            # content += """\ntext: function(item){
+            #                 var text = item.selected;
+            #                 var el = this.get('%s:' + item.selected);
+            #                 return '%s: (' + el.txt + ')';
+            #             },\n
+            #            """ % (self._name, self._title)
+        if self._icon is not None:
+            content += "icon: '" + self._icon + "', "
+        # if self._count is not None:
+        #     content += "count: " + str(self._count) + ", "
+        if self._items is not None:
+            content += "items: " + items
+        content += "}"
+        return content
+
+
+class ToolbarMenuCheck(ToolbarMenu):
+    """Adds an dropdown menu of radio buttons for selection. The selected radio button will
+    appear as the text of the dropdown menu
+    """
+
+    def __init__(self, name, title=None, icon=None, group=None, count=None, items=None):
+        ToolbarMenu.__init__(self, name, title, icon, group, count, items)
+        self._type = 'menu-check'
+
+    def add_item(self, id, text, icon=None):
+        item = "{ id: '" + id + "', "
+        item += "text: '" + text + "', "
+        if icon is not None:
+            item += "icon: '" + icon + "', "
+        item += "}"
+        self._items.append(item)
+
+
+class ToolbarDropDown(ToolbarButton):
+    """Shows a dropdown panel having its content filled with user supplied HTML. This can
+    be used to shown information, pictures, forms, etc
+    """
+
+    _html = None
+
+    def __init__(self, name, html, title=None, icon=None, group=None):
+        ToolbarButton.__init__(self, name, title, icon, group)
+        self._html = html
+        self._type = 'drop'
+
+    def render(self):
+        """Renders the widget under parent widget"""
+        content = "{"
+        content += "type: '" + self._type + "', "
+        content += "id: '" + self._name + "', "
+        content += "html: '" + self._html + "', "
+        if self._title is not None:
+            content += "text: '" + self._title + "', "
+        if self._icon is not None:
+            content += "icon: '" + self._icon + "', "
+        if self._group is not None:
+            content += "group: '" + self._group + "', "
+        content += "}"
+        return content
+
+
+class ToolbarHTML(ToolbarDropDown):
+    """Shows a panel having its content filled with the user supplied HTML. It is similr
+    to `ToolbarDropDown` but it shows the HTML inplace of title. So this item don't
+    have any dropdown to show its content
+    """
+
+    def __init__(self, name, html):
+        ToolbarDropDown.__init__(self, name, html, title=None, icon=None, group=None)
+        self._type = 'html'
 
 
 class Toolbar(Widget):

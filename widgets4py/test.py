@@ -12,7 +12,8 @@ from widgets4py.base import Page
 # from widgets4py.jquery_ui import Menu, MenuItem, SubMenu, MenuTypes, Slider, Spinner
 # from widgets4py.jquery_ui import TabSection, Tab
 from widgets4py.w2ui import GridColumn, GridColumnCollection, GridRecord, GridRecordCollection, Grid
-from widgets4py.w2ui import Toolbar, ToolbarButton, ToolbarSeparator, ToolbarCheck, ToolbarRadio, ToolbarMenu
+from widgets4py.w2ui import Toolbar, ToolbarButton, ToolbarSeparator, ToolbarCheck
+from widgets4py.w2ui import ToolbarRadio, ToolbarMenu, ToolbarMenuRadio, ToolbarMenuCheck
 from multiprocessing import Process
 
 
@@ -82,6 +83,8 @@ class PageTest:
     tool_rd2 = None
     tool_chk1 = None
     tool_menu = None
+    tool_menu_rd = None
+    tool_menu_chk = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -93,8 +96,16 @@ class PageTest:
         self.tool_rd2 = ToolbarRadio('tool_rd2', 'Radio2', group='A')
         self.tool_chk1 = ToolbarCheck('tool_chk1', 'Checkbox')
         self.tool_menu = ToolbarMenu('tool_menu', 'Menu', count=2)
-        self.tool_menu.add_item('itm1', 'Item1', count=1)
-        self.tool_menu.add_item('itm2', 'Item2', count=1)
+        self.tool_menu.add_item('Item1', '', count=1)
+        self.tool_menu.add_item('Item2', '', count=1)
+        self.tool_menu_rd = ToolbarMenuRadio('tool_menu_rd', 'MenuRadio')
+        self.tool_menu_rd.add_item('rd1', 'Radio1')
+        self.tool_menu_rd.add_item('rd2', 'Radio2')
+        self.tool_menu_rd.add_item('rd3', 'Radio3')
+        self.tool_menu_chk = ToolbarMenuCheck('tool_menu_chk', 'MenuCheck')
+        self.tool_menu_chk.add_item('ck1', 'Check1')
+        self.tool_menu_chk.add_item('ck2', 'Check2')
+        self.tool_menu_chk.add_item('ck3', 'Check3')
         self.toolbar.add(self.tool_btn1)
         self.toolbar.add(self.tool_sep)
         self.toolbar.add(self.tool_btn2)
@@ -102,6 +113,8 @@ class PageTest:
         self.toolbar.add(self.tool_rd2)
         self.toolbar.add(self.tool_chk1)
         self.toolbar.add(self.tool_menu)
+        self.toolbar.add(self.tool_menu_rd)
+        self.toolbar.add(self.tool_menu_chk)
         pg.add(self.toolbar)
         self.g_col1 = GridColumn('fname', 'First Name', 50)
         self.g_col2 = GridColumn('lname', 'Last Name', 50)
@@ -119,7 +132,8 @@ class PageTest:
         self.g_record_coll.add(self.g_rec2)
         self.grid = Grid('grid', 'My Table', self.g_column_coll, row_collection=self.g_record_coll,
                          toolbar=True, footer=True, line_numbers=True, select_column=True,
-                         multi_select=True, app=app, toolbarAdd=True, toolbarDelete=True)
+                         multi_select=True, app=app, toolbarAdd=True, toolbarDelete=True,
+                         toolbarSave=True, toolbarEdit=True)
         # self.frm = Form('frm', app=app, submit_callback=self.form_submitted)
         # sg = SimpleGridLayout("Grid", 8, 2)
         # self.btn = Button('btn', 'Push', app=app, onclick_callback=self.change_btn_title)
