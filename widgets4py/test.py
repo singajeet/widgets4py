@@ -14,6 +14,7 @@ from widgets4py.base import Page
 from widgets4py.w2ui import GridColumn, GridColumnCollection, GridRecord, GridRecordCollection, Grid
 from widgets4py.w2ui import Toolbar, ToolbarButton, ToolbarSeparator, ToolbarCheck
 from widgets4py.w2ui import ToolbarRadio, ToolbarMenu, ToolbarMenuRadio, ToolbarMenuCheck, ToolbarDropDown, ToolbarHTML
+from widgets4py.w2ui import Sidebar, SidebarNode
 from multiprocessing import Process
 
 
@@ -87,9 +88,43 @@ class PageTest:
     tool_menu_chk = None
     tool_dd = None
     tool_html = None
+    s_node1 = None
+    s_node11 = None
+    s_node12 = None
+    s_node13 = None
+    s_node2 = None
+    s_node21 = None
+    s_node211 = None
+    s_node212 = None
+    s_node213 = None
+    s_node22 = None
+    s_node23 = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
+        self.sidebar = Sidebar('sidebar', flatButton=True)
+        self.s_node1 = SidebarNode('s_node1', text='Level1', expanded=True, group=True)
+        self.s_node11 = SidebarNode('s_node11', text='Level1-1', is_leaf=True)
+        self.s_node12 = SidebarNode('s_node12', text='Level1-2', is_leaf=True)
+        self.s_node13 = SidebarNode('s_node13', text='Level1-3', is_leaf=True)
+        self.s_node2 = SidebarNode('s_node2', text='Level2', expanded=True, group=True)
+        self.s_node21 = SidebarNode('s_node21', text='Level2-1', expanded=True)
+        self.s_node211 = SidebarNode('s_node221', text='Level2-1-1', is_leaf=True)
+        self.s_node212 = SidebarNode('s_node222', text='Level2-1-2', is_leaf=True)
+        self.s_node213 = SidebarNode('s_node223', text='Level2-1-3', is_leaf=True)
+        self.s_node22 = SidebarNode('s_node22', text='Level2-2', is_leaf=True)
+        self.s_node23 = SidebarNode('s_node23', text='Level2-3', is_leaf=True)
+        self.s_node1.add(self.s_node11)
+        self.s_node1.add(self.s_node12)
+        self.s_node1.add(self.s_node13)
+        self.s_node2.add(self.s_node21)
+        self.s_node21.add(self.s_node211)
+        self.s_node21.add(self.s_node212)
+        self.s_node21.add(self.s_node213)
+        self.s_node2.add(self.s_node22)
+        self.s_node2.add(self.s_node23)
+        self.sidebar.add(self.s_node1)
+        self.sidebar.add(self.s_node2)
         self.toolbar = Toolbar('MyBar', onclick_callback=self.toolbar_clicked, app=app)
         self.tool_btn1 = ToolbarButton('tool_btn1', 'Button1', icon='fa-star')
         self.tool_btn2 = ToolbarButton('tool_btn2', 'Button2', icon='fa-heart')
@@ -122,6 +157,7 @@ class PageTest:
         self.toolbar.add(self.tool_dd)
         self.toolbar.add(self.tool_html)
         pg.add(self.toolbar)
+        pg.add(self.sidebar)
         self.g_col1 = GridColumn('fname', 'First Name', 50)
         self.g_col2 = GridColumn('lname', 'Last Name', 50)
         self.g_column_coll = GridColumnCollection()

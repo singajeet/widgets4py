@@ -1538,10 +1538,10 @@ class Toolbar(Widget):
         return self._widget_content
 
 
-class SidebarNode:
+class SidebarNode(Widget):
     """A node within the sidebar widget. A node can have text, icon and sub-nodes
     Further a node can have expanded or collapsed state. It sub-nodes can be grouped
-    under a given group. Any sidebar node can have a number of leaves which further
+    under a one group. Any sidebar node can have a number of leaves which further
     can't have any child nodes
     """
 
@@ -1553,11 +1553,11 @@ class SidebarNode:
     _img = None
     _group = None
     _count = None
-    _nodes = None
+    # _nodes = None
 
     def __init__(self, name, text=None, icon=None, is_leaf=None, expanded=None,
                  img=None, group=None, count=None, nodes=None):
-        self._name = name,
+        Widget.__init__(self, name)
         self._text = text
         self._icon = icon
         if is_leaf is not None:
@@ -1572,9 +1572,11 @@ class SidebarNode:
         self._group = group
         self._count = count
         if nodes is not None:
-            self._nodes = nodes
+            self._child_widgets = nodes
+            # self._nodes = nodes
         else:
-            self._nodes = []
+            # self._nodes = []
+            self._child_widgets = []
         if is_leaf:
             if text is None and icon is None:
                 raise ValueError("Either text or icon should have a value for an leaf")
@@ -1582,18 +1584,141 @@ class SidebarNode:
             if text is None and img is None:
                 raise ValueError("Either text or img should have a value for an node")
 
-    def add(self, node):
-        """Adds an subnode or a leaf to the current node
-
-            Args:
-                node (SidebarNode): An instance of sidebar node as a leaf or node
+    @property
+    def is_leaf(self):
+        """Property which defines whether the current node is an leaf or a sub-node
         """
-        self._nodes.append(node)
+        return self._is_leaf
 
-    def remove(self, node):
-        """Removes an node from the current node
+    @is_leaf.setter
+    def is_leaf(self, val):
+        self._is_leaf = val
 
-            Args:
-                node (SidebarNode): An instance of sidebar node
+    # def add(self, node, is_leaf=False):
+    #     """Adds an subnode or a leaf to the current node
+
+    #         Args:
+    #             node (SidebarNode): An instance of sidebar node as a leaf or node
+    #     """
+    #     node.is_leaf = is_leaf
+    #     self._nodes.append(node)
+
+    # def remove(self, node):
+    #     """Removes an node from the current node
+
+    #         Args:
+    #             node (SidebarNode): An instance of sidebar node
+    #     """
+    #     self._nodes.remove(node)
+
+    def render(self):
+        """Renders an node or leaf depending upon the value of `is_leaf' attribute
         """
-        self._nodes.remove(node)
+        content = ""
+        if self._is_leaf:
+            content += "{ id: '" + self._name + "', "
+            if self._text is not None:
+                content += "text: '" + self._text + "', "
+            if self._icon is not None:
+                content += "icon: '" + self._icon + "', "
+            if self._count is not None:
+                content += "count: " + self._count + ", "
+            content += "}"
+            return content
+        else:
+            content += "{ id: '" + self._name + "', "
+            if self._text is not None:
+                content += "text: '" + self._text + "', "
+            if self._img is not None:
+                content += "img: '" + self._img + "', "
+            if self._expanded is not None:
+                content += "expanded: " + json.dumps(self._expanded) + ", "
+            if self._group is not None:
+                content += "group: " + json.dumps(self._group) + ", "
+            if self._count is not None:
+                content += "count: " + self._count + ", "
+            if self._child_widgets is not None:
+                content += "nodes: [\n"
+                for node in self._child_widgets:
+                    content += node.render() + ",\n"
+                content += "]"
+            content += "}"
+            return content
+        return content
+
+
+class Sidebar(Widget):
+    """The w2sidebar object provides a quick solution for a vertical menu. A sidebar can have
+    multiple items and some of the items can be nested. The very same object can be used to create
+    tree structures too.
+    """
+
+    _onclick_callback = None
+    _onclick_client_script = None
+    _app = None
+    _topHTML = None
+    _bottomHTML = None
+    _flatButton = None
+
+    def __init__(self, name, nodes=None, onclick_callback=None, onclick_client_script=None, app=None,
+                 topHTML=None, bottomHTML=None, flatButton=None):
+        """
+            name (string): Name or Id for internal use
+            nodes (Widget): Sub Nodes or leaves of the current node
+            onclick_callback (callable): will be called when mouse is clicked on any child item
+            onclick_client_script (string): JS to be called when mouse is clicked on any item
+            app (Flask): An instance of Flask app
+            topHTML (string): HTML to show at the top of the sidebar
+            bottomHTML (string): HTML to be shown on the bottom of sidebar
+            flatButton (boolean): If true, it will show button to minimize or flat the sidebar
+        """
+        Widget.__init__(self, name)
+        if nodes is not None:
+            self._child_widgets = nodes
+        else:
+            self._child_widgets = []
+        self._onclick_callback = onclick_callback
+        self._onclick_client_script = onclick_client_script
+        self._app = app
+        if topHTML is not None:
+            self._topHTML = topHTML
+        else:
+            self._topHTML = ""
+        if bottomHTML is not None:
+            self._bottomHTML = bottomHTML
+        else:
+            self._bottomHTML = ""
+        if flatButton is not None:
+            self._flatButton = flatButton
+        else:
+            self._flatButton = False
+        self.add_style("height", "500px")
+        self.add_style("width", "200px")
+
+    def _attach_script(self):
+        child_widgets = "[\n"
+        for child in self._child_widgets:
+            child_widgets += child.render() + ",\n"
+        child_widgets += "\n]"
+        script = """
+                    <script>
+                        $2(function(){
+                            $2('#%s').w2sidebar({
+                                name: '%s',
+                                flatButton: %s,
+                                topHTML: '%s',
+                                bottomHTML: '%s',
+                                nodes: %s
+                            });
+                        });
+                    </script>
+                """ % (self._name, self._name, json.dumps(self._flatButton), self._topHTML,
+                       self._bottomHTML, child_widgets)
+        return script
+
+    def render(self):
+        """Renders the sidebar with its nodes and subnodes"""
+        content = self._render_pre_content('div')
+        content += self._render_post_content('div')
+        content += "\n" + self._attach_script()
+        return content
