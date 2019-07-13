@@ -1536,3 +1536,64 @@ class Toolbar(Widget):
         content += "\n" + self._attach_script()
         self._widget_content = content
         return self._widget_content
+
+
+class SidebarNode:
+    """A node within the sidebar widget. A node can have text, icon and sub-nodes
+    Further a node can have expanded or collapsed state. It sub-nodes can be grouped
+    under a given group. Any sidebar node can have a number of leaves which further
+    can't have any child nodes
+    """
+
+    _name = None
+    _text = None
+    _icon = None
+    _is_leaf = None
+    _expanded = None
+    _img = None
+    _group = None
+    _count = None
+    _nodes = None
+
+    def __init__(self, name, text=None, icon=None, is_leaf=None, expanded=None,
+                 img=None, group=None, count=None, nodes=None):
+        self._name = name,
+        self._text = text
+        self._icon = icon
+        if is_leaf is not None:
+            self._is_leaf = is_leaf
+        else:
+            self._is_leaf = False
+        if expanded is not None:
+            self._expanded = expanded
+        else:
+            self._expanded = False
+        self._img = img
+        self._group = group
+        self._count = count
+        if nodes is not None:
+            self._nodes = nodes
+        else:
+            self._nodes = []
+        if is_leaf:
+            if text is None and icon is None:
+                raise ValueError("Either text or icon should have a value for an leaf")
+        else:
+            if text is None and img is None:
+                raise ValueError("Either text or img should have a value for an node")
+
+    def add(self, node):
+        """Adds an subnode or a leaf to the current node
+
+            Args:
+                node (SidebarNode): An instance of sidebar node as a leaf or node
+        """
+        self._nodes.append(node)
+
+    def remove(self, node):
+        """Removes an node from the current node
+
+            Args:
+                node (SidebarNode): An instance of sidebar node
+        """
+        self._nodes.remove(node)
