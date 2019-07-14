@@ -1824,9 +1824,27 @@ class Sidebar(Widget):
             self._flatButton = flatButton
         else:
             self._flatButton = False
-        self.add_style("height", "500px")
-        self.add_style("width", "200px")
+        # self.add_style("height", "500px")
+        # self.add_style("width", "200px")
         self._queue = []
+
+    @property
+    def topHTML(self):
+        """HTML to be displayed on top of the sidebar"""
+        return self._topHTML
+
+    @topHTML.setter
+    def topHTML(self, val):
+        self._topHTML = val
+
+    @property
+    def bottomHTML(self):
+        """HTML to be displayed on bottom of the sidebar"""
+        return self._bottomHTML
+
+    @bottomHTML.setter
+    def bottomHTML(self, val):
+        self._bottomHTML = val
 
     @property
     def clicked_item(self):
@@ -1964,7 +1982,7 @@ class Sidebar(Widget):
                                     if(selector != undefined){
                                         if(props.cmd != undefined){
                                             if(props.cmd == "HIDE-ITEM"){
-                                                selector.hide(JSON.parseprops.arg0));
+                                                selector.hide(JSON.parse(props.arg0));
                                             }
                                             if(props.cmd == "SHOW-ITEM"){
                                                 selector.show(JSON.parse(props.arg0));
@@ -2084,4 +2102,5 @@ class Sidebar(Widget):
         content = self._render_pre_content('div')
         content += self._render_post_content('div')
         content += "\n" + self._attach_script()
+        content += "\n" + self._attach_polling()
         return content

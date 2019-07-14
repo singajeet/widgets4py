@@ -2,19 +2,21 @@ import os
 import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
-# from widgets4py.layouts import SimpleGridLayout
-# from widgets4py.app_ui import TextBox, Button  # , CheckBox, Color, Date
-# from widgets4py.app_ui import DateTimeLocal, Email, File, Image, Month
-# from widgets4py.app_ui import Number, Password, Radio, Range
-# from widgets4py.app_ui import Form, Label, DropDown
-# from widgets4py.jquery_ui import Accordion, Section, RadioButtonGroup
-# from widgets4py.jquery_ui import CheckBoxGroup, DialogBox, DialogTypes
-# from widgets4py.jquery_ui import Menu, MenuItem, SubMenu, MenuTypes, Slider, Spinner
-# from widgets4py.jquery_ui import TabSection, Tab
-from widgets4py.w2ui import GridColumn, GridColumnCollection, GridRecord, GridRecordCollection, Grid
-from widgets4py.w2ui import Toolbar, ToolbarButton, ToolbarSeparator, ToolbarCheck
-from widgets4py.w2ui import ToolbarRadio, ToolbarMenu, ToolbarMenuRadio, ToolbarMenuCheck, ToolbarDropDown, ToolbarHTML
-from widgets4py.w2ui import Sidebar, SidebarNode
+from widgets4py.layouts import SimpleGridLayout
+# from widgets4py.html5.app_ui import TextBox, Button  # , CheckBox, Color, Date
+# from widgets4py.html5.app_ui import DateTimeLocal, Email, File, Image, Month
+# from widgets4py.html5.app_ui import Number, Password, Radio, Range
+# from widgets4py.html5.app_ui import Form, Label, DropDown
+# from widgets4py.jquery.ui import Accordion, Section, RadioButtonGroup
+# from widgets4py.jquery.ui import CheckBoxGroup, DialogBox, DialogTypes
+# from widgets4py.jquery.ui import Menu, MenuItem, SubMenu, MenuTypes, Slider, Spinner
+# from widgets4py.jquery.ui import TabSection, Tab
+from widgets4py.w2ui.ui import GridColumn, GridColumnCollection
+from widgets4py.w2ui.ui import GridRecord, GridRecordCollection, Grid
+from widgets4py.w2ui.ui import Toolbar, ToolbarButton, ToolbarSeparator, ToolbarCheck
+from widgets4py.w2ui.ui import ToolbarRadio, ToolbarMenu, ToolbarMenuRadio
+from widgets4py.w2ui.ui import ToolbarMenuCheck, ToolbarDropDown, ToolbarHTML
+from widgets4py.w2ui.ui import Sidebar, SidebarNode
 from multiprocessing import Process
 
 
@@ -102,7 +104,9 @@ class PageTest:
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
-        self.sidebar = Sidebar('sidebar', flatButton=False, app=app, onclick_callback=self.sidebar_clicked)
+        self.sidebar = Sidebar('sidebar', flatButton=True, app=app, onclick_callback=self.sidebar_clicked)
+        self.sidebar.add_style("height", "100%")
+        self.sidebar.add_style("width", "100%")
         self.s_node1 = SidebarNode('s_node1', text='Level1', expanded=True, group=True)
         self.s_node11 = SidebarNode('s_node11', text='Level1-1', is_leaf=True)
         self.s_node12 = SidebarNode('s_node12', text='Level1-2', is_leaf=True)
@@ -157,7 +161,6 @@ class PageTest:
         self.toolbar.add(self.tool_dd)
         self.toolbar.add(self.tool_html)
         pg.add(self.toolbar)
-        pg.add(self.sidebar)
         self.g_col1 = GridColumn('fname', 'First Name', 50)
         self.g_col2 = GridColumn('lname', 'Last Name', 50)
         self.g_column_coll = GridColumnCollection()
@@ -177,7 +180,11 @@ class PageTest:
                          multi_select=True, app=app, toolbarAdd=True, toolbarDelete=True,
                          toolbarSave=True, toolbarEdit=True)
         # self.frm = Form('frm', app=app, submit_callback=self.form_submitted)
-        # sg = SimpleGridLayout("Grid", 8, 2)
+        sg = SimpleGridLayout("Grid", 1, 2, col_ratio=["15%", "85%"])
+        sg.add_style("height", "100%")
+        sg.add_style("width", "100%")
+        sg.add(self.sidebar)
+        sg.add(self.grid)
         # self.btn = Button('btn', 'Push', app=app, onclick_callback=self.change_btn_title)
         # self.btn1 = Button('btn1', 'Populate', app=app, onclick_callback=self.populate_text)
         # self.txt = TextBox('txt', app=app, onchange_callback=self.text_changed)
@@ -209,7 +216,7 @@ class PageTest:
         # sg.add(self.passwd)
         # sg.add(self.rd)
         # sg.add(self.rng)
-        # pg.add(sg)
+        pg.add(sg)
         # self.lbl1 = Label('lbl1', 'TextBox Label:', self.txt)
         # self.dd = DropDown('dd', app=app, onchange_callback=self.dd_changed)
         # self.dd.add_option('a', 'A', False)
@@ -265,12 +272,13 @@ class PageTest:
         # self.tab.add(self.tab_sec1)
         # self.tab.add(self.tab_sec2)
         # pg.add(self.tab)
-        pg.add(self.grid)
         content = pg.render()
         return content
 
     def sidebar_clicked(self):
         print("Sidebar clicked: " + self.sidebar.clicked_item)
+        if self.sidebar.clicked_item == "s_node11":
+            self.sidebar.collapse_item('s_node21')
         return "success"
 
     def toolbar_clicked(self):

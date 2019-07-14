@@ -47,7 +47,7 @@ class SimpleGridLayout(Widget):
             # check whether the height ratio is given for row and apply same
             if self._rows_ratio.__len__() > 0\
                     and row_index < self._rows_ratio.__len__():
-                main_content += "\n<tr height=" + self._rows_ratio[row_index] + ">"
+                main_content += "\n<tr height='" + self._rows_ratio[row_index] + "'>"
             else:
                 main_content += "\n<tr>"
             # loop through the columns
@@ -55,7 +55,7 @@ class SimpleGridLayout(Widget):
                 # Check whether the column ratio is given and apply same
                 if self._columns_ratio.__len__() > 0\
                         and col_index < self._columns_ratio.__len__():
-                    main_content += "\n<td width=" + self._columns_ratio[col_index] + ">"
+                    main_content += "\n<td width='" + self._columns_ratio[col_index] + "'>"
                 else:
                     main_content += "\n<td>"
                 # check if widget is available then render it
