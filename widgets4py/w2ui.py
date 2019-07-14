@@ -1477,7 +1477,7 @@ class Toolbar(Widget):
     def _attach_script(self):
         url = ""
         if self._app is not None:
-            url = str(__name__ + "_" + self._name)
+            url = str(__name__ + "_" + self._name).replace('.', '_')
             found = False
             for rule in self._app.url_map.iter_rules():
                 if rule.endpoint == url:
@@ -1502,7 +1502,11 @@ class Toolbar(Widget):
                                     data: {'target': event.target},
                                     dataType: 'json',
                                     success: function(status){},
-                                    error: function(err_status){}
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
                                 });
                             }
                         });
@@ -1659,6 +1663,7 @@ class Sidebar(Widget):
     _topHTML = None
     _bottomHTML = None
     _flatButton = None
+    _clicked_item = None
 
     def __init__(self, name, nodes=None, onclick_callback=None, onclick_client_script=None, app=None,
                  topHTML=None, bottomHTML=None, flatButton=None):
@@ -1695,7 +1700,34 @@ class Sidebar(Widget):
         self.add_style("height", "500px")
         self.add_style("width", "200px")
 
+    @property
+    def clicked_item(self):
+        """The sidebar item which was clicked"""
+        return self._clicked_item
+
+    @clicked_item.setter
+    def clicked_item(self, val):
+        self._clicked_item = val
+
+    def _process_onclick_callback(self):
+        if request.args.__len__() > 0:
+            val = request.args['target']
+            if val is not None:
+                self._clicked_item = val
+        if self._onclick_callback is not None:
+            return json.dumps({'result': self._onclick_callback()})
+        return json.dumps({'result': ''})
+
     def _attach_script(self):
+        url = ""
+        if self._app is not None:
+            url = str(__name__ + "_" + self._name).replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + url, url, self._process_onclick_callback)
         child_widgets = "[\n"
         for child in self._child_widgets:
             child_widgets += child.render() + ",\n"
@@ -1708,12 +1740,29 @@ class Sidebar(Widget):
                                 flatButton: %s,
                                 topHTML: '%s',
                                 bottomHTML: '%s',
-                                nodes: %s
+                                nodes: %s,
+                                onFlat: function(event){
+                                    $('#%s').css('width', (event.goFlat ? '35px' : '200px'));
+                                },
+                                onClick: function(event){
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        data: {'target': event.target},
+                                        success: function(status){},
+                                        error: function(err_status){
+                                            alertify.error("Status Code: "
+                                            + err_status.status + "<br />" + "Error Message:"
+                                            + err_status.statusText);
+                                        }
+                                    });
+                                }
                             });
                         });
                     </script>
                 """ % (self._name, self._name, json.dumps(self._flatButton), self._topHTML,
-                       self._bottomHTML, child_widgets)
+                       self._bottomHTML, child_widgets, self._name, url)
         return script
 
     def render(self):

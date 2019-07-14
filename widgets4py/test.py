@@ -102,16 +102,16 @@ class PageTest:
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
-        self.sidebar = Sidebar('sidebar', flatButton=True)
+        self.sidebar = Sidebar('sidebar', flatButton=False, app=app, onclick_callback=self.sidebar_clicked)
         self.s_node1 = SidebarNode('s_node1', text='Level1', expanded=True, group=True)
         self.s_node11 = SidebarNode('s_node11', text='Level1-1', is_leaf=True)
         self.s_node12 = SidebarNode('s_node12', text='Level1-2', is_leaf=True)
         self.s_node13 = SidebarNode('s_node13', text='Level1-3', is_leaf=True)
         self.s_node2 = SidebarNode('s_node2', text='Level2', expanded=True, group=True)
         self.s_node21 = SidebarNode('s_node21', text='Level2-1', expanded=True)
-        self.s_node211 = SidebarNode('s_node221', text='Level2-1-1', is_leaf=True)
-        self.s_node212 = SidebarNode('s_node222', text='Level2-1-2', is_leaf=True)
-        self.s_node213 = SidebarNode('s_node223', text='Level2-1-3', is_leaf=True)
+        self.s_node211 = SidebarNode('s_node211', text='Level2-1-1', is_leaf=True)
+        self.s_node212 = SidebarNode('s_node212', text='Level2-1-2', is_leaf=True)
+        self.s_node213 = SidebarNode('s_node213', text='Level2-1-3', is_leaf=True)
         self.s_node22 = SidebarNode('s_node22', text='Level2-2', is_leaf=True)
         self.s_node23 = SidebarNode('s_node23', text='Level2-3', is_leaf=True)
         self.s_node1.add(self.s_node11)
@@ -268,6 +268,10 @@ class PageTest:
         pg.add(self.grid)
         content = pg.render()
         return content
+
+    def sidebar_clicked(self):
+        print("Sidebar clicked: " + self.sidebar.clicked_item)
+        return "success"
 
     def toolbar_clicked(self):
         print("Toolbar clicked on item: " + self.toolbar.clicked_item)
