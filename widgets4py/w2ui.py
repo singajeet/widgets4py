@@ -1453,6 +1453,7 @@ class Toolbar(Widget):
     _onclick_client_script = None
     _app = None
     _clicked_item = None
+    _queue = None
 
     def __init__(self, name, items=None, onclick_callback=None, onclick_client_script=None, app=None):
         """
@@ -1473,6 +1474,130 @@ class Toolbar(Widget):
         else:
             self._onclick_client_script = ""
         self._app = app
+        self._queue = {}
+
+    def add_item(self, item):
+        """Adds a new item to the toolbar passed as argument
+
+            Args:
+                item (ToolbarButton): An instance of ToolbarButton or its subclasses
+        """
+        self._queue.append({'cmd': 'ADD-ITEM', 'arg0': item.render()})
+
+    def insert_item(self, item, ref_item):
+        """Inserts a new item to the toolbar after the specified referenced item
+
+            Args:
+                item (ToolbarButton): Instance of ToolbarButton or its subclasses
+                ref_item (string): Id or name of the item after which new item should be
+                                    inserted
+        """
+        self._queue.append({'cmd': 'INSERT-ITEM', 'arg0': item.render(), 'ref': ref_item})
+
+    def remove_item(self, index_of_item):
+        """Removes an item from the toolbar available at the specified index location
+
+            Args:
+                index_of_item (int): Index of item that needs to be removed from toolbar
+        """
+        self._queue.append({'cmd': 'REMOVE-ITEM', 'arg0': index_of_item})
+
+    def show_item(self, item_name):
+        """Shows an item which was in hidden state previously
+
+            Args:
+                item_name (string): Name or Id of the toolbar item that needs to be set visible
+        """
+        self._queue.append({'cmd': 'SHOW-ITEM', 'arg0': item_name})
+
+    def hide_item(self, item_name):
+        """Hides an visible item available on the toolbar
+
+            Args:
+                item_name (string): Name or Id of the toolbar item that needs to be set as hidden
+        """
+        self._queue.append({'cmd': 'HIDE-ITEM', 'arg0': item_name})
+
+    def enable_item(self, item_name):
+        """Enables an visible toollbar item if its has been set as disiabled
+
+            Args:
+                item_name (string): Name or Id of item that needs to be enabled
+        """
+        self._queue.append({'cmd': 'ENABLE-ITEM', 'arg0': item_name})
+
+    def disable_item(self, item_name):
+        """Disable an visible toolbar item which is already in enabled state
+
+            Args:
+                item_name (string): Name or Id of the item that needs to be disabled
+        """
+        self._queue.append({'cmd': 'DISABLE-ITEM', 'arg0': item_name})
+
+    def _sync_properties(self):
+        if self._queue.__len__() > 0:
+            cmd = self._queue.pop()
+            return json.dumps(cmd)
+        return json.dumps({'result': ''})
+
+    def _attach_polling(self):
+        if self._app is None:
+            return
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                    (function %s_poll(){
+                        setTimeout(function(){
+                            $.ajax({
+                                url: "/%s",
+                                dataType: "json",
+                                success: function(props){
+                                    selector = w2ui['%s'];
+                                    if(selector != undefined){
+                                        if(props.cmd != undefined){
+                                            if(props.cmd == "HIDE-ITEM"){
+                                                selector.hide(props.arg0);
+                                            }
+                                            if(props.cmd == "SHOW-ITEM"){
+                                                selector.show(props.arg0);
+                                            }
+                                            if(props.cmd == "ENABLE-ITEM"){
+                                                selector.enable(props.arg0);
+                                            }
+                                            if(props.cmd == "DISABLE-ITEM"){
+                                                selector.disable(props.arg0);
+                                            }
+                                            if(props.cmd == "ADD-ITEM"){
+                                                selector.add(props.arg0);
+                                            }
+                                            if(props.cmd == "INSERT-ITEM"){
+                                                selector.insert(props.ref, props.arg0);
+                                            }
+                                            if(props.cmd == "REMOVE-ITEM"){
+                                                selector.remove(props.arg0);
+                                            }
+                                        } else {
+                                            alertify.warning("No command to process");
+                                        }
+                                    }
+                                },
+                                error: function(err_status){
+                                    alertify.error("Status Code: "
+                                    + err_status.status + "<br />" + "Error Message:"
+                                    + err_status.statusText);
+                                }
+                            });
+                            %s_poll();
+                        }, 10000);
+                    })();
+                    </script>
+                """ % (url, url, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url, self._sync_properties)
+        return script
 
     def _attach_script(self):
         url = ""
@@ -1538,6 +1663,7 @@ class Toolbar(Widget):
         content = self._render_pre_content('div')
         content += self._render_post_content('div')
         content += "\n" + self._attach_script()
+        content += "\n" + self._attach_polling()
         self._widget_content = content
         return self._widget_content
 
