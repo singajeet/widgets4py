@@ -275,6 +275,8 @@ class PageTest:
 
     def toolbar_clicked(self):
         print("Toolbar clicked on item: " + self.toolbar.clicked_item)
+        if self.toolbar.clicked_item == 'tool_btn1':
+            self.toolbar.disable_item('tool_btn2')
         return "success"
 
     def tab_clicked(self):

@@ -1474,7 +1474,7 @@ class Toolbar(Widget):
         else:
             self._onclick_client_script = ""
         self._app = app
-        self._queue = {}
+        self._queue = []
 
     def add_item(self, item):
         """Adds a new item to the toolbar passed as argument
@@ -1790,6 +1790,7 @@ class Sidebar(Widget):
     _bottomHTML = None
     _flatButton = None
     _clicked_item = None
+    _queue = None
 
     def __init__(self, name, nodes=None, onclick_callback=None, onclick_client_script=None, app=None,
                  topHTML=None, bottomHTML=None, flatButton=None):
@@ -1825,6 +1826,7 @@ class Sidebar(Widget):
             self._flatButton = False
         self.add_style("height", "500px")
         self.add_style("width", "200px")
+        self._queue = []
 
     @property
     def clicked_item(self):
@@ -1834,6 +1836,192 @@ class Sidebar(Widget):
     @clicked_item.setter
     def clicked_item(self, val):
         self._clicked_item = val
+
+    def add_items(self, items):
+        """Adds items to sidebar which are passed as list of items to
+        this method
+
+            Args:
+                items (list): List of SidebarNode items
+        """
+        content = "[\n"
+        for item in items:
+            content += item.render() + ",\n"
+        content += "\n]"
+        self._queue.append({'cmd': 'ADD-ITEMS', 'arg0': content})
+
+    def insert_items(self, items, ref_item):
+        """Insert specified items after the item passed for reference
+
+            Args:
+                items (list): List of sidebar nodes
+                ref_item (string): Name of the referenced item
+        """
+        content = "[\n"
+        for item in items:
+            content += item.render() + ",\n"
+        content += "\n]"
+        self._queue.append({'cmd': 'INSERT-ITEMS', 'arg0': content, 'ref': ref_item})
+
+    def remove_items(self, items):
+        """Removes all items from the toolbar passed as arg to this method
+
+            Args:
+                items (list): A list of item names to be removed from toolbar
+        """
+        self._queue.append({'cmd': 'REMOVE-ITEMS', 'arg0': json.dumps(items)})
+
+    def show_items(self, items):
+        """Shows the hidden items passed as list of item names
+
+            Args:
+                items (list): List of names of items
+        """
+        self._queue.append({'cmd': 'SHOW-ITEMS', 'arg0': json.dumps(items)})
+
+    def hide_items(self, items):
+        """Hides the specified items passed as list of item names parameter
+
+            Args:
+                items (list): List of item names
+        """
+        self._queue.append({'cmd': 'HIDE-ITEMS', 'arg0': json.dumps(items)})
+
+    def enable_item(self, item):
+        """Enables an already disabled item in the sidebar
+
+            Args:
+                item (string): Name or Id of the item that needs to be enabled
+        """
+        self._queue.append({'cmd': 'ENABLE-ITEM', 'arg0': item})
+
+    def disable_item(self, item):
+        """Disables an already enabled item in the sidebar
+
+            Args:
+                item (string): Name or Id of the item that needs to be enabled
+        """
+        self._queue.append({'cmd': 'DISABLE-ITEM', 'arg0': item})
+
+    def expand_item(self, item):
+        """Expands an collapsed item node
+
+            Args:
+                item (string): Name or Id of the node that needs to be expanded
+        """
+        self._queue.append({'cmd': 'EXPAND-ITEM', 'arg0': item})
+
+    def collapse_item(self, item):
+        """Collapse an expanded node in the sidebar
+
+            Args:
+                item (string): Collapse the provided node
+        """
+        self._queue.append({'cmd': 'COLLAPSE-ITEM', 'arg0': item})
+
+    def select_item(self, item):
+        """Selects the specified item in the sidebar
+
+            Args:
+                item (string): Name or Id of the node that needs to be selected
+        """
+        self._queue.append({'cmd': 'SELECT-ITEM', 'arg0': item})
+
+    def unselect_item(self, item):
+        """UnSelects the specidied item in the sidebar
+
+            Args:
+                item (string): Name or Id of the node that needs to be unselected
+        """
+        self._queue.append({'cmd': 'UNSELECT-ITEM', 'arg0': item})
+
+    def click_item(self, item):
+        """Emulates an click on the specified node
+
+            Args:
+                item (string): Name or Id of the node
+        """
+        self._queue.append({'cmd': 'CLICK-ITEM', 'arg0': item})
+
+    def _sync_properties(self):
+        if self._queue.__len__() > 0:
+            cmd = self._queue.pop()
+            return json.dumps(cmd)
+        return json.dumps({'result': ''})
+
+    def _attach_polling(self):
+        if self._app is None:
+            return
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                    (function %s_poll(){
+                        setTimeout(function(){
+                            $.ajax({
+                                url: "/%s",
+                                dataType: "json",
+                                success: function(props){
+                                    selector = w2ui['%s'];
+                                    if(selector != undefined){
+                                        if(props.cmd != undefined){
+                                            if(props.cmd == "HIDE-ITEM"){
+                                                selector.hide(JSON.parseprops.arg0));
+                                            }
+                                            if(props.cmd == "SHOW-ITEM"){
+                                                selector.show(JSON.parse(props.arg0));
+                                            }
+                                            if(props.cmd == "ENABLE-ITEM"){
+                                                selector.enable(props.arg0);
+                                            }
+                                            if(props.cmd == "DISABLE-ITEM"){
+                                                selector.disable(props.arg0);
+                                            }
+                                            if(props.cmd == "ADD-ITEM"){
+                                                selector.add(props.arg0);
+                                            }
+                                            if(props.cmd == "INSERT-ITEM"){
+                                                selector.insert(props.ref, props.arg0);
+                                            }
+                                            if(props.cmd == "REMOVE-ITEM"){
+                                                selector.remove(JSON.parse(props.arg0));
+                                            }
+                                            if(props.cmd == "COLLAPSE-ITEM"){
+                                                selector.collapse(props.arg0);
+                                            }
+                                            if(props.cmd == "EXPAND-ITEM"){
+                                                selector.expand(props.arg0);
+                                            }
+                                            if(props.cmd == "SELECT-ITEM"){
+                                                selector.select(props.arg0);
+                                            }
+                                            if(props.cmd == "UNSELECT-ITEM"){
+                                                selector.unselect(props.arg0);
+                                            }
+                                            if(props.cmd == "CLICK-ITEM"){
+                                                selector.click(props.arg0);
+                                            }
+                                        } else {
+                                            alertify.warning("No command to process");
+                                        }
+                                    }
+                                },
+                                error: function(err_status){
+                                    alertify.error("Status Code: "
+                                    + err_status.status + "<br />" + "Error Message:"
+                                    + err_status.statusText);
+                                }
+                            });
+                            %s_poll();
+                        }, 10000);
+                    })();
+                    </script>
+                """ % (url, url, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url, self._sync_properties)
+        return script
 
     def _process_onclick_callback(self):
         if request.args.__len__() > 0:
