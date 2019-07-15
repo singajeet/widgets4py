@@ -1127,11 +1127,11 @@ class Grid(Widget):
         script = """<script>
                     (function %s_poll(){
                         setTimeout(function(){
-                            $.ajax({
+                            $2.ajax({
                                 url: "/%s",
                                 dataType: "json",
                                 success: function(props){
-                                    selector = $("#%s");
+                                    selector = $2("#%s");
                                     if(selector != undefined){
                                         if(props.cmd != undefined){
                                             if(props.cmd == "HIDE"){
@@ -1547,7 +1547,7 @@ class Toolbar(Widget):
         script = """<script>
                     (function %s_poll(){
                         setTimeout(function(){
-                            $.ajax({
+                            $2.ajax({
                                 url: "/%s",
                                 dataType: "json",
                                 success: function(props){
@@ -1974,7 +1974,7 @@ class Sidebar(Widget):
         script = """<script>
                     (function %s_poll(){
                         setTimeout(function(){
-                            $.ajax({
+                            $2.ajax({
                                 url: "/%s",
                                 dataType: "json",
                                 success: function(props){
@@ -2074,7 +2074,7 @@ class Sidebar(Widget):
                                 bottomHTML: '%s',
                                 nodes: %s,
                                 onFlat: function(event){
-                                    $('#%s').css('width', (event.goFlat ? '35px' : '200px'));
+                                    $2('#%s').css('width', (event.goFlat ? '35px' : '200px'));
                                 },
                                 onClick: function(event){
                                     $2.ajax({
@@ -2103,4 +2103,236 @@ class Sidebar(Widget):
         content += self._render_post_content('div')
         content += "\n" + self._attach_script()
         content += "\n" + self._attach_polling()
+        return content
+
+
+class FormFieldText(Widget):
+    """ A textbox field to be used inside an form"""
+
+    _type = None
+    _required = None
+    _options = None
+    _items = None
+    _caption = None
+    _attributes = None
+
+    def __init__(self, name, required=None, options=None, items=None,
+                 caption=None, attributes=None):
+        Widget.__init__(self, name)
+        self._type = 'text'
+        if required is not None:
+            self._required = required
+        else:
+            self._required = False
+        if options is not None:
+            self._options = options
+        else:
+            self._options = False
+        self._items = items
+        if caption is not None:
+            self._caption = caption
+        else:
+            self._caption = name
+        self._attributes = attributes
+
+    def render(self):
+        content = "{ "
+        content += "field: '" + self._name + "', "
+        content += "type: '" + self._type + "', "
+        content += "required: " + json.dumps(self._required) + ", "
+        if self._options is not None and self._options:
+            content += "options: {items: ["
+            if self._items is not None:
+                for item in self._items:
+                    content += "'" + item + "', "
+            content += "]}, "
+        if self._caption is not None:
+            content += "html: { caption: '" + self._caption + "', "
+            if self._attributes is not None:
+                content += "attr: '" + self._attributes + "' "
+            content += "}"
+        content += "}"
+        return content
+
+
+class FormFieldAlpha(FormFieldText):
+    """Field which can hold only alpha and numeric values """
+
+    def __init__(self, name, required=None, options=None, items=None,
+                 caption=None, attributes=None):
+        FormFieldText.__init__(self, name, required, options, items,
+                               caption, attributes)
+        self._type = 'alphaNumeric'
+
+
+class FormFieldInt(FormFieldText):
+    """Field which can hold only integer values """
+
+    def __init__(self, name, required=None, options=None, items=None,
+                 caption=None, attributes=None):
+        FormFieldText.__init__(self, name, required, options, items,
+                               caption, attributes)
+        self._type = 'int'
+
+
+class FormFieldFloat(FormFieldText):
+    """Field which can hold only floating numbers/ values """
+
+    def __init__(self, name, required=None, options=None, items=None,
+                 caption=None, attributes=None):
+        FormFieldText.__init__(self, name, required, options, items,
+                               caption, attributes)
+        self._type = 'float'
+
+
+class FormFieldDate(FormFieldText):
+    """Field which can hold only datevalues """
+
+    def __init__(self, name, required=None, options=None, items=None,
+                 caption=None, attributes=None):
+        FormFieldText.__init__(self, name, required, options, items,
+                               caption, attributes)
+        self._type = 'date'
+
+
+class FormFieldList(FormFieldText):
+    """Field which can hold only list of values """
+
+    def __init__(self, name, required=None, options=None, items=None,
+                 caption=None, attributes=None):
+        FormFieldText.__init__(self, name, required, options, items,
+                               caption, attributes)
+        self._type = 'list'
+
+
+class FormFieldEnum(FormFieldText):
+    """Field which can hold only unique values from provided list"""
+
+    def __init__(self, name, required=None, options=None, items=None,
+                 caption=None, attributes=None):
+        FormFieldText.__init__(self, name, required, options, items,
+                               caption, attributes)
+        self._type = 'enum'
+
+
+class FormFieldSelect(FormFieldText):
+    """Field which can hold only list of values and provides dropdown to select """
+
+    def __init__(self, name, required=None, options=None, items=None,
+                 caption=None, attributes=None):
+        FormFieldText.__init__(self, name, required, options, items,
+                               caption, attributes)
+        self._type = 'select'
+
+
+class FormFieldCheckbox(FormFieldText):
+    """Field which can hold only one of two values: true or false """
+
+    def __init__(self, name, required=None, options=None, items=None,
+                 caption=None, attributes=None):
+        FormFieldText.__init__(self, name, required, options, items,
+                               caption, attributes)
+        self._type = 'checkbox'
+
+
+class FormFieldRadio(FormFieldText):
+    """Field which can hold only one of the multiple values grouped together """
+
+    def __init__(self, name, required=None, options=None, items=None,
+                 caption=None, attributes=None):
+        FormFieldText.__init__(self, name, required, options, items,
+                               caption, attributes)
+        self._type = 'radio'
+
+
+class FormFieldTextArea(FormFieldText):
+    """Field which can hold only one of the multiple values grouped together """
+
+    def __init__(self, name, required=None, options=None, items=None,
+                 caption=None, attributes=None):
+        FormFieldText.__init__(self, name, required, options, items,
+                               caption, attributes)
+        self._type = 'textarea'
+
+
+class Form(Widget):
+    """A form can have multiple fields embedded and provides option to
+    either POST data from fields to server for further processing OR
+    sends the data from fields to GET more information
+    """
+
+    _url = None
+    _header = None
+    _actions = None
+    _submit_callback = None
+    _reset_callback = None
+    _app = None
+
+    def __init__(self, name, url=None, header=None, formURL=None, fields=None,
+                 submit_callback=None, reset_callback=None, app=None):
+        Widget.__init__(self, name)
+        self._app = app
+        if url is not None:
+            self._url = url
+        if header is not None:
+            self._header = header
+        else:
+            self._header = 'FORM'
+        if fields is not None:
+            self._child_widgets = fields
+        else:
+            self._child_widgets = []
+        self._submit_callback = submit_callback
+        self._reset_callback = reset_callback
+
+    def _process_submit_callback(self):
+        if request.args.__len__() > 0:
+            print(str(request.args))
+        if self._submit_callback is not None:
+            return json.dumps({'result': self._submit_callback()})
+        return json.dumps({'result': ''})
+
+    def _attach_script(self):
+        if self._app is not None and self._url is None:
+            self._url = str(__name__ + "_" + self._name).replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == self._url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + self._url, self._url, self._process_submit_callback)
+        fields = "[\n"
+        for field in self._child_widgets:
+            fields += field.render() + ",\n"
+        fields += "\n]"
+        script = """
+                <script>
+                    $2(function(){
+                        $2('#%s').w2form({
+                            name: '%s',
+                            url: '%s',
+                            header: '%s',
+                            fields: %s,
+                            actions: {
+                                reset: function(){
+                                    this.clear();
+                                },
+                                save: function(){
+                                    this.save();
+                                    //$2.ajax({
+                                    //    url: '/%s'
+                                    //});
+                                }
+                            }
+                        });
+                    });
+                </script>
+                """ % (self._name, self._name, self._url, self._header,
+                       fields, self._url)
+        return script
+
+    def render(self):
+        content = self._render_pre_content('div')
+        content += self._render_post_content('div')
+        content += self._attach_script()
         return content

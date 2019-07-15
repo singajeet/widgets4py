@@ -17,6 +17,8 @@ from widgets4py.w2ui.ui import Toolbar, ToolbarButton, ToolbarSeparator, Toolbar
 from widgets4py.w2ui.ui import ToolbarRadio, ToolbarMenu, ToolbarMenuRadio
 from widgets4py.w2ui.ui import ToolbarMenuCheck, ToolbarDropDown, ToolbarHTML
 from widgets4py.w2ui.ui import Sidebar, SidebarNode
+from widgets4py.w2ui.ui import Form, FormFieldAlpha, FormFieldText, FormFieldDate
+from widgets4py.w2ui.ui import FormFieldList, FormFieldEnum, FormFieldSelect
 from multiprocessing import Process
 
 
@@ -101,9 +103,29 @@ class PageTest:
     s_node213 = None
     s_node22 = None
     s_node23 = None
+    frm = None
+    frm_text = None
+    frm_alpha = None
+    frm_dt = None
+    frm_lst = None
+    frm_enm = None
+    frm_sel = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
+        self.frm_text = FormFieldText('frm_text', caption='Text Field', required=True)
+        self.frm_alpha = FormFieldAlpha('frm_alpha', caption='Alphanum Field')
+        self.frm_dt = FormFieldDate('frm_dt', caption='Date Field', required=True)
+        self.frm_lst = FormFieldList('frm_lst', caption='List Field', options=True, items=['abc', 'def', 'ghi'])
+        self.frm_enm = FormFieldEnum('frm_enm', caption='Enum Field', options=True, items=['abc', 'def', 'ghi'])
+        self.frm_sel = FormFieldSelect('frm_sel', caption='Select Field', options=True, items=['abc', 'def', 'ghi'])
+        self.frm = Form('frm', app=app)
+        self.frm.add(self.frm_text)
+        self.frm.add(self.frm_alpha)
+        self.frm.add(self.frm_dt)
+        self.frm.add(self.frm_lst)
+        self.frm.add(self.frm_enm)
+        self.frm.add(self.frm_sel)
         self.sidebar = Sidebar('sidebar', flatButton=True, app=app, onclick_callback=self.sidebar_clicked)
         self.sidebar.add_style("height", "100%")
         self.sidebar.add_style("width", "100%")
@@ -181,7 +203,7 @@ class PageTest:
                          toolbarSave=True, toolbarEdit=True)
         # self.frm = Form('frm', app=app, submit_callback=self.form_submitted)
         sg = SimpleGridLayout("Grid", 1, 2, col_ratio=["15%", "85%"])
-        sg.add_style("height", "100%")
+        sg.add_style("height", "500px")
         sg.add_style("width", "100%")
         sg.add(self.sidebar)
         sg.add(self.grid)
@@ -272,6 +294,7 @@ class PageTest:
         # self.tab.add(self.tab_sec1)
         # self.tab.add(self.tab_sec2)
         # pg.add(self.tab)
+        pg.add(self.frm)
         content = pg.render()
         return content
 
