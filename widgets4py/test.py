@@ -119,7 +119,7 @@ class PageTest:
         self.frm_lst = FormFieldList('frm_lst', caption='List Field', options=True, items=['abc', 'def', 'ghi'])
         self.frm_enm = FormFieldEnum('frm_enm', caption='Enum Field', options=True, items=['abc', 'def', 'ghi'])
         self.frm_sel = FormFieldSelect('frm_sel', caption='Select Field', options=True, items=['abc', 'def', 'ghi'])
-        self.frm = Form('frm', app=app)
+        self.frm = Form('frm', app=app, submit_callback=self.w2ui_form_submitted)
         self.frm.add(self.frm_text)
         self.frm.add(self.frm_alpha)
         self.frm.add(self.frm_dt)
@@ -297,6 +297,10 @@ class PageTest:
         pg.add(self.frm)
         content = pg.render()
         return content
+
+    def w2ui_form_submitted(self, form):
+        print("Form has been submitted with data: " + str(form))
+        return "success"
 
     def sidebar_clicked(self):
         print("Sidebar clicked: " + self.sidebar.clicked_item)

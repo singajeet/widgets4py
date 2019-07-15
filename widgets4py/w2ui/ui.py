@@ -1370,16 +1370,8 @@ class ToolbarMenuRadio(ToolbarMenu):
         content += "id: '" + self._name + "', "
         if self._title is not None:
             content += "text: '" + self._title + "', "
-            # content += """\ntext: function(item){
-            #                 var text = item.selected;
-            #                 var el = this.get('%s:' + item.selected);
-            #                 return '%s: (' + el.txt + ')';
-            #             },\n
-            #            """ % (self._name, self._title)
         if self._icon is not None:
             content += "icon: '" + self._icon + "', "
-        # if self._count is not None:
-        #     content += "count: " + str(self._count) + ", "
         if self._items is not None:
             content += "items: " + items
         content += "}"
@@ -1651,8 +1643,8 @@ class Toolbar(Widget):
 
     @property
     def clicked_item(self):
-        """Contains the name / id of item where mouse was clicked (i.e., the item which received the mouse
-        click event)"""
+        """Contains the name / id of item where mouse was clicked (i.e., the item which received
+        the mouse click event)"""
         return self._clicked_item
 
     @clicked_item.setter
@@ -1683,7 +1675,6 @@ class SidebarNode(Widget):
     _img = None
     _group = None
     _count = None
-    # _nodes = None
 
     def __init__(self, name, text=None, icon=None, is_leaf=None, expanded=None,
                  img=None, group=None, count=None, nodes=None):
@@ -1703,9 +1694,7 @@ class SidebarNode(Widget):
         self._count = count
         if nodes is not None:
             self._child_widgets = nodes
-            # self._nodes = nodes
         else:
-            # self._nodes = []
             self._child_widgets = []
         if is_leaf:
             if text is None and icon is None:
@@ -1723,23 +1712,6 @@ class SidebarNode(Widget):
     @is_leaf.setter
     def is_leaf(self, val):
         self._is_leaf = val
-
-    # def add(self, node, is_leaf=False):
-    #     """Adds an subnode or a leaf to the current node
-
-    #         Args:
-    #             node (SidebarNode): An instance of sidebar node as a leaf or node
-    #     """
-    #     node.is_leaf = is_leaf
-    #     self._nodes.append(node)
-
-    # def remove(self, node):
-    #     """Removes an node from the current node
-
-    #         Args:
-    #             node (SidebarNode): An instance of sidebar node
-    #     """
-    #     self._nodes.remove(node)
 
     def render(self):
         """Renders an node or leaf depending upon the value of `is_leaf' attribute
@@ -1824,9 +1796,17 @@ class Sidebar(Widget):
             self._flatButton = flatButton
         else:
             self._flatButton = False
-        # self.add_style("height", "500px")
-        # self.add_style("width", "200px")
         self._queue = []
+
+    @property
+    def onclick_client_script(self):
+        """The Javascript that will be executed at client side on mouse click event
+        """
+        return self._onclick_client_script
+
+    @onclick_client_script.setter
+    def onclick_client_script(self, val):
+        self._onclick_client_script = val
 
     @property
     def topHTML(self):
@@ -1960,6 +1940,15 @@ class Sidebar(Widget):
                 item (string): Name or Id of the node
         """
         self._queue.append({'cmd': 'CLICK-ITEM', 'arg0': item})
+
+    def on_sidebar_item_clicked(self, click_callback):
+        """Registers an method or callback to be called whenever an mouse click event
+        is triggered on the widget
+
+            Args:
+                click_callback (callable): Function or method that needs to be called
+        """
+        self._onclick_callback = click_callback
 
     def _sync_properties(self):
         if self._queue.__len__() > 0:
@@ -2107,7 +2096,7 @@ class Sidebar(Widget):
 
 
 class FormFieldText(Widget):
-    """ A textbox field to be used inside an form"""
+    """A most basic form of field in an form. It allows user to enter any kind of text as input"""
 
     _type = None
     _required = None
@@ -2166,7 +2155,7 @@ class FormFieldAlpha(FormFieldText):
 
 
 class FormFieldInt(FormFieldText):
-    """Field which can hold only integer values """
+    """This field allows to hold integer values as a whole number only"""
 
     def __init__(self, name, required=None, options=None, items=None,
                  caption=None, attributes=None):
@@ -2176,7 +2165,7 @@ class FormFieldInt(FormFieldText):
 
 
 class FormFieldFloat(FormFieldText):
-    """Field which can hold only floating numbers/ values """
+    """Field which allows to store floating point numbers or values """
 
     def __init__(self, name, required=None, options=None, items=None,
                  caption=None, attributes=None):
@@ -2186,7 +2175,7 @@ class FormFieldFloat(FormFieldText):
 
 
 class FormFieldDate(FormFieldText):
-    """Field which can hold only datevalues """
+    """Field which can hold date values and provides an calendar widget for selection"""
 
     def __init__(self, name, required=None, options=None, items=None,
                  caption=None, attributes=None):
@@ -2196,7 +2185,7 @@ class FormFieldDate(FormFieldText):
 
 
 class FormFieldList(FormFieldText):
-    """Field which can hold only list of values """
+    """Field which can hold list of values and display them as dropdown widget """
 
     def __init__(self, name, required=None, options=None, items=None,
                  caption=None, attributes=None):
@@ -2206,7 +2195,7 @@ class FormFieldList(FormFieldText):
 
 
 class FormFieldEnum(FormFieldText):
-    """Field which can hold only unique values from provided list"""
+    """Field which to select multiple options and display it as tokens in the textfield widget"""
 
     def __init__(self, name, required=None, options=None, items=None,
                  caption=None, attributes=None):
@@ -2216,7 +2205,9 @@ class FormFieldEnum(FormFieldText):
 
 
 class FormFieldSelect(FormFieldText):
-    """Field which can hold only list of values and provides dropdown to select """
+    """Field which can hold list of values and provides either dropdown or listbox
+    to select an element. Based on the browser, it renders the widget as ListBox or Dropdown
+    """
 
     def __init__(self, name, required=None, options=None, items=None,
                  caption=None, attributes=None):
@@ -2236,7 +2227,7 @@ class FormFieldCheckbox(FormFieldText):
 
 
 class FormFieldRadio(FormFieldText):
-    """Field which can hold only one of the multiple values grouped together """
+    """Field which allows to select single option among the may provided"""
 
     def __init__(self, name, required=None, options=None, items=None,
                  caption=None, attributes=None):
@@ -2246,7 +2237,7 @@ class FormFieldRadio(FormFieldText):
 
 
 class FormFieldTextArea(FormFieldText):
-    """Field which can hold only one of the multiple values grouped together """
+    """Field which can hold multiple line text in it"""
 
     def __init__(self, name, required=None, options=None, items=None,
                  caption=None, attributes=None):
@@ -2263,12 +2254,12 @@ class Form(Widget):
 
     _url = None
     _header = None
-    _actions = None
     _submit_callback = None
     _reset_callback = None
     _app = None
+    _form_data = None
 
-    def __init__(self, name, url=None, header=None, formURL=None, fields=None,
+    def __init__(self, name, url=None, header=None, fields=None,
                  submit_callback=None, reset_callback=None, app=None):
         Widget.__init__(self, name)
         self._app = app
@@ -2285,22 +2276,92 @@ class Form(Widget):
         self._submit_callback = submit_callback
         self._reset_callback = reset_callback
 
+    @property
+    def URL(self):
+        """URL that will be called when form data is posted. If no external URL is provided,
+        this attribute will point to `submit_callback` and will provide the form data as
+        parameter of the callback
+        """
+        return self._url
+
+    @URL.setter
+    def URL(self, val):
+        self._url = val
+
+    @property
+    def header(self):
+        """The text to be shown as title / header of the form"""
+        return self._header
+
+    @header.setter
+    def header(self, val):
+        self._header = val
+
+    @property
+    def form_data(self):
+        """User submitted form data, it will be available only after user submits the form
+        """
+        return self._form_data
+
+    @form_data.setter
+    def form_data(self, val):
+        self._form_data = val
+
+    def on_form_submit(self, submit_callback):
+        """Attaches the provided function/method to form's submit event
+
+            Args:
+                submit_callback (callable): Function or method that needs to be called when
+                                            event triggers. The callable should have a parameter
+                                            which will be used to pass the form data to the
+                                            callable
+            Example:
+                def handle_form_submit(form):
+                    pass
+        """
+        self._submit_callback = submit_callback
+
+    def on_form_reset(self, reset_callback):
+        """Attaches the provided function/method to form's reset event
+
+            Args:
+                reset_callback (callable): Function or Method that will be called when
+                                            event triggers
+        """
+        self._reset_callback = reset_callback
+
     def _process_submit_callback(self):
-        if request.args.__len__() > 0:
-            print(str(request.args))
+        self._form_data = request.form
         if self._submit_callback is not None:
-            return json.dumps({'result': self._submit_callback()})
+            return json.dumps({'result': self._submit_callback(request.form)})
+        return json.dumps({'result': ''})
+
+    def _process_reset_callback(self):
+        if self._reset_callback is not None:
+            return json.dumps({'result': self._reset_callback()})
         return json.dumps({'result': ''})
 
     def _attach_script(self):
+        reset_url = ""
         if self._app is not None and self._url is None:
+            # Prepare the form submit URL if no external URL is provided
             self._url = str(__name__ + "_" + self._name).replace('.', '_')
             found = False
             for rule in self._app.url_map.iter_rules():
                 if rule.endpoint == self._url:
                     found = True
             if not found:
-                self._app.add_url_rule('/' + self._url, self._url, self._process_submit_callback)
+                self._app.add_url_rule('/' + self._url, self._url, self._process_submit_callback,
+                                       methods=['POST'])
+            # Prepare the form reset URL to call the reset callback
+            reset_url = str(__name__ + "_" + self._name + "reset").replace('.', '_')
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == reset_url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + reset_url, reset_url, self._process_reset_callback)
+        # Prepare the fields to be added to form
         fields = "[\n"
         for field in self._child_widgets:
             fields += field.render() + ",\n"
@@ -2316,22 +2377,31 @@ class Form(Widget):
                             actions: {
                                 reset: function(){
                                     this.clear();
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        success: function(status){},
+                                        error: function(err_status){
+                                            alertify.error("Status Code: "
+                                            + err_status.status + "<br />" + "Error Message:"
+                                            + err_status.statusText);
+                                        }
+                                    });
                                 },
                                 save: function(){
                                     this.save();
-                                    //$2.ajax({
-                                    //    url: '/%s'
-                                    //});
                                 }
                             }
                         });
                     });
                 </script>
                 """ % (self._name, self._name, self._url, self._header,
-                       fields, self._url)
+                       fields, reset_url)
         return script
 
     def render(self):
+        """Renders the content of Form widget with its fields to the parent widget"""
         content = self._render_pre_content('div')
         content += self._render_post_content('div')
         content += self._attach_script()
