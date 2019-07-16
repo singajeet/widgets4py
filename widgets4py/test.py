@@ -11,15 +11,16 @@ from widgets4py.layouts import SimpleGridLayout
 # from widgets4py.jquery.ui import CheckBoxGroup, DialogBox, DialogTypes
 # from widgets4py.jquery.ui import Menu, MenuItem, SubMenu, MenuTypes, Slider, Spinner
 # from widgets4py.jquery.ui import TabSection, Tab
-from widgets4py.w2ui.ui import GridColumn, GridColumnCollection
-from widgets4py.w2ui.ui import GridRecord, GridRecordCollection, Grid
-from widgets4py.w2ui.ui import Toolbar, ToolbarButton, ToolbarSeparator, ToolbarCheck
-from widgets4py.w2ui.ui import ToolbarRadio, ToolbarMenu, ToolbarMenuRadio
-from widgets4py.w2ui.ui import ToolbarMenuCheck, ToolbarDropDown, ToolbarHTML
-from widgets4py.w2ui.ui import Sidebar, SidebarNode
-from widgets4py.w2ui.ui import Form, FormFieldAlpha, FormFieldText, FormFieldDate
-from widgets4py.w2ui.ui import FormFieldList, FormFieldEnum, FormFieldSelect
-from widgets4py.w2ui.ui import Popup
+# from widgets4py.w2ui.ui import GridColumn, GridColumnCollection
+# from widgets4py.w2ui.ui import GridRecord, GridRecordCollection, Grid
+# from widgets4py.w2ui.ui import Toolbar, ToolbarButton, ToolbarSeparator, ToolbarCheck
+# from widgets4py.w2ui.ui import ToolbarRadio, ToolbarMenu, ToolbarMenuRadio
+# from widgets4py.w2ui.ui import ToolbarMenuCheck, ToolbarDropDown, ToolbarHTML
+# from widgets4py.w2ui.ui import Sidebar, SidebarNode
+# from widgets4py.w2ui.ui import Form, FormFieldAlpha, FormFieldText, FormFieldDate
+# from widgets4py.w2ui.ui import FormFieldList, FormFieldEnum, FormFieldSelect
+# from widgets4py.w2ui.ui import Popup
+from widgets4py.jstree.ui import JSTree, JSTreeNode
 from multiprocessing import Process
 
 
@@ -74,145 +75,157 @@ class PageTest:
     # tab = None
     # tab_sec1 = None
     # tab_sec2 = None
-    g_col1 = None
-    g_col2 = None
-    g_column_coll = None
-    g_rec1 = None
-    g_rec2 = None
-    g_record_coll = None
-    grid = None
-    tool_btn1 = None
-    tool_sep = None
-    tool_btn2 = None
-    toolbar = None
-    tool_rd1 = None
-    tool_rd2 = None
-    tool_chk1 = None
-    tool_menu = None
-    tool_menu_rd = None
-    tool_menu_chk = None
-    tool_dd = None
-    tool_html = None
-    s_node1 = None
-    s_node11 = None
-    s_node12 = None
-    s_node13 = None
-    s_node2 = None
-    s_node21 = None
-    s_node211 = None
-    s_node212 = None
-    s_node213 = None
-    s_node22 = None
-    s_node23 = None
-    frm = None
-    frm_text = None
-    frm_alpha = None
-    frm_dt = None
-    frm_lst = None
-    frm_enm = None
-    frm_sel = None
-    pop = None
+    # g_col1 = None
+    # g_col2 = None
+    # g_column_coll = None
+    # g_rec1 = None
+    # g_rec2 = None
+    # g_record_coll = None
+    # grid = None
+    # tool_btn1 = None
+    # tool_sep = None
+    # tool_btn2 = None
+    # toolbar = None
+    # tool_rd1 = None
+    # tool_rd2 = None
+    # tool_chk1 = None
+    # tool_menu = None
+    # tool_menu_rd = None
+    # tool_menu_chk = None
+    # tool_dd = None
+    # tool_html = None
+    # s_node1 = None
+    # s_node11 = None
+    # s_node12 = None
+    # s_node13 = None
+    # s_node2 = None
+    # s_node21 = None
+    # s_node211 = None
+    # s_node212 = None
+    # s_node213 = None
+    # s_node22 = None
+    # s_node23 = None
+    # frm = None
+    # frm_text = None
+    # frm_alpha = None
+    # frm_dt = None
+    # frm_lst = None
+    # frm_enm = None
+    # frm_sel = None
+    # pop = None
+    tree = None
+    node1 = None
+    node2 = None
+    node3 = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
-        self.pop = Popup('pop', 'Test Title', app=app,
-                         buttons='<input type="button" onclick="w2popup.close();" value="Close" />',
-                         show_max=True, show_close=True, modal=True,
-                         body='<span>This message for you to show in popup widow!</span>')
-        self.frm_text = FormFieldText('frm_text', caption='Text Field', required=True)
-        self.frm_alpha = FormFieldAlpha('frm_alpha', caption='Alphanum Field')
-        self.frm_dt = FormFieldDate('frm_dt', caption='Date Field', required=True)
-        self.frm_lst = FormFieldList('frm_lst', caption='List Field', options=True, items=['abc', 'def', 'ghi'])
-        self.frm_enm = FormFieldEnum('frm_enm', caption='Enum Field', options=True, items=['abc', 'def', 'ghi'])
-        self.frm_sel = FormFieldSelect('frm_sel', caption='Select Field', options=True, items=['abc', 'def', 'ghi'])
-        self.frm = Form('frm', app=app, submit_callback=self.w2ui_form_submitted)
-        self.frm.add(self.frm_text)
-        self.frm.add(self.frm_alpha)
-        self.frm.add(self.frm_dt)
-        self.frm.add(self.frm_lst)
-        self.frm.add(self.frm_enm)
-        self.frm.add(self.frm_sel)
-        self.sidebar = Sidebar('sidebar', flatButton=True, app=app, onclick_callback=self.sidebar_clicked)
-        self.sidebar.add_style("height", "100%")
-        self.sidebar.add_style("width", "100%")
-        self.s_node1 = SidebarNode('s_node1', text='Level1', expanded=True, group=True)
-        self.s_node11 = SidebarNode('s_node11', text='Level1-1', is_leaf=True)
-        self.s_node12 = SidebarNode('s_node12', text='Level1-2', is_leaf=True)
-        self.s_node13 = SidebarNode('s_node13', text='Level1-3', is_leaf=True)
-        self.s_node2 = SidebarNode('s_node2', text='Level2', expanded=True, group=True)
-        self.s_node21 = SidebarNode('s_node21', text='Level2-1', expanded=True)
-        self.s_node211 = SidebarNode('s_node211', text='Level2-1-1', is_leaf=True)
-        self.s_node212 = SidebarNode('s_node212', text='Level2-1-2', is_leaf=True)
-        self.s_node213 = SidebarNode('s_node213', text='Level2-1-3', is_leaf=True)
-        self.s_node22 = SidebarNode('s_node22', text='Level2-2', is_leaf=True)
-        self.s_node23 = SidebarNode('s_node23', text='Level2-3', is_leaf=True)
-        self.s_node1.add(self.s_node11)
-        self.s_node1.add(self.s_node12)
-        self.s_node1.add(self.s_node13)
-        self.s_node2.add(self.s_node21)
-        self.s_node21.add(self.s_node211)
-        self.s_node21.add(self.s_node212)
-        self.s_node21.add(self.s_node213)
-        self.s_node2.add(self.s_node22)
-        self.s_node2.add(self.s_node23)
-        self.sidebar.add(self.s_node1)
-        self.sidebar.add(self.s_node2)
-        self.toolbar = Toolbar('MyBar', onclick_callback=self.toolbar_clicked, app=app)
-        self.tool_btn1 = ToolbarButton('tool_btn1', 'Button1', icon='fa-star')
-        self.tool_btn2 = ToolbarButton('tool_btn2', 'Button2', icon='fa-heart')
-        self.tool_sep = ToolbarSeparator('tool_sep', 'Sep')
-        self.tool_rd1 = ToolbarRadio('tool_rd1', 'Radio1', group='A')
-        self.tool_rd2 = ToolbarRadio('tool_rd2', 'Radio2', group='A')
-        self.tool_chk1 = ToolbarCheck('tool_chk1', 'Checkbox')
-        self.tool_menu = ToolbarMenu('tool_menu', 'Menu', count=2)
-        self.tool_menu.add_item('Item1', '', count=1)
-        self.tool_menu.add_item('Item2', '', count=1)
-        self.tool_menu_rd = ToolbarMenuRadio('tool_menu_rd', 'MenuRadio')
-        self.tool_menu_rd.add_item('rd1', 'Radio1')
-        self.tool_menu_rd.add_item('rd2', 'Radio2')
-        self.tool_menu_rd.add_item('rd3', 'Radio3')
-        self.tool_menu_chk = ToolbarMenuCheck('tool_menu_chk', 'MenuCheck')
-        self.tool_menu_chk.add_item('ck1', 'Check1')
-        self.tool_menu_chk.add_item('ck2', 'Check2')
-        self.tool_menu_chk.add_item('ck3', 'Check3')
-        self.tool_dd = ToolbarDropDown('tool_dd', "<p>My name is Singh...Ajeet Singh!!", "Drop")
-        self.tool_html = ToolbarHTML('tool_html', '<span>Name:</span><input type="text" id="smid" />', title='abc')
-        self.toolbar.add(self.tool_btn1)
-        self.toolbar.add(self.tool_sep)
-        self.toolbar.add(self.tool_btn2)
-        self.toolbar.add(self.tool_rd1)
-        self.toolbar.add(self.tool_rd2)
-        self.toolbar.add(self.tool_chk1)
-        self.toolbar.add(self.tool_menu)
-        self.toolbar.add(self.tool_menu_rd)
-        self.toolbar.add(self.tool_menu_chk)
-        self.toolbar.add(self.tool_dd)
-        self.toolbar.add(self.tool_html)
-        pg.add(self.toolbar)
-        self.g_col1 = GridColumn('fname', 'First Name', 50)
-        self.g_col2 = GridColumn('lname', 'Last Name', 50)
-        self.g_column_coll = GridColumnCollection()
-        self.g_column_coll.add(self.g_col1)
-        self.g_column_coll.add(self.g_col2)
-        self.g_rec1 = GridRecord()
-        self.g_rec1.add_cell("fname", "Ajeet")
-        self.g_rec1.add_cell("lname", "Singh")
-        self.g_rec2 = GridRecord()
-        self.g_rec2.add_cell("fname", "Armin")
-        self.g_rec2.add_cell("lname", "Kaur")
-        self.g_record_coll = GridRecordCollection()
-        self.g_record_coll.add(self.g_rec1)
-        self.g_record_coll.add(self.g_rec2)
-        self.grid = Grid('grid', 'My Table', self.g_column_coll, row_collection=self.g_record_coll,
-                         toolbar=True, footer=True, line_numbers=True, select_column=True,
-                         multi_select=True, app=app, toolbarAdd=True, toolbarDelete=True,
-                         toolbarSave=True, toolbarEdit=True)
+        self.tree = JSTree('tree')
+        self.node1 = JSTreeNode('node1', 'Node 1', is_opened=True)
+        self.node2 = JSTreeNode('node2', 'Node 2')
+        self.node3 = JSTreeNode('node3', 'Node 3', is_disabled=True)
+        self.tree.add(self.node1)
+        self.node1.add(self.node2)
+        self.node1.add(self.node3)
+        # self.pop = Popup('pop', 'Test Title', app=app,
+        #                  buttons='<input type="button" onclick="w2popup.close();" value="Close" />',
+        #                  show_max=True, show_close=True, modal=True,
+        #                  body='<span>This message for you to show in popup widow!</span>')
+        # self.frm_text = FormFieldText('frm_text', caption='Text Field', required=True)
+        # self.frm_alpha = FormFieldAlpha('frm_alpha', caption='Alphanum Field')
+        # self.frm_dt = FormFieldDate('frm_dt', caption='Date Field', required=True)
+        # self.frm_lst = FormFieldList('frm_lst', caption='List Field', options=True, items=['abc', 'def', 'ghi'])
+        # self.frm_enm = FormFieldEnum('frm_enm', caption='Enum Field', options=True, items=['abc', 'def', 'ghi'])
+        # self.frm_sel = FormFieldSelect('frm_sel', caption='Select Field', options=True, items=['abc', 'def', 'ghi'])
+        # self.frm = Form('frm', app=app, submit_callback=self.w2ui_form_submitted)
+        # self.frm.add(self.frm_text)
+        # self.frm.add(self.frm_alpha)
+        # self.frm.add(self.frm_dt)
+        # self.frm.add(self.frm_lst)
+        # self.frm.add(self.frm_enm)
+        # self.frm.add(self.frm_sel)
+        # self.sidebar = Sidebar('sidebar', flatButton=True, app=app, onclick_callback=self.sidebar_clicked)
+        # self.sidebar.add_style("height", "100%")
+        # self.sidebar.add_style("width", "100%")
+        # self.s_node1 = SidebarNode('s_node1', text='Level1', expanded=True, group=True)
+        # self.s_node11 = SidebarNode('s_node11', text='Level1-1', is_leaf=True)
+        # self.s_node12 = SidebarNode('s_node12', text='Level1-2', is_leaf=True)
+        # self.s_node13 = SidebarNode('s_node13', text='Level1-3', is_leaf=True)
+        # self.s_node2 = SidebarNode('s_node2', text='Level2', expanded=True, group=True)
+        # self.s_node21 = SidebarNode('s_node21', text='Level2-1', expanded=True)
+        # self.s_node211 = SidebarNode('s_node211', text='Level2-1-1', is_leaf=True)
+        # self.s_node212 = SidebarNode('s_node212', text='Level2-1-2', is_leaf=True)
+        # self.s_node213 = SidebarNode('s_node213', text='Level2-1-3', is_leaf=True)
+        # self.s_node22 = SidebarNode('s_node22', text='Level2-2', is_leaf=True)
+        # self.s_node23 = SidebarNode('s_node23', text='Level2-3', is_leaf=True)
+        # self.s_node1.add(self.s_node11)
+        # self.s_node1.add(self.s_node12)
+        # self.s_node1.add(self.s_node13)
+        # self.s_node2.add(self.s_node21)
+        # self.s_node21.add(self.s_node211)
+        # self.s_node21.add(self.s_node212)
+        # self.s_node21.add(self.s_node213)
+        # self.s_node2.add(self.s_node22)
+        # self.s_node2.add(self.s_node23)
+        # self.sidebar.add(self.s_node1)
+        # self.sidebar.add(self.s_node2)
+        # self.toolbar = Toolbar('MyBar', onclick_callback=self.toolbar_clicked, app=app)
+        # self.tool_btn1 = ToolbarButton('tool_btn1', 'Button1', icon='fa-star')
+        # self.tool_btn2 = ToolbarButton('tool_btn2', 'Button2', icon='fa-heart')
+        # self.tool_sep = ToolbarSeparator('tool_sep', 'Sep')
+        # self.tool_rd1 = ToolbarRadio('tool_rd1', 'Radio1', group='A')
+        # self.tool_rd2 = ToolbarRadio('tool_rd2', 'Radio2', group='A')
+        # self.tool_chk1 = ToolbarCheck('tool_chk1', 'Checkbox')
+        # self.tool_menu = ToolbarMenu('tool_menu', 'Menu', count=2)
+        # self.tool_menu.add_item('Item1', '', count=1)
+        # self.tool_menu.add_item('Item2', '', count=1)
+        # self.tool_menu_rd = ToolbarMenuRadio('tool_menu_rd', 'MenuRadio')
+        # self.tool_menu_rd.add_item('rd1', 'Radio1')
+        # self.tool_menu_rd.add_item('rd2', 'Radio2')
+        # self.tool_menu_rd.add_item('rd3', 'Radio3')
+        # self.tool_menu_chk = ToolbarMenuCheck('tool_menu_chk', 'MenuCheck')
+        # self.tool_menu_chk.add_item('ck1', 'Check1')
+        # self.tool_menu_chk.add_item('ck2', 'Check2')
+        # self.tool_menu_chk.add_item('ck3', 'Check3')
+        # self.tool_dd = ToolbarDropDown('tool_dd', "<p>My name is Singh...Ajeet Singh!!", "Drop")
+        # self.tool_html = ToolbarHTML('tool_html', '<span>Name:</span><input type="text" id="smid" />', title='abc')
+        # self.toolbar.add(self.tool_btn1)
+        # self.toolbar.add(self.tool_sep)
+        # self.toolbar.add(self.tool_btn2)
+        # self.toolbar.add(self.tool_rd1)
+        # self.toolbar.add(self.tool_rd2)
+        # self.toolbar.add(self.tool_chk1)
+        # self.toolbar.add(self.tool_menu)
+        # self.toolbar.add(self.tool_menu_rd)
+        # self.toolbar.add(self.tool_menu_chk)
+        # self.toolbar.add(self.tool_dd)
+        # self.toolbar.add(self.tool_html)
+        # pg.add(self.toolbar)
+        # self.g_col1 = GridColumn('fname', 'First Name', 50)
+        # self.g_col2 = GridColumn('lname', 'Last Name', 50)
+        # self.g_column_coll = GridColumnCollection()
+        # self.g_column_coll.add(self.g_col1)
+        # self.g_column_coll.add(self.g_col2)
+        # self.g_rec1 = GridRecord()
+        # self.g_rec1.add_cell("fname", "Ajeet")
+        # self.g_rec1.add_cell("lname", "Singh")
+        # self.g_rec2 = GridRecord()
+        # self.g_rec2.add_cell("fname", "Armin")
+        # self.g_rec2.add_cell("lname", "Kaur")
+        # self.g_record_coll = GridRecordCollection()
+        # self.g_record_coll.add(self.g_rec1)
+        # self.g_record_coll.add(self.g_rec2)
+        # self.grid = Grid('grid', 'My Table', self.g_column_coll, row_collection=self.g_record_coll,
+        #                  toolbar=True, footer=True, line_numbers=True, select_column=True,
+        #                  multi_select=True, app=app, toolbarAdd=True, toolbarDelete=True,
+        #                  toolbarSave=True, toolbarEdit=True)
         # self.frm = Form('frm', app=app, submit_callback=self.form_submitted)
-        sg = SimpleGridLayout("Grid", 1, 2, col_ratio=["15%", "85%"])
+        sg = SimpleGridLayout("Grid", 1, 2, col_ratio=["20%", "80%"])
         sg.add_style("height", "500px")
         sg.add_style("width", "100%")
-        sg.add(self.sidebar)
-        sg.add(self.grid)
+        sg.add(self.tree)
+        # sg.add(self.sidebar)
+        # sg.add(self.grid)
         # self.btn = Button('btn', 'Push', app=app, onclick_callback=self.change_btn_title)
         # self.btn1 = Button('btn1', 'Populate', app=app, onclick_callback=self.populate_text)
         # self.txt = TextBox('txt', app=app, onchange_callback=self.text_changed)
@@ -300,8 +313,8 @@ class PageTest:
         # self.tab.add(self.tab_sec1)
         # self.tab.add(self.tab_sec2)
         # pg.add(self.tab)
-        pg.add(self.frm)
-        pg.add(self.pop)
+        # pg.add(self.frm)
+        # pg.add(self.pop)
         content = pg.render()
         return content
 
