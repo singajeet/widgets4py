@@ -2788,106 +2788,109 @@ class Popup(Widget):
         return content
 
 
-class WidgetContextMenu(Widget):
-    """Displays a context menu for a given widget whenever it is clicked.
-    Please note that it is not like normal context menu which appears on
-    right mouse click on a field, rather it appears when left button of
-    mouse is clicked on an widget
-    """
+# class WidgetContextMenu(Widget):
+#     """Displays a context menu for a given widget whenever it is clicked.
+#     Please note that it is not like normal context menu which appears on
+#     right mouse click on a field, rather it appears when left button of
+#     mouse is clicked on an widget
+#     """
 
-    _spinner = None
-    _search = None
-    _match = None
-    _align = None  # values can be: None, left, right, both
-    _open_above = None
-    _alt_rows = None
-    _index = None
-    _msg_no_items = None
-    _onselect_callback = None
-    _app = None
+#     _spinner = None
+#     _search = None
+#     _match = None
+#     _align = None  # values can be: None, left, right, both
+#     _open_above = None
+#     _alt_rows = None
+#     _index = None
+#     _msg_no_items = None
+#     _onselect_callback = None
+#     _app = None
+#     _items = None
 
-    def __init__(self, name, items=None, spinner=None, search=None, match=None,
-                 alt_rows=None, index=None, msg_no_items=None, align=None,
-                 open_above=None, onselect_callback=None, app=None):
-        Widget.__init__(self, name)
-        if items is not None:
-            self._child_widgets = items
-        else:
-            self._child_widgets = []
-        self._spinner = spinner
-        self._search = search
-        self._match = match
-        self._align = align
-        self._open_above = open_above
-        self._alt_rows = alt_rows
-        self._index = index
-        self._msg_no_items = msg_no_items
-        self._onselect_callback
-        self._app = app
+#     def __init__(self, name, items=None, spinner=None, search=None, match=None,
+#                  alt_rows=None, index=None, msg_no_items=None, align=None,
+#                  open_above=None, onselect_callback=None, app=None):
+#         Widget.__init__(self, name)
+#         if items is not None:
+#             self.items = items
+#         else:
+#             self._items = []
+#         self._spinner = spinner
+#         self._search = search
+#         self._match = match
+#         self._align = align
+#         self._open_above = open_above
+#         self._alt_rows = alt_rows
+#         self._index = index
+#         self._msg_no_items = msg_no_items
+#         self._onselect_callback
+#         self._app = app
 
-    def add(self, id, text, icon=None):
-        item = "{id: '" + id + "',text: '" + text + "', "
-        if icon is not None:
-            item += "icon: '" + icon + "'"
-        item += "}"
-        self._child_widgets.append(item)
+#     def add_item(self, id, text, icon=None):
+#         item = "{id: '" + id + "',text: '" + text + "', "
+#         if icon is not None:
+#             item += "icon: '" + icon + "'"
+#         item += "}"
+#         self._items.append(item)
 
-    def _process_onselect_callback(self):
-        if self._onselect_callback is not None:
-            return json.dumps({'result': self._onselect_callback()})
-        return json.dumps({'result': ''})
+#     def _process_onselect_callback(self):
+#         if self._onselect_callback is not None:
+#             return json.dumps({'result': self._onselect_callback()})
+#         return json.dumps({'result': ''})
 
-    def _attach_script(self):
-        url = ""
-        if self._app is not None:
-            url = str(__name__ + "_" + self._name + "_ctx_menu").replace('.', '_')
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
-            if not found:
-                self._app.add_url_rule('/' + url, url, self._process_onselect_callback)
-        items = "[\n"
-        for item in self._child_widgets:
-            items += item + ",\n"
-        items += "]"
-        script = """
-                    <script>
-                    $('#%s').w2menu({
-                        type: type,
-                        align: '%s',
-                        openAbove: %s,
-                        search: %s,
-                        match: '%s',
-                        altRows: %s,
-                        index: %d,
-                        msgNoItems: '%s',
-                        items: %s,
-                        onSelect: function(event){
-                            url: '/%s',
-                            type: 'get',
-                            dataType: 'json',
-                            error: function(err_status){
-                                    alertify.error("Status Code: "
-                                    + err_status.status + "<br />" + "Error Message:"
-                                    + err_status.statusText);
-                            }
-                        }
-                    });
-                    </script>
-                """ % (self._name,
-                       self._align if self._align is not None else "none",
-                       json.dumps(self._open_above) if self._open_above is not None else json.dumps(False),
-                       json.dumps(self._search) if self._search is not None else json.dumps(False),
-                       self._match if self._match is not None else "begins",
-                       json.dumps(self._alt_rows) if self._alt_rows is not None else json.dumps(True),
-                       self._index if self._index is not None else 0,
-                       self._msg_no_items if self._msg_no_items is not None else 'No Items!',
-                       items,
-                       url
-                       )
-        return script
+#     def _attach_script(self):
+#         url = ""
+#         if self._app is not None:
+#             url = str(__name__ + "_" + self._name + "_ctx_menu").replace('.', '_')
+#             found = False
+#             for rule in self._app.url_map.iter_rules():
+#                 if rule.endpoint == url:
+#                     found = True
+#             if not found:
+#                 self._app.add_url_rule('/' + url, url, self._process_onselect_callback)
+#         items = "[\n"
+#         for item in self._items:
+#             items += item + ",\n"
+#         items += "]"
+#         script = """
+#                     <script>
+#                     $('#%s').w2menu({
+#                         //type: type,
+#                         align: '%s',
+#                         openAbove: %s,
+#                         search: %s,
+#                         match: '%s',
+#                         altRows: %s,
+#                         index: %d,
+#                         msgNoItems: '%s',
+#                         items: %s,
+#                         onSelect: function(event){
+#                             $2.ajax({
+#                                 url: '/%s',
+#                                 type: 'get',
+#                                 dataType: 'json',
+#                                 error: function(err_status){
+#                                         alertify.error("Status Code: "
+#                                         + err_status.status + "<br />" + "Error Message:"
+#                                         + err_status.statusText);
+#                                 }
+#                             });
+#                         }
+#                     });
+#                     </script>
+#                 """ % (self._name,
+#                        self._align if self._align is not None else "none",
+#                        json.dumps(self._open_above) if self._open_above is not None else json.dumps(False),
+#                        json.dumps(self._search) if self._search is not None else json.dumps(False),
+#                        self._match if self._match is not None else "begins",
+#                        json.dumps(self._alt_rows) if self._alt_rows is not None else json.dumps(True),
+#                        self._index if self._index is not None else 0,
+#                        self._msg_no_items if self._msg_no_items is not None else 'No Items!',
+#                        items,
+#                        url
+#                        )
+#         return script
 
-    def render(self):
-        content = self._attach_script()
-        return content
+#     def render(self):
+#         content = self._attach_script()
+#         return content

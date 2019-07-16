@@ -19,7 +19,7 @@ from widgets4py.w2ui.ui import ToolbarMenuCheck, ToolbarDropDown, ToolbarHTML
 from widgets4py.w2ui.ui import Sidebar, SidebarNode
 from widgets4py.w2ui.ui import Form, FormFieldAlpha, FormFieldText, FormFieldDate
 from widgets4py.w2ui.ui import FormFieldList, FormFieldEnum, FormFieldSelect
-from widgets4py.w2ui.ui import Popup, WidgetContextMenu
+from widgets4py.w2ui.ui import Popup
 from multiprocessing import Process
 
 
@@ -112,7 +112,6 @@ class PageTest:
     frm_enm = None
     frm_sel = None
     pop = None
-    wcm = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
