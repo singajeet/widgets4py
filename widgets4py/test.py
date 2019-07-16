@@ -116,7 +116,9 @@ class PageTest:
     def show_layout(self):
         pg = Page('myPage', 'My Page')
         self.pop = Popup('pop', 'Test Title', app=app,
-                         buttons='<input type="button" onclick="w2popup.close();" value="Close" />')
+                         buttons='<input type="button" onclick="w2popup.close();" value="Close" />',
+                         show_max=True, show_close=True, modal=True,
+                         body='<span>This message for you to show in popup widow!</span>')
         self.frm_text = FormFieldText('frm_text', caption='Text Field', required=True)
         self.frm_alpha = FormFieldAlpha('frm_alpha', caption='Alphanum Field')
         self.frm_dt = FormFieldDate('frm_dt', caption='Date Field', required=True)

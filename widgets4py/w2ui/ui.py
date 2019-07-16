@@ -2481,27 +2481,27 @@ class Popup(Widget):
     def _process_on_close_callback(self):
         if self._on_close_callback is not None:
             return json.dumps({'result': self._on_close_callback()})
-        return json.dumps({'result', ''})
+        return json.dumps({'result': ''})
 
     def _process_on_max_callback(self):
         if self._on_max_callback is not None:
             return json.dumps({'result': self._on_max_callback()})
-        return json.dumps({'result', ''})
+        return json.dumps({'result': ''})
 
     def _process_on_min_callback(self):
         if self._on_min_callback is not None:
             return json.dumps({'result': self._on_min_callback()})
-        return json.dumps({'result', ''})
+        return json.dumps({'result': ''})
 
     def _process_on_toggle_callback(self):
         if self._on_toggle_callback is not None:
             return json.dumps({'result': self._on_toggle_callback()})
-        return json.dumps({'result', ''})
+        return json.dumps({'result': ''})
 
     def _process_on_keydown_callback(self):
         if self._on_keydown_callback is not None:
             return json.dumps({'result': self._on_keydown_callback()})
-        return json.dumps({'result', ''})
+        return json.dumps({'result': ''})
 
     def _register_url(self, url, func):
         if self._app is None:
@@ -2553,7 +2553,7 @@ class Popup(Widget):
 
     def open(self):
         """Opens the dialogbox or popup on screen"""
-        self._queue.append({'cmd', 'OPEN'})
+        self._queue.append({'cmd': 'OPEN'})
 
     def load(self, url):
         """Opens the popup and displays the content loaded from url"""
@@ -2574,11 +2574,11 @@ class Popup(Widget):
 
     def max(self):
         """Maximize the popup window"""
-        self._queue.append({'cmd', 'MAX'})
+        self._queue.append({'cmd': 'MAX'})
 
     def min(self):
         """Minimizes the popup window"""
-        self._queue.append({'cmd', 'MIN'})
+        self._queue.append({'cmd': 'MIN'})
 
     def message(self, options=None):
         """Shows an message in the popup box
@@ -2645,6 +2645,7 @@ class Popup(Widget):
                                             if(props.cmd == "RESIZE"){
                                                 if(props.arg2 == null){
                                                     w2popup.resize(props.arg0, props.arg1);
+                                                    }
                                                 else{
                                                     w2popup.resize(props.arg0, props.arg1, props.arg2);
                                                 }
