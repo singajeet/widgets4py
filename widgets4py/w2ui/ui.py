@@ -2406,3 +2406,382 @@ class Form(Widget):
         content += self._render_post_content('div')
         content += self._attach_script()
         return content
+
+
+class Popup(Widget):
+    """The `Popup` class allows you to create different types of dialogs and
+    it can fuether configured to your needs using many attributes which belongs
+    to this class
+    """
+
+    _title = None
+    _body = None
+    _buttons = None
+    _modal = None
+    _width = None
+    _height = None
+    _url = None
+    _color = None
+    _opacity = None
+    _speed = None
+    _transition = None
+    _show_close = None
+    _show_max = None
+    _keyboard = None
+
+    _on_open_callback = None
+    _open_callback_url = None
+    _on_close_callback = None
+    _close_callback_url = None
+    _on_max_callback = None
+    _max_callback_url = None
+    _on_min_callback = None
+    _min_callback_url = None
+    _on_toggle_callback = None
+    _toggle_callback_url = None
+    _on_keydown_callback = None
+    _keydown_callback_url = None
+    _queue = None
+    _app = None
+
+    def __init__(self, name, title=None, body=None, buttons=None, style=None, modal=None, width=None,
+                 height=None, url=None, color=None, opacity=None, speed=None, transition=None,
+                 show_close=None, show_max=None, keyboard=None, on_open_callback=None,
+                 on_close_callback=None, on_max_callback=None, on_min_callback=None,
+                 on_toggle_callback=None, on_keydown_callback=None, app=None):
+        Widget.__init__(self, name)
+        self._title = title
+        self._body = body
+        self._buttons = buttons
+        self._modal = modal
+        self._width = width
+        self._height = height
+        self._url = url
+        self._color = color
+        self._opacity = opacity
+        self._speed = speed
+        self._transition = transition
+        self._show_close = show_close
+        self._show_max = show_max
+        self._keyboard = keyboard
+        self._on_open_callback = on_open_callback
+        self._on_close_callback = on_close_callback
+        self._on_max_callback = on_max_callback
+        self._on_min_callback = on_min_callback
+        self._on_toggle_callback = on_toggle_callback
+        self._on_keydown_callback = on_keydown_callback
+        self._queue = []
+        self._app = app
+
+    def _process_on_open_callback(self):
+        if self._on_open_callback is not None:
+            return json.dumps({'result': self._on_open_callback()})
+        return json.dumps({'result': ''})
+
+    def _process_on_close_callback(self):
+        if self._on_close_callback is not None:
+            return json.dumps({'result': self._on_close_callback()})
+        return json.dumps({'result', ''})
+
+    def _process_on_max_callback(self):
+        if self._on_max_callback is not None:
+            return json.dumps({'result': self._on_max_callback()})
+        return json.dumps({'result', ''})
+
+    def _process_on_min_callback(self):
+        if self._on_min_callback is not None:
+            return json.dumps({'result': self._on_min_callback()})
+        return json.dumps({'result', ''})
+
+    def _process_on_toggle_callback(self):
+        if self._on_toggle_callback is not None:
+            return json.dumps({'result': self._on_toggle_callback()})
+        return json.dumps({'result', ''})
+
+    def _process_on_keydown_callback(self):
+        if self._on_keydown_callback is not None:
+            return json.dumps({'result': self._on_keydown_callback()})
+        return json.dumps({'result', ''})
+
+    def _register_url(self, url, func):
+        if self._app is None:
+            raise ValueError("The value of the 'app' attribute can't be empty")
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url, func)
+
+    def _process_urls(self):
+        # open callback url
+        self._open_callback_url = str(__name__ + "_" + self._name + "_open").replace('.', '_')
+        self._register_url(self._open_callback_url, self._process_on_open_callback)
+        # close callback url
+        self._close_callback_url = str(__name__ + "_" + self._name + "_close").replace('.', '_')
+        self._register_url(self._close_callback_url, self._process_on_close_callback)
+        # max callback url
+        self._max_callback_url = str(__name__ + "_" + self._name + "_max").replace('.', '_')
+        self._register_url(self._max_callback_url, self._process_on_max_callback)
+        # min callback url
+        self._min_callback_url = str(__name__ + "_" + self._name + "_min").replace('.', '_')
+        self._register_url(self._min_callback_url, self._process_on_min_callback)
+        # toggle callback url
+        self._toggle_callback_url = str(__name__ + "_" + self._name + "_toggle").replace('.', '_')
+        self._register_url(self._toggle_callback_url, self._process_on_toggle_callback)
+        # keydown callback url
+        self._keydown_callback_url = str(__name__ + "_" + self._name + "_keydown").replace('.', '_')
+        self._register_url(self._keydown_callback_url, self._process_on_keydown_callback)
+
+    @property
+    def title(self):
+        """Title of the popup box"""
+        return self._title
+
+    @title.setter
+    def title(self, val):
+        self._title = val
+
+    @property
+    def body(self):
+        """Body section of the popup"""
+        return self._body
+
+    @body.setter
+    def body(self, val):
+        self._body = val
+
+    def open(self):
+        """Opens the dialogbox or popup on screen"""
+        self._queue.append({'cmd', 'OPEN'})
+
+    def load(self, url):
+        """Opens the popup and displays the content loaded from url"""
+        self._queue.append({'cmd': 'LOAD', 'arg0': url})
+
+    def close(self):
+        """Closes the already opened popup"""
+        self._queue.append({'cmd': 'CLOSE'})
+
+    def lock(self, message, showSpinner=False):
+        """Locks the dialogbox using an overlay and shows the spinner if set to True
+        """
+        self._queue.append({'cmd': 'LOCK', 'arg0': message, 'arg1': json.dumps(showSpinner)})
+
+    def lockScreen(self, options=None):
+        """Locks the whole screen using the overlay"""
+        self._queue.append({'cmd': 'LOCK-SCREEN', 'arg0': options})
+
+    def max(self):
+        """Maximize the popup window"""
+        self._queue.append({'cmd', 'MAX'})
+
+    def min(self):
+        """Minimizes the popup window"""
+        self._queue.append({'cmd', 'MIN'})
+
+    def message(self, options=None):
+        """Shows an message in the popup box
+
+            Example:
+                message({'height':200, 'width': 200, 'html': '<span>Some message</span>}')
+        """
+        self._queue.append({'cmd': 'MSG', 'arg0': json.dumps(options)})
+
+    def resize(self, height, width, callback):
+        """Resize the popup to desired size and calls the callback"""
+        self._queue.append({'cmd': 'RESIZE', 'arg0': width, 'arg1': height, 'arg2': json.dumps(callback)})
+
+    def unlock(self):
+        """Unlocks the locked popup"""
+        self._queue.append({'cmd': 'UNLOCK'})
+
+    def unlock_screen(self):
+        """Unlocks the whole screen"""
+        self._queue.append({'cmd': 'UNLOCK-SCREEN'})
+
+    def _sync_properties(self):
+        if self._queue.__len__() > 0:
+            cmd = self._queue.pop()
+            return json.dumps(cmd)
+        return json.dumps({'result': ''})
+
+    def _attach_polling(self):
+        if self._app is None:
+            raise ValueError("The value of 'app' attribute can't be empty")
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        script = """<script>
+                    (function %s_poll(){
+                        setTimeout(function(){
+                            $2.ajax({
+                                url: "/%s",
+                                dataType: "json",
+                                success: function(props){
+                                        if(props.cmd != undefined){
+                                            if(props.cmd == "OPEN"){
+                                                %s_popup();
+                                            }
+                                            if(props.cmd == "CLOSE"){
+                                                w2popup.close();
+                                            }
+                                            if(props.cmd == "LOAD"){
+                                                w2popup.load({url: props.arg0});
+                                            }
+                                            if(props.cmd == "LOCK"){
+                                                w2popup.lock(props.arg0, props.arg1);
+                                            }
+                                            if(props.cmd == "LOCK-SCREEN"){
+                                                w2popup.lockScreen(props.arg0);
+                                            }
+                                            if(props.cmd == "MAX"){
+                                                w2popup.max();
+                                            }
+                                            if(props.cmd == "MIN"){
+                                                w2popup.min();
+                                            }
+                                            if(props.cmd == "MSG"){
+                                                w2popup.message(JSON.parse(props.arg0));
+                                            }
+                                            if(props.cmd == "RESIZE"){
+                                                if(props.arg2 == null){
+                                                    w2popup.resize(props.arg0, props.arg1);
+                                                else{
+                                                    w2popup.resize(props.arg0, props.arg1, props.arg2);
+                                                }
+                                            }
+                                            if(props.cmd == "UNLOCK"){
+                                                w2popup.unlock();
+                                            }
+                                            if(props.cmd == "UNLOCK-SCREEN"){
+                                                w2popup.unlockScreen();
+                                            }
+                                        } else {
+                                            alertify.warning("No command to process");
+                                        }
+                                },
+                                error: function(err_status){
+                                    alertify.error("Status Code: "
+                                    + err_status.status + "<br />" + "Error Message:"
+                                    + err_status.statusText);
+                                }
+                            });
+                            %s_poll();
+                        }, 10000);
+                    })();
+                    </script>
+                """ % (url, url, self._name, url)
+        found = False
+        for rule in self._app.url_map.iter_rules():
+            if rule.endpoint == url:
+                found = True
+        if not found:
+            self._app.add_url_rule('/' + url, url, self._sync_properties)
+        return script
+
+    def _attach_script(self):
+        self._process_urls()
+        script = """
+                    <script>
+                        function %s_popup(){
+                            w2popup.open({
+                                title: '%s',
+                                body: '%s',
+                                buttons: '%s',
+                                width: %d,
+                                height: %d,
+                                color: '%s',
+                                speed: '%s',
+                                opacity: '%s',
+                                modal: %s,
+                                showClose: %s,
+                                showMax: %s,
+                                onOpen: function(event){
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        error: function(err_status){
+                                            alertify.error("Status Code: "
+                                            + err_status.status + "<br />" + "Error Message:"
+                                            + err_status.statusText);
+                                        }
+                                    });
+                                },
+                                onClose: function(event){
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        error: function(err_status){
+                                            alertify.error("Status Code: "
+                                            + err_status.status + "<br />" + "Error Message:"
+                                            + err_status.statusText);
+                                        }
+                                    });
+                                },
+                                onMax: function(event){
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        error: function(err_status){
+                                            alertify.error("Status Code: "
+                                            + err_status.status + "<br />" + "Error Message:"
+                                            + err_status.statusText);
+                                        }
+                                    });
+                                },
+                                onMin: function(event){
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        error: function(err_status){
+                                            alertify.error("Status Code: "
+                                            + err_status.status + "<br />" + "Error Message:"
+                                            + err_status.statusText);
+                                        }
+                                    });
+                                },
+                                onKeydown: function(event){
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json',
+                                        error: function(err_status){
+                                            alertify.error("Status Code: "
+                                            + err_status.status + "<br />" + "Error Message:"
+                                            + err_status.statusText);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    </script>
+                """ % (self._name,
+                       self._title if self._title is not None else '',
+                       self._body if self._body is not None else '',
+                       self._buttons if self._buttons is not None else '',
+                       self._width if self._width is not None else 400,
+                       self._height if self._height is not None else 300,
+                       self._color if self._color is not None else '#333',
+                       self._speed if self._speed is not None else '0.3',
+                       self._opacity if self._opacity is not None else '0.8',
+                       json.dumps(self._modal) if self._modal is not None else json.dumps(False),
+                       json.dumps(self._show_close) if self._show_close is not None else json.dumps(False),
+                       json.dumps(self._show_max) if self._show_max is not None else json.dumps(False),
+                       self._open_callback_url,
+                       self._close_callback_url,
+                       self._max_callback_url,
+                       self._min_callback_url,
+                       self._keydown_callback_url
+                       )
+        return script
+
+    def render(self):
+        """Renders the popup as HTML"""
+        content = ""
+        content += self._attach_script()
+        content += "\n" + self._attach_polling()
+        self._widget_content = content
+        return content

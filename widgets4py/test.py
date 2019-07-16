@@ -19,6 +19,7 @@ from widgets4py.w2ui.ui import ToolbarMenuCheck, ToolbarDropDown, ToolbarHTML
 from widgets4py.w2ui.ui import Sidebar, SidebarNode
 from widgets4py.w2ui.ui import Form, FormFieldAlpha, FormFieldText, FormFieldDate
 from widgets4py.w2ui.ui import FormFieldList, FormFieldEnum, FormFieldSelect
+from widgets4py.w2ui.ui import Popup
 from multiprocessing import Process
 
 
@@ -110,9 +111,12 @@ class PageTest:
     frm_lst = None
     frm_enm = None
     frm_sel = None
+    pop = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
+        self.pop = Popup('pop', 'Test Title', app=app,
+                         buttons='<input type="button" onclick="w2popup.close();" value="Close" />')
         self.frm_text = FormFieldText('frm_text', caption='Text Field', required=True)
         self.frm_alpha = FormFieldAlpha('frm_alpha', caption='Alphanum Field')
         self.frm_dt = FormFieldDate('frm_dt', caption='Date Field', required=True)
@@ -295,6 +299,7 @@ class PageTest:
         # self.tab.add(self.tab_sec2)
         # pg.add(self.tab)
         pg.add(self.frm)
+        pg.add(self.pop)
         content = pg.render()
         return content
 
@@ -312,6 +317,8 @@ class PageTest:
         print("Toolbar clicked on item: " + self.toolbar.clicked_item)
         if self.toolbar.clicked_item == 'tool_btn1':
             self.toolbar.disable_item('tool_btn2')
+        if self.toolbar.clicked_item == 'tool_btn2':
+            self.pop.open()
         return "success"
 
     def tab_clicked(self):
