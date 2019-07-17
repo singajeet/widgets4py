@@ -96,7 +96,18 @@ class ContextMenuItem:
         self._disabled = disabled
         self._shortcut = shortcut
         self._shortcut_label = shortcut_label
-        self._submenu = submenu
+        if submenu is not None:
+            self._submenu = submenu
+        else:
+            self._submenu = {}
+
+    def add(self, key, item):
+        """Adds submenu item to the current menu item"""
+        self._submenu[key] = item
+
+    def remove(self, key):
+        """Removes the submenu item from the current menu item"""
+        self._submenu.pop(key)
 
     def render(self):
         """Renders the context menu """
@@ -134,6 +145,14 @@ class JSTree(Widget):
 
     _plugin_whole_row = None
     _plugin_checkbox = None
+    _plugin_contextmenu = None
+    _plugin_dnd = None
+    _plugin_massload = None
+    _plugin_search = None
+    _plugin_sort = None
+    _plugin_state = None
+    _plugin_types = None
+    _plugin_unique = None
     _core_themes_variant = None
     _core_themes_show_dots = None
     _core_themes_show_icons = None
@@ -157,6 +176,8 @@ class JSTree(Widget):
     _ctx_submenu_items = None
 
     def __init__(self, name, child_nodes=None, plugin_whole_row=None, plugin_checkbox=None,
+                 plugin_contextmenu=None, plugin_dnd=None, plugin_massload=None, plugin_search=None,
+                 plugin_sort=None, plugin_state=None, plugin_types=None, plugin_unique=None,
                  core_themes_variant=None, core_themes_show_dots=None, core_themes_show_icons=None,
                  core_themes_show_stripes=None, core_multiple=None, core_animation=None,
                  core_expand_selected_onload=None, core_dblclick_toggle=None,
@@ -174,6 +195,14 @@ class JSTree(Widget):
             self._child_widgets = []
         self._plugin_whole_row = plugin_whole_row
         self._plugin_checkbox = plugin_checkbox
+        self._plugin_contextmenu = plugin_contextmenu
+        self._plugin_dnd = plugin_dnd
+        self._plugin_massload = plugin_massload
+        self._plugin_search = plugin_search
+        self._plugin_sort = plugin_sort
+        self._plugin_state = plugin_state
+        self._plugin_types = plugin_types
+        self._plugin_unique = plugin_unique
         self._core_themes_variant = core_themes_variant
         self._core_themes_show_dots = core_themes_show_dots
         self._core_themes_show_icons = core_themes_show_icons
@@ -194,22 +223,67 @@ class JSTree(Widget):
         self._checkbox_whole_node = checkbox_whole_node
         self._ctx_menu_select_node = ctx_menu_select_node
         self._ctx_menu_show_at_node = ctx_menu_show_at_node
-        self._ctx_submenu_items = ctx_submenu_items
+        if ctx_submenu_items is not None:
+            self._ctx_submenu_items = ctx_submenu_items
+        else:
+            self._ctx_submenu_items = {}
+
+    def add_ctx_menu_item(self, key, item):
+        """Adds an context menu item to the `dict` of items where each element
+        contains the key to be displayed in the menu and an object of class
+        `ContextMenuItem`
+
+            Args:
+                key (string): Name or label of the menu item
+                item (ContextMenuItem): An instance of `ContextMenuItem` class
+        """
+        self._ctx_submenu_items[key] = item
+
+    def remove_ctx_menu_item(self, key):
+        """Removes the menu item from the `dict` of submenus based on the key
+        passed to this method
+        """
+        self._ctx_submenu_items.pop(key)
+
+    def _get_plugins(self):
+        plugins = ""
+        if self._plugin_whole_row is not None and self._plugin_whole_row:
+            plugins += "'wholerow', "
+        if self._plugin_checkbox is not None and self._plugin_checkbox:
+            plugins += "'checkbox', "
+        if self._plugin_contextmenu is not None and self._plugin_contextmenu:
+            plugins += "'contextmenu', "
+        if self._plugin_dnd is not None and self._plugin_dnd:
+            plugins += "'dnd', "
+        if self._plugin_massload is not None and self._plugin_massload:
+            plugins += "'massload', "
+        if self._plugin_search is not None and self._plugin_search:
+            plugins += "'search', "
+        if self._plugin_sort is not None and self._plugin_sort:
+            plugins += "'sort', "
+        if self._plugin_state is not None and self._plugin_state:
+            plugins += "'state', "
+        if self._plugin_types is not None and self._plugin_types:
+            plugins += "'types', "
+        if self._plugin_unique is not None and self._plugin_unique:
+            plugins += "'unique', "
+        return plugins
 
     def _attach_script(self):
         data = ""
         plugins = ""
+        # ================= Render Submenu Items ===================== #
         submenu = "{\n"
         if self._ctx_submenu_items is not None:
             for menu in self._ctx_submenu_items:
                 submenu += self._ctx_submenu_items.get(menu).render() + ",\n"
         submenu += "\n}"
-        if self._plugin_whole_row is not None and self._plugin_whole_row:
-            plugins += "'wholerow', "
-        if self._plugin_checkbox is not None and self._plugin_checkbox:
-            plugins += "'checkbox', "
+        # ==================== Render Plugins ========================== #
+        plugins = self._get_plugins()
+        # ==================== Render Child Nodes ====================== #
         for child in self._child_widgets:
             data += child.render() + ",\n"
+        # =============== Build the final string for JSTree ============ #
         script = """
                     <script>
                         $(function(){
@@ -260,7 +334,7 @@ class JSTree(Widget):
                                 contextmenu: {
                                     select_node: %s,
                                     show_at_node: %s,
-                                    submenu: %s
+                                    items: %s
                                 }
                             });
                         })();

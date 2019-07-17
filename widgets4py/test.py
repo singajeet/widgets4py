@@ -20,7 +20,7 @@ from widgets4py.layouts import SimpleGridLayout
 # from widgets4py.w2ui.ui import Form, FormFieldAlpha, FormFieldText, FormFieldDate
 # from widgets4py.w2ui.ui import FormFieldList, FormFieldEnum, FormFieldSelect
 # from widgets4py.w2ui.ui import Popup
-from widgets4py.jstree.ui import JSTree, JSTreeNode
+from widgets4py.jstree.ui import JSTree, JSTreeNode, ContextMenuItem
 from multiprocessing import Process
 
 
@@ -117,10 +117,25 @@ class PageTest:
     node1 = None
     node2 = None
     node3 = None
+    ctx_item1 = None
+    ctx_item2 = None
+    ctx_item21 = None
+    ctx_item22 = None
+    ctx_item3 = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
-        self.tree = JSTree('tree')
+        self.ctx_item1 = ContextMenuItem('Item1', "function(item, ref, ele, pos){}")
+        self.ctx_item2 = ContextMenuItem('Item2', "function(item, ref, ele, pos){}")
+        self.ctx_item21 = ContextMenuItem('Item2-1', "function(item, ref, ele, pos){}")
+        self.ctx_item22 = ContextMenuItem('Item2-2', "function(item, ref, ele, pos){}")
+        self.ctx_item2.add('Item2-1', self.ctx_item21)
+        self.ctx_item2.add('Item2-2', self.ctx_item22)
+        self.ctx_item3 = ContextMenuItem('Item3', "function(item, ref, ele, pos){}")
+        self.tree = JSTree('tree', plugin_checkbox=True, plugin_contextmenu=True)
+        self.tree.add_ctx_menu_item('Item1', self.ctx_item1)
+        self.tree.add_ctx_menu_item('Item2', self.ctx_item2)
+        self.tree.add_ctx_menu_item('Item3', self.ctx_item3)
         self.node1 = JSTreeNode('node1', 'Node 1', is_opened=True)
         self.node2 = JSTreeNode('node2', 'Node 2')
         self.node3 = JSTreeNode('node3', 'Node 3', is_disabled=True)
