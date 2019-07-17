@@ -174,6 +174,14 @@ class JSTree(Widget):
     _ctx_menu_select_node = None
     _ctx_menu_show_at_node = None
     _ctx_submenu_items = None
+    _dnd_copy = None
+    _dnd_always_copy = None
+    _dnd_drag_selection = None
+    _dnd_drag_selected_touch = None
+    _dnd_large_drop_target = None
+    _dnd_large_drag_target = None
+    _dnd_use_html5 = None
+    _search_ajax_url = None
 
     def __init__(self, name, child_nodes=None, plugin_whole_row=None, plugin_checkbox=None,
                  plugin_contextmenu=None, plugin_dnd=None, plugin_massload=None, plugin_search=None,
@@ -184,10 +192,11 @@ class JSTree(Widget):
                  core_chk_callbk_create_node=None, core_chk_callbk_rename_node=None,
                  core_chk_callbk_delete_node=None, core_chk_callbk_move_node=None,
                  core_chk_callbk_copy_node=None, core_chk_callbk_edit=None,
-                 checkbox_keep_selected_style=None, checkbox_visible=None,
-                 checkbox_three_state=None, checkbox_whole_node=None,
-                 ctx_menu_select_node=None, ctx_menu_show_at_node=None,
-                 ctx_submenu_items=None):
+                 checkbox_keep_selected_style=None, checkbox_visible=None, checkbox_three_state=None,
+                 checkbox_whole_node=None, ctx_menu_select_node=None, ctx_menu_show_at_node=None,
+                 ctx_submenu_items=None, dnd_copy=None, dnd_always_copy=None, dnd_drag_selection=None,
+                 dnd_drag_selected_touch=None, dnd_large_drop_target=None, dnd_large_drag_target=None,
+                 dnd_use_html5=None, search_ajax_url=None):
         Widget.__init__(self, name)
         if child_nodes is not None:
             self._child_widgets = child_nodes
@@ -227,6 +236,17 @@ class JSTree(Widget):
             self._ctx_submenu_items = ctx_submenu_items
         else:
             self._ctx_submenu_items = {}
+        self._dnd_copy = dnd_copy
+        self._dnd_always_copy = dnd_always_copy
+        self._dnd_drag_selection = dnd_drag_selection
+        self._dnd_drag_selected_touch = dnd_drag_selected_touch
+        self._dnd_large_drop_target = dnd_large_drop_target
+        self._dnd_large_drag_target = dnd_large_drag_target
+        self._dnd_use_html5 = dnd_use_html5
+        if search_ajax_url is not None:
+            self._search_ajax_url = search_ajax_url
+        else:
+            self._search_ajax_url = str(__name__ + "_" + self._name + "_search")
 
     def add_ctx_menu_item(self, key, item):
         """Adds an context menu item to the `dict` of items where each element
@@ -335,6 +355,23 @@ class JSTree(Widget):
                                     select_node: %s,
                                     show_at_node: %s,
                                     items: %s
+                                },
+                                dnd: {
+                                    copy: %s,
+                                    is_draggable: function(nodes, event){return true;},
+                                    always_copy: %s,
+                                    drag_selection: %s,
+                                    touch: %s,
+                                    large_drop_target: %s,
+                                    large_drag_target: %s,
+                                    use_html5: %s
+                                },
+                                search: {
+                                    ajax: {
+                                        url: '/%s',
+                                        type: 'get',
+                                        dataType: 'json'
+                                    }
                                 }
                             });
                         })();
@@ -373,7 +410,21 @@ class JSTree(Widget):
                        json.dumps(self._checkbox_whole_node if self._checkbox_whole_node is not None else False),
                        json.dumps(self._ctx_menu_select_node if self._ctx_menu_select_node is not None else True),
                        json.dumps(self._ctx_menu_show_at_node if self._ctx_menu_show_at_node is not None else True),
-                       submenu
+                       submenu,
+                       json.dumps(self._dnd_copy if self._dnd_copy is not None else True),
+                       json.dumps(self._dnd_always_copy
+                                  if self._dnd_always_copy is not None else False),
+                       json.dumps(self._dnd_drag_selection
+                                  if self._dnd_drag_selection is not None else True),
+                       ("'selected'"
+                        if self._dnd_drag_selected_touch is not None and self._dnd_drag_selected_touch
+                        else json.dumps(False)),
+                       json.dumps(self._dnd_large_drop_target
+                                  if self._dnd_large_drop_target is not None else False),
+                       json.dumps(self._dnd_large_drag_target
+                                  if self._dnd_large_drag_target is not None else False),
+                       json.dumps(self._dnd_use_html5 if self._dnd_use_html5 is not None else False),
+                       self._search_ajax_url
                        )
         return script
 
