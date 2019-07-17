@@ -6,7 +6,7 @@ This module will handle the functionality to render the tree at frontend and set
 communication between the client and server side code.
 """
 from widgets4py.base import Widget
-from flask import json, request
+from flask import json  # , request
 
 
 class JSTreeNode(Widget):
@@ -67,6 +67,65 @@ class JSTreeNode(Widget):
         return content
 
 
+class ContextMenuItem:
+    """A JSTree's context menu item that will appear in the context menu of a node.
+    Each item must have the following two attributes as mandatory: label and action,
+    other attributes are optional. An `dict` of objects should be passed to JSTree
+    having each element an key and object of this class
+    """
+
+    _sep_before = None
+    _sep_after = None
+    _disabled = None
+    _label = None
+    _title = None
+    _action = None
+    _icon = None
+    _shortcut = None
+    _shortcut_label = None
+    _submenu = None
+
+    def __init__(self, label, action, title=None, icon=None, sep_before=None, sep_after=None,
+                 disabled=None, shortcut=None, shortcut_label=None, submenu=None):
+        self._label = label
+        self._action = action
+        self._title = title
+        self._icon = icon
+        self._sep_before = sep_before
+        self._sep_after = sep_after
+        self._disabled = disabled
+        self._shortcut = shortcut
+        self._shortcut_label = shortcut_label
+        self._submenu = submenu
+
+    def render(self):
+        """Renders the context menu """
+        content = "'" + self._label + "': {\n"
+        if self._sep_before is not None:
+            content += "seperator_before: %s,\n" % json.dumps(self._sep_before)
+        if self._sep_after is not None:
+            content += "separator_after: %s,\n" % json.dumps(self._sep_after)
+        if self._disabled is not None:
+            content += "_disabled: %s,\n" % json.dumps(self._disabled)
+        content += "label: '%s',\n" % (self._label)
+        content += "action: %s,\n" % (self._action)
+        if self._title is not None:
+            content += "title: '%s',\n"
+        if self._icon is not None:
+            content += "icon: '%s',\n"
+        if self._shortcut is not None:
+            content += "shortcut: '%s',\n"
+        if self._shortcut_label is not None:
+            content += "shortcut_label: '%s',\n"
+        if self._submenu is not None and self._submenu.__len__() > 0:
+            content += "submenu: {\n"
+            for menu in self._submenu:
+                content += self._submenu.get(menu).render() + ",\n"
+            content += "\n}"
+        content += "\n}"
+        return content
+
+
 class JSTree(Widget):
     """The JSTree class collects all the child nodes and renders the HTML content. Also,
     it handles some of the events fired on JSTree and further calls the callbacks
@@ -90,6 +149,12 @@ class JSTree(Widget):
     _core_chk_callbk_copy_node = None
     _core_chk_callbk_edit = None
     _checkbox_keep_selected_style = None
+    _checkbox_visible = None
+    _checkbox_three_state = None
+    _checkbox_whole_node = None
+    _ctx_menu_select_node = None
+    _ctx_menu_show_at_node = None
+    _ctx_submenu_items = None
 
     def __init__(self, name, child_nodes=None, plugin_whole_row=None, plugin_checkbox=None,
                  core_themes_variant=None, core_themes_show_dots=None, core_themes_show_icons=None,
@@ -98,7 +163,10 @@ class JSTree(Widget):
                  core_chk_callbk_create_node=None, core_chk_callbk_rename_node=None,
                  core_chk_callbk_delete_node=None, core_chk_callbk_move_node=None,
                  core_chk_callbk_copy_node=None, core_chk_callbk_edit=None,
-                 checkbox_keep_selected_style=None, ):
+                 checkbox_keep_selected_style=None, checkbox_visible=None,
+                 checkbox_three_state=None, checkbox_whole_node=None,
+                 ctx_menu_select_node=None, ctx_menu_show_at_node=None,
+                 ctx_submenu_items=None):
         Widget.__init__(self, name)
         if child_nodes is not None:
             self._child_widgets = child_nodes
@@ -121,10 +189,21 @@ class JSTree(Widget):
         self._core_chk_callbk_copy_node = core_chk_callbk_copy_node
         self._core_chk_callbk_edit = core_chk_callbk_edit
         self._checkbox_keep_selected_style = checkbox_keep_selected_style
+        self._checkbox_visible = checkbox_visible
+        self._checkbox_three_state = checkbox_three_state
+        self._checkbox_whole_node = checkbox_whole_node
+        self._ctx_menu_select_node = ctx_menu_select_node
+        self._ctx_menu_show_at_node = ctx_menu_show_at_node
+        self._ctx_submenu_items = ctx_submenu_items
 
     def _attach_script(self):
         data = ""
         plugins = ""
+        submenu = "{\n"
+        if self._ctx_submenu_items is not None:
+            for menu in self._ctx_submenu_items:
+                submenu += self._ctx_submenu_items.get(menu).render() + ",\n"
+        submenu += "\n}"
         if self._plugin_whole_row is not None and self._plugin_whole_row:
             plugins += "'wholerow', "
         if self._plugin_checkbox is not None and self._plugin_checkbox:
@@ -173,7 +252,15 @@ class JSTree(Widget):
                                 },
                                 plugins: [%s],
                                 checkbox: {
-                                    keep_selected_style: %s
+                                    keep_selected_style: %s,
+                                    visible: %s,
+                                    three_state: %s,
+                                    whole_node: %s,
+                                },
+                                contextmenu: {
+                                    select_node: %s,
+                                    show_at_node: %s,
+                                    submenu: %s
                                 }
                             });
                         })();
@@ -207,6 +294,12 @@ class JSTree(Widget):
                        plugins,
                        json.dumps(self._checkbox_keep_selected_style
                                   if self._checkbox_keep_selected_style is not None else False),
+                       json.dumps(self._checkbox_visible if self._checkbox_visible is not None else True),
+                       json.dumps(self._checkbox_three_state if self._checkbox_three_state is not None else True),
+                       json.dumps(self._checkbox_whole_node if self._checkbox_whole_node is not None else False),
+                       json.dumps(self._ctx_menu_select_node if self._ctx_menu_select_node is not None else True),
+                       json.dumps(self._ctx_menu_show_at_node if self._ctx_menu_show_at_node is not None else True),
+                       submenu
                        )
         return script
 
