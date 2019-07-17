@@ -66,34 +66,6 @@ class JSTreeNode(Widget):
         content += "\n}"
         return content
 
-    # def render(self):
-    #    content = "<li id='" + self._name + "' "
-    #    content += "data-jstree='{"
-    #    if self._is_opened:
-    #        content += "\"opened\": true, "
-    #    else:
-    #        content += "\"opened\": false, "
-    #    if self._is_selected:
-    #        content += "\"selected\": true, "
-    #    else:
-    #        content += "\"selected\": false, "
-    #    if self._is_disabled:
-    #        content += "\"disabled\": true, "
-    #    else:
-    #        content += "\"disabled\": false, "
-    #    if self._icon is not None:
-    #        content += "\"icon\": \"" + self._icon + "\" "
-    #    content += "}'>"
-    #    content += self._text
-    #    if self._child_widgets is not None and self._child_widgets.__len__() > 0:
-    #        content += "\n<ul>\n"
-    #        for child in self._child_widgets:
-    #            content += child.render() + "\n"
-    #        content += "\n</ul>\n</li>"
-    #    else:
-    #        content += "\n</li>"
-    #    return content
-
 
 class JSTree(Widget):
     """The JSTree class collects all the child nodes and renders the HTML content. Also,
@@ -104,8 +76,13 @@ class JSTree(Widget):
     _plugin_whole_row = None
     _plugin_checkbox = None
     _core_themes_variant = None
+    _core_themes_show_dots = None
+    _core_themes_show_icons = None
+    _core_themes_show_stripes = None
+    _core_expand_selected_onload = None
     _core_multiple = None
     _core_animation = None
+    _core_dblclick_toggle = None
     _core_chk_callbk_create_node = None
     _core_chk_callbk_rename_node = None
     _core_chk_callbk_delete_node = None
@@ -114,10 +91,14 @@ class JSTree(Widget):
     _core_chk_callbk_edit = None
     _checkbox_keep_selected_style = None
 
-    def __init__(self, name, child_nodes=None, plugin_whole_row=None, plugin_checkbox=None, core_themes_variant=None,
-                 core_multiple=None, core_animation=None, core_chk_callbk_create_node=None,
-                 core_chk_callbk_rename_node=None, core_chk_callbk_delete_node=None, core_chk_callbk_move_node=None,
-                 core_chk_callbk_copy_node=None, core_chk_callbk_edit=None, checkbox_keep_selected_style=None, ):
+    def __init__(self, name, child_nodes=None, plugin_whole_row=None, plugin_checkbox=None,
+                 core_themes_variant=None, core_themes_show_dots=None, core_themes_show_icons=None,
+                 core_themes_show_stripes=None, core_multiple=None, core_animation=None,
+                 core_expand_selected_onload=None, core_dblclick_toggle=None,
+                 core_chk_callbk_create_node=None, core_chk_callbk_rename_node=None,
+                 core_chk_callbk_delete_node=None, core_chk_callbk_move_node=None,
+                 core_chk_callbk_copy_node=None, core_chk_callbk_edit=None,
+                 checkbox_keep_selected_style=None, ):
         Widget.__init__(self, name)
         if child_nodes is not None:
             self._child_widgets = child_nodes
@@ -126,8 +107,13 @@ class JSTree(Widget):
         self._plugin_whole_row = plugin_whole_row
         self._plugin_checkbox = plugin_checkbox
         self._core_themes_variant = core_themes_variant
+        self._core_themes_show_dots = core_themes_show_dots
+        self._core_themes_show_icons = core_themes_show_icons
+        self._core_themes_show_icons = core_themes_show_stripes
+        self._core_expand_selected_onload = core_expand_selected_onload
         self._core_multiple = core_multiple
         self._core_animation = core_animation
+        self._core_dblclick_toggle = core_dblclick_toggle
         self._core_chk_callbk_create_node = core_chk_callbk_create_node
         self._core_chk_callbk_rename_node = core_chk_callbk_rename_node
         self._core_chk_callbk_delete_node = core_chk_callbk_delete_node
@@ -152,10 +138,15 @@ class JSTree(Widget):
                                 core: {
                                     data: [%s],
                                     themes: {
-                                        variant: '%s'
+                                        variant: '%s',
+                                        dots: %s,
+                                        icons: %s,
+                                        stripes: %s
                                     },
+                                    expand_selected_onload: %s,
                                     multiple: %s,
                                     animation: %d,
+                                    dblclick_toggle: %s,
                                     check_callback: function(operation, node, node_parent, node_position, more){
                                         if(operation === 'create_node'){
                                             return %s
@@ -175,6 +166,9 @@ class JSTree(Widget):
                                         if(operation === 'edit'){
                                             return %s
                                         }
+                                    },
+                                    error: function(err_status){
+                                        alertify('Error while working with JSTree: ' + str(err_status))
                                     }
                                 },
                                 plugins: [%s],
@@ -186,8 +180,18 @@ class JSTree(Widget):
                     </script>
                 """ % (self._name, data,
                        self._core_themes_variant if self._core_themes_variant is not None else 'large',
+                       json.dumps(self._core_themes_show_dots
+                                  if self._core_themes_show_dots is not None else True),
+                       json.dumps(self._core_themes_show_icons
+                                  if self._core_themes_show_icons is not None else True),
+                       json.dumps(self._core_themes_show_stripes
+                                  if self._core_themes_show_stripes is not None else False),
+                       json.dumps(self._core_expand_selected_onload
+                                  if self._core_expand_selected_onload is not None else False),
                        json.dumps(self._core_multiple if self._core_multiple is not None else False),
                        self._core_animation if self._core_animation is not None else 0,
+                       json.dumps(self._core_dblclick_toggle
+                                  if self._core_dblclick_toggle is not None else True),
                        json.dumps(self._core_chk_callbk_create_node
                                   if self._core_chk_callbk_create_node is not None else False),
                        json.dumps(self._core_chk_callbk_rename_node
@@ -208,10 +212,6 @@ class JSTree(Widget):
 
     def render(self):
         content = self._render_pre_content('div')
-        # content += "\n<ul>\n"
-        # for child in self._child_widgets:
-        #    content += child.render() + "\n"
-        # content += "</ul>"
         content += self._render_post_content('div')
         content += self._attach_script()
         return content
