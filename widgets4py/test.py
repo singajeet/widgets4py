@@ -125,20 +125,20 @@ class PageTest:
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
-        self.ctx_item1 = ContextMenuItem('Item1', "function(item, ref, ele, pos){alert(item);}")
-        self.ctx_item2 = ContextMenuItem('Item2', "function(item, ref, ele, pos){}")
-        self.ctx_item21 = ContextMenuItem('Item2-1', "function(item, ref, ele, pos){}")
-        self.ctx_item22 = ContextMenuItem('Item2-2', "function(item, ref, ele, pos){}")
-        self.ctx_item2.add('Item2-1', self.ctx_item21)
-        self.ctx_item2.add('Item2-2', self.ctx_item22)
-        self.ctx_item3 = ContextMenuItem('Item3', "function(item, ref, ele, pos){}")
+        # self.ctx_item1 = ContextMenuItem('Item1', "function(item, ref, ele, pos){alert(item);}")
+        # self.ctx_item2 = ContextMenuItem('Item2', "function(item, ref, ele, pos){}")
+        # self.ctx_item21 = ContextMenuItem('Item2-1', "function(item, ref, ele, pos){}")
+        # self.ctx_item22 = ContextMenuItem('Item2-2', "function(item, ref, ele, pos){}")
+        # self.ctx_item2.add('Item2-1', self.ctx_item21)
+        # self.ctx_item2.add('Item2-2', self.ctx_item22)
+        # self.ctx_item3 = ContextMenuItem('Item3', "function(item, ref, ele, pos){}")
         self.tree = JSTree('tree', plugin_contextmenu=True, plugin_dnd=True, plugin_search=True,
                            core_chk_callbk_create_node=True, core_chk_callbk_rename_node=True,
                            core_chk_callbk_edit=True, core_chk_callbk_delete_node=True,
                            core_chk_callbk_copy_node=True, core_chk_callbk_move_node=True)
-        self.tree.add_ctx_menu_item('Item1', self.ctx_item1)
-        self.tree.add_ctx_menu_item('Item2', self.ctx_item2)
-        self.tree.add_ctx_menu_item('Item3', self.ctx_item3)
+        # self.tree.add_ctx_menu_item('Item1', self.ctx_item1)
+        # self.tree.add_ctx_menu_item('Item2', self.ctx_item2)
+        # self.tree.add_ctx_menu_item('Item3', self.ctx_item3)
         self.node1 = JSTreeNode('node1', 'Node 1', is_opened=True)
         self.node2 = JSTreeNode('node2', 'Node 2')
         self.node3 = JSTreeNode('node3', 'Node 3')

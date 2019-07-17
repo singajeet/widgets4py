@@ -293,11 +293,12 @@ class JSTree(Widget):
         data = ""
         plugins = ""
         # ================= Render Submenu Items ===================== #
-        submenu = "{\n"
-        if self._ctx_submenu_items is not None:
+        submenu = ""
+        if self._ctx_submenu_items is not None and self._ctx_submenu_items.__len__() > 0:
+            submenu = "items: {\n"
             for menu in self._ctx_submenu_items:
                 submenu += self._ctx_submenu_items.get(menu).render() + ",\n"
-        submenu += "\n}"
+            submenu += "\n}"
         # ==================== Render Plugins ========================== #
         plugins = self._get_plugins()
         # ==================== Render Child Nodes ====================== #
@@ -354,7 +355,7 @@ class JSTree(Widget):
                                 contextmenu: {
                                     select_node: %s,
                                     show_at_node: %s,
-                                    items: %s
+                                    %s
                                 },
                                 dnd: {
                                     copy: %s,
