@@ -89,7 +89,8 @@ class JSTreeNodeType:
     _li_attr = None
     _a_attr = None
 
-    def __init__(self, name, max_children, max_depth, valid_children, icon, li_attr, a_attr):
+    def __init__(self, name, max_children=None, max_depth=None, valid_children=None, icon=None,
+                 li_attr=None, a_attr=None):
         self._name = name
         self._max_children = max_children
         self._max_depth = max_depth
@@ -101,9 +102,9 @@ class JSTreeNodeType:
     def render(self):
         content = "'" + self._name + "': {\n"
         if self._max_children is not None:
-            content += "max_children: " + self._max_children + ",\n"
+            content += "max_children: " + str(self._max_children) + ",\n"
         if self._max_depth is not None:
-            content += "max_depth: " + self._max_depth + ",\n"
+            content += "max_depth: " + str(self._max_depth) + ",\n"
         if self._valid_children is not None:
             content += "valid_children: '" + self._valid_children + "',\n"
         if self._icon is not None:
@@ -239,6 +240,10 @@ class JSTree(Widget):
     _sort_callback = None
     _sort_url = None
     _types = None
+    _unique_case_sensitive = None
+    _unique_trim_whitespace = None
+    _unique_duplicate_url = None
+    _unique_duplicate_callback = None
 
     def __init__(self, name, app=None, child_nodes=None, plugin_whole_row=None, plugin_checkbox=None,  # noqa
                  plugin_contextmenu=None, plugin_dnd=None, plugin_massload=None, plugin_search=None,
@@ -255,7 +260,8 @@ class JSTree(Widget):
                  dnd_drag_selected_touch=None, dnd_large_drop_target=None, dnd_large_drag_target=None,
                  dnd_use_html5=None, search_ajax_url=None, search_callback=None, search_case_sensitive=None,
                  search_show_only_matches=None, search_close_opened_onclear=None, sort_callback=None,
-                 sort_url=None, types=None):
+                 sort_url=None, types=None, unique_case_sensitive=None, unique_trim_whitespace=None,
+                 unique_duplicate_url=None, unique_duplicate_callback=None):
         Widget.__init__(self, name)
         self._app = app
         if child_nodes is not None:
@@ -330,7 +336,30 @@ class JSTree(Widget):
                         found = True
                 if not found:
                     self._app.add_url_rule('/' + self._sort_url, self._sort_url, self._process_sort_callback)
-        self._types = types
+        if types is not None:
+            self._types = types
+        else:
+            self._types = {}
+        self._unique_case_sensitive = unique_case_sensitive
+        self._unique_trim_whitespace = unique_trim_whitespace
+        self._unique_duplicate_callback = unique_duplicate_callback
+        if unique_duplicate_url is not None:
+            self._unique_duplicate_url = unique_duplicate_url
+        else:
+            self._unique_duplicate_url = str(__name__ + "_" + self._name + "_unique_duplicate").replace('.', '_')
+            if self._app is not None:
+                found = False
+                for rule in self._app.url_map.iter_rules():
+                    if rule.endpoint == self._unique_duplicate_url:
+                        found = True
+                if not found:
+                    self._app.add_url_rule('/' + self._unique_duplicate_url,
+                                           self._unique_duplicate_url, self._process_unique_duplicate_callback)
+
+    def _process_unique_duplicate_callback(self):
+        if self._unique_duplicate_callback is not None:
+            return json.dumps({'result': self._unique_duplicate_callback()})
+        return json.dumps({'result': ''})
 
     def _process_sort_callback(self):
         if self._sort_callback is not None:
@@ -342,6 +371,23 @@ class JSTree(Widget):
             return json.dumps({'result': self._search_callback()})
         else:
             return json.dumps({'result': ''})
+
+    def add_node_type(self, key, n_type):
+        """Adds a node type to JSTree's type collection
+
+            Args:
+                key (string): A key associated with new type to be added
+                n_type (JSTreeNodeType): An inatance of the `JSTreeNodeType` class
+        """
+        self._types[key] = n_type
+
+    def remove_node_type(self, key):
+        """Removes an NodeType from the JSTree's type collection
+
+            Args:
+                key (string): A key related to type for deletion
+        """
+        self._types.pop(key)
 
     def add_ctx_menu_item(self, key, item):
         """Adds an context menu item to the `dict` of items where each element
@@ -492,6 +538,20 @@ class JSTree(Widget):
                                 },
                                 //Types will be rendered below with trailing comma
                                 %s
+                                unique: {
+                                    case_sensitive: %s,
+                                    trim_whitespace: %s,
+                                    duplicate: function(name, counter){
+                                        alert(name);
+                                        $2.ajax({
+                                            url: '/%s',
+                                            type: 'get',
+                                            dataType: 'json',
+                                            data: {'name': name, 'counter': counter},
+                                            error: function(err_status){}
+                                        });
+                                    }
+                                }
                             });
                         })();
                     </script>
@@ -550,7 +610,10 @@ class JSTree(Widget):
                        json.dumps(self._search_close_opened_onclear
                                   if self._search_close_opened_onclear is not None else False),
                        self._sort_url,
-                       types
+                       types,
+                       json.dumps(self._unique_case_sensitive if self._unique_case_sensitive is not None else False),
+                       json.dumps(self._unique_trim_whitespace if self._unique_trim_whitespace is not None else False),
+                       self._unique_duplicate_url
                        )
         return script
 

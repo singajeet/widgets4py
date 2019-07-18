@@ -20,7 +20,7 @@ from widgets4py.layouts import SimpleGridLayout
 # from widgets4py.w2ui.ui import Form, FormFieldAlpha, FormFieldText, FormFieldDate
 # from widgets4py.w2ui.ui import FormFieldList, FormFieldEnum, FormFieldSelect
 # from widgets4py.w2ui.ui import Popup
-from widgets4py.jstree.ui import JSTree, JSTreeNode, ContextMenuItem
+from widgets4py.jstree.ui import JSTree, JSTreeNode, JSTreeNodeType  # ContextMenuItem
 from multiprocessing import Process
 
 
@@ -122,6 +122,7 @@ class PageTest:
     ctx_item21 = None
     ctx_item22 = None
     ctx_item3 = None
+    tree_node_type = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -139,6 +140,8 @@ class PageTest:
         # self.tree.add_ctx_menu_item('Item1', self.ctx_item1)
         # self.tree.add_ctx_menu_item('Item2', self.ctx_item2)
         # self.tree.add_ctx_menu_item('Item3', self.ctx_item3)
+        self.tree_node_type = JSTreeNodeType('tree_node_type', max_depth=10)
+        self.tree.add_node_type('tree_node_type', self.tree_node_type)
         self.node1 = JSTreeNode('node1', 'Node 1', is_opened=True)
         self.node2 = JSTreeNode('node2', 'Node 2')
         self.node3 = JSTreeNode('node3', 'Node 3')
