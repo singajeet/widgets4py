@@ -143,6 +143,7 @@ class JSTree(Widget):
     associated with the Tree
     """
 
+    _app = None
     _plugin_whole_row = None
     _plugin_checkbox = None
     _plugin_contextmenu = None
@@ -182,8 +183,14 @@ class JSTree(Widget):
     _dnd_large_drag_target = None
     _dnd_use_html5 = None
     _search_ajax_url = None
+    _search_callback = None
+    _search_case_sensitive = None
+    _search_show_only_matches = None
+    _search_close_opened_onclear = None
+    _sort_callback = None
+    _sort_url = None
 
-    def __init__(self, name, child_nodes=None, plugin_whole_row=None, plugin_checkbox=None,
+    def __init__(self, name, app=None, child_nodes=None, plugin_whole_row=None, plugin_checkbox=None,  # noqa
                  plugin_contextmenu=None, plugin_dnd=None, plugin_massload=None, plugin_search=None,
                  plugin_sort=None, plugin_state=None, plugin_types=None, plugin_unique=None,
                  core_themes_variant=None, core_themes_show_dots=None, core_themes_show_icons=None,
@@ -196,8 +203,11 @@ class JSTree(Widget):
                  checkbox_whole_node=None, ctx_menu_select_node=None, ctx_menu_show_at_node=None,
                  ctx_submenu_items=None, dnd_copy=None, dnd_always_copy=None, dnd_drag_selection=None,
                  dnd_drag_selected_touch=None, dnd_large_drop_target=None, dnd_large_drag_target=None,
-                 dnd_use_html5=None, search_ajax_url=None):
+                 dnd_use_html5=None, search_ajax_url=None, search_callback=None, search_case_sensitive=None,
+                 search_show_only_matches=None, search_close_opened_onclear=None, sort_callback=None,
+                 sort_url=None):
         Widget.__init__(self, name)
+        self._app = app
         if child_nodes is not None:
             self._child_widgets = child_nodes
         else:
@@ -246,7 +256,41 @@ class JSTree(Widget):
         if search_ajax_url is not None:
             self._search_ajax_url = search_ajax_url
         else:
-            self._search_ajax_url = str(__name__ + "_" + self._name + "_search")
+            self._search_ajax_url = str(__name__ + "_" + self._name + "_search").replace('.', '_')
+            if self._app is not None:
+                found = False
+                for rule in self._app.url_map.iter_rules():
+                    if rule.endpoint == self._search_ajax_url:
+                        found = True
+                if not found:
+                    self._app.add_url_rule('/' + self._search_ajax_url, self._search_ajax_url, self._process_search)
+        self._search_callback = search_callback
+        self._search_case_sensitive = search_case_sensitive
+        self._search_show_only_matches = search_show_only_matches,
+        self._search_close_opened_onclear = search_close_opened_onclear
+        self._sort_callback = sort_callback
+        if sort_url is not None:
+            self._sort_url = sort_url
+        else:
+            self._sort_url = str(__name__ + "_" + self._name + "_sort").replace('.', '_')
+            if self._app is not None:
+                found = False
+                for rule in self._app.url_map.iter_rules():
+                    if rule.endpoint == self._sort_url:
+                        found = True
+                if not found:
+                    self._app.add_url_rule('/' + self._sort_url, self._sort_url, self._process_sort_callback)
+
+    def _process_sort_callback(self):
+        if self._sort_callback is not None:
+            return self._sort_callback()
+        return -1  # The sort option should receive 1 or -1
+
+    def _process_search(self):
+        if self._search_callback is not None:
+            return json.dumps({'result': self._search_callback()})
+        else:
+            return json.dumps({'result': ''})
 
     def add_ctx_menu_item(self, key, item):
         """Adds an context menu item to the `dict` of items where each element
@@ -372,7 +416,21 @@ class JSTree(Widget):
                                         url: '/%s',
                                         type: 'get',
                                         dataType: 'json'
-                                    }
+                                    },
+                                    case_sensitive: %s,
+                                    show_only_matches: %s,
+                                    close_opened_onclear: %s,
+                                },
+                                sort: function(node1, node2){
+                                    //**THIS NEEDS TO BE FIXED! SOMEHOW THIS FUNCTION SHOULD RETURN
+                                    // 1 OR -1. THE BELOW AJAX WILL NOT WORK THAT WAY. THIS FUNCTION
+                                    //NEEDS TO HAVE RETURN STATEMENT!!**
+                                    $2.ajax({
+                                        url: '/%s',
+                                        type: 'get',
+                                        success: function(data){return data; },
+                                        error: function(status){ return -1; }
+                                    });
                                 }
                             });
                         })();
@@ -425,7 +483,13 @@ class JSTree(Widget):
                        json.dumps(self._dnd_large_drag_target
                                   if self._dnd_large_drag_target is not None else False),
                        json.dumps(self._dnd_use_html5 if self._dnd_use_html5 is not None else False),
-                       self._search_ajax_url
+                       self._search_ajax_url,
+                       json.dumps(self._search_case_sensitive if self._search_case_sensitive is not None else False),
+                       json.dumps(self._search_show_only_matches
+                                  if self._search_show_only_matches is not None else False),
+                       json.dumps(self._search_close_opened_onclear
+                                  if self._search_close_opened_onclear is not None else False),
+                       self._sort_url
                        )
         return script
 
