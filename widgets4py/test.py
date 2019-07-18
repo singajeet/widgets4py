@@ -134,6 +134,7 @@ class PageTest:
         # self.ctx_item2.add('Item2-2', self.ctx_item22)
         # self.ctx_item3 = ContextMenuItem('Item3', "function(item, ref, ele, pos){}")
         self.tree = JSTree('tree', plugin_contextmenu=True, plugin_dnd=True, plugin_search=True,
+                           plugin_unique=True,
                            core_chk_callbk_create_node=True, core_chk_callbk_rename_node=True,
                            core_chk_callbk_edit=True, core_chk_callbk_delete_node=True,
                            core_chk_callbk_copy_node=True, core_chk_callbk_move_node=True)

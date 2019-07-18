@@ -322,7 +322,7 @@ class JSTree(Widget):
                     self._app.add_url_rule('/' + self._search_ajax_url, self._search_ajax_url, self._process_search)
         self._search_callback = search_callback
         self._search_case_sensitive = search_case_sensitive
-        self._search_show_only_matches = search_show_only_matches,
+        self._search_show_only_matches = search_show_only_matches
         self._search_close_opened_onclear = search_close_opened_onclear
         self._sort_callback = sort_callback
         if sort_url is not None:
@@ -526,15 +526,22 @@ class JSTree(Widget):
                                     close_opened_onclear: %s,
                                 },
                                 sort: function(node1, node2){
-                                    //**THIS NEEDS TO BE FIXED! SOMEHOW THIS FUNCTION SHOULD RETURN
-                                    // 1 OR -1. THE BELOW AJAX WILL NOT WORK THAT WAY. THIS FUNCTION
-                                    //NEEDS TO HAVE RETURN STATEMENT!!**
-                                    $2.ajax({
+                                    var sort_order = -1;
+                                    $.ajax({
                                         url: '/%s',
                                         type: 'get',
-                                        success: function(data){return data; },
-                                        error: function(status){ return -1; }
+                                        async: false,
+                                        timeout: 30000,
+                                        dataType: 'json',
+                                        data: {'node1': node1, 'node2': node2},
+                                        success: function(data){
+                                            sort_order = data;
+                                        },
+                                        error: function(status){
+                                            sort_order = -1;
+                                        }
                                     });
+                                    return sort_order;
                                 },
                                 //Types will be rendered below with trailing comma
                                 %s
@@ -542,16 +549,95 @@ class JSTree(Widget):
                                     case_sensitive: %s,
                                     trim_whitespace: %s,
                                     duplicate: function(name, counter){
-                                        alert(name);
-                                        $2.ajax({
+                                        var name_str = "";
+                                        $.ajax({
                                             url: '/%s',
                                             type: 'get',
+                                            async: false,
+                                            timeout: 30000,
                                             dataType: 'json',
                                             data: {'name': name, 'counter': counter},
-                                            error: function(err_status){}
+                                            success: function(status){
+                                                name_str = status;
+                                            },
+                                            error: function(err_status){
+                                                name_str = name + '(' + counter + ')';
+                                            }
                                         });
+                                        if(name_str == ""){
+                                            return name + '(' + counter + ')';
+                                        } else {
+                                            return name_str;
+                                        }
                                     }
                                 }
+                            });
+                            var selector = $('#%s');
+                            selector.on('loaded.jstree', function(e, data){
+
+                            });
+                            selector.on('ready.jstree', function(e, data){
+
+                            });
+                            selector.on('load_node.jstree', function(node, status){
+
+                            });
+                            selector.on('model.jstree', function(nodes, parent){
+
+                            });
+                            selector.on('redraw.jstree', function(e, data){
+
+                            });
+                            selector.on('before_open.jstree', function(e, data){
+
+                            });
+                            selector.on('open_node.jstree', function(e, data){
+
+                            });
+                            selector.on('after_open.jstree', function(e, data){
+
+                            });
+                            selector.on('close_node.jstree', function(e, data){
+
+                            });
+                            selector.on('after_close.jstree', function(e, data){
+
+                            });
+                            selector.on('activate_node.jstree', function(e, data){
+
+                            });
+                            selector.on('hover_node.jstree', function(e, data){
+
+                            });
+                            selector.on('dehover_node.jstree', function(e, data){
+
+                            });
+                            selector.on('select_node.jstree', function(e, data){
+
+                            });
+                            selector.on('changed.jstree', function(e, data){
+
+                            });
+                            selector.on('set_text.jstree', function(e, data){
+
+                            });
+                            selector.on('create_node.jstree', function(e, data){
+
+                            });
+                            selector.on('rename_node.jstree', function(e, data){
+
+                            });
+                            selector.on('delete_node.jstree', function(e, data){
+
+                            });
+                            selector.on('move_node.jstree', function(e, data){
+
+                            });
+                            selector.on('copy.jstree', function(e, data){
+
+                            });
+                            selector.on('cut.jstree', function(e, data){
+
                             });
                         })();
                     </script>
@@ -613,7 +699,8 @@ class JSTree(Widget):
                        types,
                        json.dumps(self._unique_case_sensitive if self._unique_case_sensitive is not None else False),
                        json.dumps(self._unique_trim_whitespace if self._unique_trim_whitespace is not None else False),
-                       self._unique_duplicate_url
+                       self._unique_duplicate_url,
+                       self._name
                        )
         return script
 
