@@ -21,14 +21,18 @@ class JSTreeNode(Widget):
     _icon = None
     _text = None
     _is_leaf = None
-    li_attr = None
-    a_attr = None
+    _li_attr = None
+    _a_attr = None
+    _type = None
 
     def __init__(self, name, text, icon=None, is_opened=None, is_selected=None, is_disabled=None,
-                 child_nodes=None):
+                 child_nodes=None, li_attr=None, a_attr=None, n_type=None):
         Widget.__init__(self, name)
         self._icon = icon
         self._text = text
+        self._li_attr = li_attr
+        self._a_attr = a_attr
+        self._type = n_type
         if is_opened is not None:
             self._is_opened = is_opened
         else:
@@ -50,6 +54,8 @@ class JSTreeNode(Widget):
         content = "{\n"
         content += "id: '" + self._name + "',\n"
         content += "text: '" + self._text + "',\n"
+        if self._type is not None:
+            content += "type: '" + self._type + "',\n"
         if self._icon is not None:
             content += "icon: '" + self._icon + "',"
         content += "state: {\n"
@@ -63,6 +69,49 @@ class JSTreeNode(Widget):
         content += "],\n"
         content += "li_attr: {},\n"
         content += "a_attr: {}"
+        content += "\n}"
+        return content
+
+
+class JSTreeNodeType:
+    """Type of the JSTree Node. Be default there are two types provided by the framework
+    which are '#' and 'default'. Types have some properties associated with it and applies
+    to all those nodes which have this style. For example, if type `ABCType` has a specific
+    icon defined 'myIcon', all nodes having 'type': 'ABCType' will get the icon value as
+    'myIcon'
+    """
+
+    _name = None
+    _max_children = None
+    _max_depth = None
+    _valid_children = None
+    _icon = None
+    _li_attr = None
+    _a_attr = None
+
+    def __init__(self, name, max_children, max_depth, valid_children, icon, li_attr, a_attr):
+        self._name = name
+        self._max_children = max_children
+        self._max_depth = max_depth
+        self._valid_children = valid_children
+        self._icon = icon
+        self._li_attr = li_attr
+        self._a_attr = a_attr
+
+    def render(self):
+        content = "'" + self._name + "': {\n"
+        if self._max_children is not None:
+            content += "max_children: " + self._max_children + ",\n"
+        if self._max_depth is not None:
+            content += "max_depth: " + self._max_depth + ",\n"
+        if self._valid_children is not None:
+            content += "valid_children: '" + self._valid_children + "',\n"
+        if self._icon is not None:
+            content += "icon: '" + self._icon + "',\n"
+        if self._li_attr is not None:
+            content += "li_attr: '" + self._li_attr + "',\n"
+        if self._a_attr is not None:
+            content += "a_attr: '" + self._a_attr + "',\n"
         content += "\n}"
         return content
 
@@ -189,6 +238,7 @@ class JSTree(Widget):
     _search_close_opened_onclear = None
     _sort_callback = None
     _sort_url = None
+    _types = None
 
     def __init__(self, name, app=None, child_nodes=None, plugin_whole_row=None, plugin_checkbox=None,  # noqa
                  plugin_contextmenu=None, plugin_dnd=None, plugin_massload=None, plugin_search=None,
@@ -205,7 +255,7 @@ class JSTree(Widget):
                  dnd_drag_selected_touch=None, dnd_large_drop_target=None, dnd_large_drag_target=None,
                  dnd_use_html5=None, search_ajax_url=None, search_callback=None, search_case_sensitive=None,
                  search_show_only_matches=None, search_close_opened_onclear=None, sort_callback=None,
-                 sort_url=None):
+                 sort_url=None, types=None):
         Widget.__init__(self, name)
         self._app = app
         if child_nodes is not None:
@@ -280,6 +330,7 @@ class JSTree(Widget):
                         found = True
                 if not found:
                     self._app.add_url_rule('/' + self._sort_url, self._sort_url, self._process_sort_callback)
+        self._types = types
 
     def _process_sort_callback(self):
         if self._sort_callback is not None:
@@ -336,6 +387,13 @@ class JSTree(Widget):
     def _attach_script(self):
         data = ""
         plugins = ""
+        types = ""
+        # ================= Render Node Types ======================== #
+        if self._types is not None and self._types.__len__() > 0:
+            types = "types: {\n"
+            for n_type in self._types:
+                types += self._types.get(n_type).render() + ",\n"
+            types += "\n},"
         # ================= Render Submenu Items ===================== #
         submenu = ""
         if self._ctx_submenu_items is not None and self._ctx_submenu_items.__len__() > 0:
@@ -431,7 +489,9 @@ class JSTree(Widget):
                                         success: function(data){return data; },
                                         error: function(status){ return -1; }
                                     });
-                                }
+                                },
+                                //Types will be rendered below with trailing comma
+                                %s
                             });
                         })();
                     </script>
@@ -489,7 +549,8 @@ class JSTree(Widget):
                                   if self._search_show_only_matches is not None else False),
                        json.dumps(self._search_close_opened_onclear
                                   if self._search_close_opened_onclear is not None else False),
-                       self._sort_url
+                       self._sort_url,
+                       types
                        )
         return script
 
