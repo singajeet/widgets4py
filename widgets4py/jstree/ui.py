@@ -245,6 +245,37 @@ class JSTree(Widget):
     _unique_trim_whitespace = None
     _unique_duplicate_url = None
     _unique_duplicate_callback = None
+    # ========= Events ============= #
+    _loaded_callback = None
+    _ready_callback = None
+    _load_node_callback = None
+    _model_callback = None
+    _redraw_callback = None
+    _on_before_open_callback = None
+    _open_node_callback = None
+    _after_open_callback = None
+    _close_node_callback = None
+    _after_close_callback = None
+    _activate_node_callback = None
+    _hover_node_callback = None
+    _unhover_node_callback = None
+    _select_node_callback = None
+    _changed_callback = None
+    _set_text_callback = None
+    _create_node_callback = None
+    _rename_node_callback = None
+    _delete_node_callback = None
+    _move_node_callback = None
+    _copy_node_callback = None
+    _copy_callback = None
+    _cut_callback = None
+    _paste_callback = None
+    _check_node_callback = None
+    _uncheck_node_callback = None
+    _show_contextmenu_callback = None
+    _search_callback = None
+    _clear_search_callback = None
+    # ============================== #
 
     def __init__(self, name, app=None, child_nodes=None, plugin_whole_row=None, plugin_checkbox=None,  # noqa
                  plugin_contextmenu=None, plugin_dnd=None, plugin_massload=None, plugin_search=None,
@@ -686,6 +717,48 @@ class JSTree(Widget):
 
     def on_changed_event(self, callback):
         self._changed_callback = callback
+
+    def on_set_text_callback(self, callback):
+        self._set_text_callback = callback
+
+    def on_create_node_callback(self, callback):
+        self._create_node_callback = callback
+
+    def on_rename_node_callback(self, callback):
+        self._rename_node_callback = callback
+
+    def on_delete_node_callback(self, callback):
+        self._delete_node_callback = callback
+
+    def on_move_node_callback(self, callback):
+        self._move_node_callback = callback
+
+    def on_copy_node_callback(self, callback):
+        self._copy_node_callback = callback
+
+    def on_copy_callback(self, callback):
+        self._copy_callback = callback
+
+    def on_cut_callback(self, callback):
+        self._cut_callback = callback
+
+    def on_paste_callback(self, callback):
+        self._paste_callback = callback
+
+    def on_check_node_callback(self, callback):
+        self._check_node_callback = callback
+
+    def on_uncheck_node_callback(self, callback):
+        self._uncheck_node_callback = callback
+
+    def on_show_contextmenu_callback(self, callback):
+        self._show_contextmenu_callback = callback
+
+    def on_search_callback(self, callback):
+        self._search_callback = callback
+
+    def on_clear_search_callback(self, callback):
+        self._clear_search_callback = callback
 
     def _attach_event_handlers(self):       # noqa
         handlers = ""
