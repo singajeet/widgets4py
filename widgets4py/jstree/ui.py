@@ -430,24 +430,67 @@ class JSTree(Widget):
             return json.dumps({'result': self._unique_duplicate_callback(name, counter)})
         return json.dumps({'result': name + '(' + str(counter) + ')'})
 
-    def on_duplicate_node_event(self, callback):
+    def duplicate_node_config(self, callback):
+        """This event is fired when a new node is created with the same name which already
+        exist in tree. This callback should return a new name which shouldn't conflict
+        with the existing node's name. By default, this callback will return the name in
+        the following form: "NodeName(Counter)" for example, "NewNode(2)".
+
+        The callback function will receive the following two parameters: name and counter
+        and should return string as a new name for the node
+
+        **NOTE**: This callback is the part of configuration and shouldn't be confused with
+                    any event
+
+            Args:
+                callback (callable): A callable which accepts two params 'name' & 'counter'
+        """
         self._unique_duplicate_callback = callback
 
     def _process_sort_callback(self):
+        node1 = ""
+        node2 = ""
+        if request.args.__len__() > 0:
+            node1 = request.args['node1']
+            node2 = request.args['node2']
         if self._sort_callback is not None:
-            return self._sort_callback()
-        return -1  # The sort option should receive 1 or -1
+            return json.dumps({'result': self._sort_callback(node1, node2)})
+        return json.dumps({'result': -1})  # The sort option should receive 1 or -1
 
-    def on_sort_event(self, callback):
+    def sort_config(self, callback):
+        """The sort event is fired when tree tries to sort its nodes in a particular direction.
+        Callback will receive two parameters: "node1" & "node2" and should return -1 or 1 based
+        on the comparision between these 2 nodes. By default, it will return -1
+
+        **NOTE**: This callback is the part of configuration and shouldn't be confused with
+                    any event
+
+            Args:
+                callback (callable): A callable which accepts two params 'node1' & 'node2'
+        """
         self._sort_callback = callback
 
     def _process_search_ajax_callback(self):
+        search_str = ""
+        inside = ""
+        if request.args.__len__() > 0:
+            search_str = request.args['str']
+            inside = request.args['inside']
         if self._search_ajax_callback is not None:
-            return json.dumps({'result': self._search_ajax_callback()})
+            return json.dumps(self._search_ajax_callback(search_str, inside))
         else:
-            return json.dumps({'result': ''})
+            return json.dumps([])  # an empty JSON array
 
-    def on_search_ajax_event(self, callback):
+    def search_ajax_config(self, callback):
+        """This callback will be used by JSTree to execute the search query at the server side.
+        The callback will receive `str` parameter which is a search string or query and an optional
+        parameter `inside` (i.e., node id) if search is limited to a node. The callback should
+        return an JSON array of node id after executing the search logic on server. All these
+        nodes in the array will be opened and revealed to user
+
+            Args:
+                callback (callable): A callable which accepts two params 'str' and 'inside'
+        """
         self._search_ajax_callback = callback
 
     def add_node_type(self, key, n_type):
@@ -614,7 +657,7 @@ class JSTree(Widget):
                                         dataType: 'json',
                                         data: {'node1': node1, 'node2': node2},
                                         success: function(data){
-                                            sort_order = data;
+                                            sort_order = data.result;
                                         },
                                         error: function(status){
                                             sort_order = -1;
