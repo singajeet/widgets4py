@@ -251,14 +251,14 @@ class JSTree(Widget):
     _load_node_callback = None
     _model_callback = None
     _redraw_callback = None
-    _on_before_open_callback = None
+    _before_open_callback = None
     _open_node_callback = None
     _after_open_callback = None
     _close_node_callback = None
     _after_close_callback = None
     _activate_node_callback = None
     _hover_node_callback = None
-    _unhover_node_callback = None
+    _dehover_node_callback = None
     _select_node_callback = None
     _changed_callback = None
     _set_text_callback = None
@@ -273,9 +273,38 @@ class JSTree(Widget):
     _check_node_callback = None
     _uncheck_node_callback = None
     _show_contextmenu_callback = None
-    _search_callback = None
+    _search_ajax_callback = None
     _clear_search_callback = None
     # ============================== #
+    _loaded_url = None
+    _ready_url = None
+    _load_node_url = None
+    _model_url = None
+    _redraw_url = None
+    _before_open_url = None
+    _open_node_url = None
+    _after_open_url = None
+    _close_node_url = None
+    _after_close_url = None
+    _activate_node_url = None
+    _hover_node_url = None
+    _dehover_node_url = None
+    _select_node_url = None
+    _changed_url = None
+    _set_text_url = None
+    _create_node_url = None
+    _rename_node_url = None
+    _delete_node_url = None
+    _move_node_url = None
+    _copy_node_url = None
+    _copy_url = None
+    _cut_url = None
+    _paste_url = None
+    _check_node_url = None
+    _uncheck_node_url = None
+    _show_contextmenu_url = None
+    _search_url = None
+    _clear_search_url = None
 
     def __init__(self, name, app=None, child_nodes=None, plugin_whole_row=None, plugin_checkbox=None,  # noqa
                  plugin_contextmenu=None, plugin_dnd=None, plugin_massload=None, plugin_search=None,
@@ -291,7 +320,7 @@ class JSTree(Widget):
                  ctx_menu_select_node=None, ctx_menu_show_at_node=None,
                  ctx_submenu_items=None, dnd_copy=None, dnd_always_copy=None, dnd_drag_selection=None,
                  dnd_drag_selected_touch=None, dnd_large_drop_target=None, dnd_large_drag_target=None,
-                 dnd_use_html5=None, search_ajax_url=None, search_callback=None, search_case_sensitive=None,
+                 dnd_use_html5=None, search_ajax_url=None, search_ajax_callback=None, search_case_sensitive=None,
                  search_show_only_matches=None, search_close_opened_onclear=None, sort_callback=None,
                  sort_url=None, types=None, unique_case_sensitive=None, unique_trim_whitespace=None,
                  unique_duplicate_url=None, unique_duplicate_callback=None):
@@ -353,8 +382,9 @@ class JSTree(Widget):
                     if rule.endpoint == self._search_ajax_url:
                         found = True
                 if not found:
-                    self._app.add_url_rule('/' + self._search_ajax_url, self._search_ajax_url, self._process_search)
-        self._search_callback = search_callback
+                    self._app.add_url_rule('/' + self._search_ajax_url,
+                                           self._search_ajax_url, self._process_search_ajax_callback)
+        self._search_ajax_callback = search_ajax_callback
         self._search_case_sensitive = search_case_sensitive
         self._search_show_only_matches = search_show_only_matches
         self._search_close_opened_onclear = search_close_opened_onclear
@@ -395,16 +425,25 @@ class JSTree(Widget):
             return json.dumps({'result': self._unique_duplicate_callback()})
         return json.dumps({'result': ''})
 
+    def on_duplicate_node_event(self, callback):
+        self._unique_duplicate_callback = callback
+
     def _process_sort_callback(self):
         if self._sort_callback is not None:
             return self._sort_callback()
         return -1  # The sort option should receive 1 or -1
 
-    def _process_search(self):
-        if self._search_callback is not None:
-            return json.dumps({'result': self._search_callback()})
+    def on_sort_event(self, callback):
+        self._sort_callback = callback
+
+    def _process_search_ajax_callback(self):
+        if self._search_ajax_callback is not None:
+            return json.dumps({'result': self._search_ajax_callback()})
         else:
             return json.dumps({'result': ''})
+
+    def on_search_ajax_event(self, callback):
+        self._search_ajax_callback = callback
 
     def add_node_type(self, key, n_type):
         """Adds a node type to JSTree's type collection
@@ -673,92 +712,277 @@ class JSTree(Widget):
                        )
         return script
 
+    def _register_url(self, url, callback):
+        if self._app is not None:
+            found = False
+            for rule in self._app.map_url.iter_urls():
+                if rule.endpoint == url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + url, url, callback)
+
+    def _prepare_callback_urls(self):
+        self._loaded_url = str(__name__ + "_" + self._name + "_loaded").replace('.', '_')
+        self._ready_url = str(__name__ + "_" + self._name + "_loaded").replace('.', '_')
+        self._load_node_url = None
+        self._model_url = None
+        self._redraw_url = None
+        self._before_open_url = None
+        self._open_node_url = None
+        self._after_open_url = None
+        self._close_node_url = None
+        self._after_close_url = None
+        self._activate_node_url = None
+        self._hover_node_url = None
+        self._dehover_node_url = None
+        self._select_node_url = None
+        self._changed_url = None
+        self._set_text_url = None
+        self._create_node_url = None
+        self._rename_node_url = None
+        self._delete_node_url = None
+        self._move_node_url = None
+        self._copy_node_url = None
+        self._copy_url = None
+        self._cut_url = None
+        self._paste_url = None
+        self._check_node_url = None
+        self._uncheck_node_url = None
+        self._show_contextmenu_url = None
+        self._search_url = None
+        self._clear_search_url = None
+
     def on_loaded_event(self, callback):
         self._loaded_callback = callback
+
+    def _process_loaded_callback(self):
+        if self._loaded_callback is not None:
+            return json.dumps({'result': self._loaded_callback()})
+        return json.dumps({'result': ''})
 
     def on_ready_event(self, callback):
         self._ready_callback = callback
 
+    def _process_ready_callback(self):
+        if self._ready_callback is not None:
+            return json.dumps({'result': self._ready_callback()})
+        return json.dumps({'result': ''})
+
     def on_load_node_event(self, callback):
         self._load_node_callback = callback
+
+    def _process_load_node_callback(self):
+        if self._load_node_callback is not None:
+            return json.dumps({'result': self._load_node_callback()})
+        return json.dumps({'result': ''})
 
     def on_model_event(self, callback):
         self._model_callback = callback
 
+    def _process_model_callback(self):
+        if self._model_callback is not None:
+            return json.dumps({'result': self._model_callback()})
+        return json.dumps({'result': ''})
+
     def on_redraw_event(self, callback):
         self._redraw_callback = callback
 
+    def _process_redraw_callback(self):
+        if self._redraw_callback is not None:
+            return json.dumps({'result': self._redraw_callback()})
+        return json.dumps({'result': ''})
+
     def on_before_open_event(self, callback):
-        self._on_before_open_callback = callback
+        self._before_open_callback = callback
+
+    def _process_before_open_callback(self):
+        if self._before_open_callback is not None:
+            return json.dumps({'result': self._before_open_callback()})
+        return json.dumps({'result': ''})
 
     def on_open_node_event(self, callback):
         self._open_node_callback = callback
 
+    def _process_open_node_callback(self):
+        if self._open_node_callback is not None:
+            return json.dumps({'result': self._open_node_callback()})
+        return json.dumps({'result': ''})
+
     def on_after_open_event(self, callback):
         self._after_open_callback = callback
+
+    def _process_after_open_callback(self):
+        if self._after_open_callback is not None:
+            return json.dumps({'result': self._after_open_callback()})
+        return json.dumps({'result': ''})
 
     def on_close_node_event(self, callback):
         self._close_node_callback = callback
 
+    def _process_close_node_callback(self):
+        if self._close_node_callback is not None:
+            return json.dumps({'result': self._close_node_callback()})
+        return json.dumps({'result': ''})
+
     def on_after_close_event(self, callback):
         self._after_close_callback = callback
+
+    def _process_after_close_callback(self):
+        if self._after_close_callback is not None:
+            return json.dumps({'result': self._after_close_callback()})
+        return json.dumps({'result': ''})
 
     def on_activate_node_event(self, callback):
         self._activate_node_callback = callback
 
+    def _process_activate_node_callback(self):
+        if self._activate_node_callback is not None:
+            return json.dumps({'result': self._activate_node_callback()})
+        return json.dumps({'result': ''})
+
     def on_hover_node_event(self, callback):
         self._hover_node_callback = callback
 
-    def on_unhover_node_event(self, callback):
-        self._unhover_node_callback = callback
+    def _process_hover_node_callback(self):
+        if self._hover_node_callback is not None:
+            return json.dumps({'result': self._hover_node_callback()})
+        return json.dumps({'result': ''})
+
+    def on_dehover_node_event(self, callback):
+        self._dehover_node_callback = callback
+
+    def _process_dehover_node_callback(self):
+        if self._dehover_node_callback is not None:
+            return json.dumps({'result': self._dehover_node_callback()})
+        return json.dumps({'result': ''})
 
     def on_select_node_event(self, callback):
         self._select_node_callback = callback
 
+    def _process_select_node_callback(self):
+        if self._select_node_callback is not None:
+            return json.dumps({'result': self._select_node_callback()})
+        return json.dumps({'result': ''})
+
     def on_changed_event(self, callback):
         self._changed_callback = callback
+
+    def _process_changed_callback(self):
+        if self._changed_callback is not None:
+            return json.dumps({'result': self._changed_callback()})
+        return json.dumps({'result': ''})
 
     def on_set_text_callback(self, callback):
         self._set_text_callback = callback
 
+    def _process_set_text_callback(self):
+        if self._set_text_callback is not None:
+            return json.dumps({'result': self._set_text_callback()})
+        return json.dumps({'result': ''})
+
     def on_create_node_callback(self, callback):
         self._create_node_callback = callback
+
+    def _process_create_node_callback(self):
+        if self._create_node_callback is not None:
+            return json.dumps({'result': self._create_node_callback()})
+        return json.dumps({'result': ''})
 
     def on_rename_node_callback(self, callback):
         self._rename_node_callback = callback
 
+    def _process_rename_node_callback(self):
+        if self._rename_node_callback is not None:
+            return json.dumps({'result': self._rename_node_callback()})
+        return json.dumps({'result': ''})
+
     def on_delete_node_callback(self, callback):
         self._delete_node_callback = callback
+
+    def _process_delete_node_callback(self):
+        if self._delete_node_callback is not None:
+            return json.dumps({'result': self._delete_node_callback()})
+        return json.dumps({'result': ''})
 
     def on_move_node_callback(self, callback):
         self._move_node_callback = callback
 
+    def _process_move_node_callback(self):
+        if self._move_node_callback is not None:
+            return json.dumps({'result': self._move_node_callback()})
+        return json.dumps({'result': ''})
+
     def on_copy_node_callback(self, callback):
         self._copy_node_callback = callback
+
+    def _process_copy_node_callback(self):
+        if self._copy_node_callback is not None:
+            return json.dumps({'result': self._copy_node_callback()})
+        return json.dumps({'result': ''})
 
     def on_copy_callback(self, callback):
         self._copy_callback = callback
 
+    def _process_copy_callback(self):
+        if self._copy_callback is not None:
+            return json.dumps({'result': self._copy_callback()})
+        return json.dumps({'result': ''})
+
     def on_cut_callback(self, callback):
         self._cut_callback = callback
+
+    def _process_cut_callback(self):
+        if self._cut_callback is not None:
+            return json.dumps({'result': self._cut_callback()})
+        return json.dumps({'result': ''})
 
     def on_paste_callback(self, callback):
         self._paste_callback = callback
 
+    def _process_paste_callback(self):
+        if self._paste_callback is not None:
+            return json.dumps({'result': self._paste_callback()})
+        return json.dumps({'result': ''})
+
     def on_check_node_callback(self, callback):
         self._check_node_callback = callback
+
+    def _process_check_node_callback(self):
+        if self._check_node_callback is not None:
+            return json.dumps({'result': self._check_node_callback()})
+        return json.dumps({'result': ''})
 
     def on_uncheck_node_callback(self, callback):
         self._uncheck_node_callback = callback
 
+    def _process_uncheck_node_callback(self):
+        if self._uncheck_node_callback is not None:
+            return json.dumps({'result': self._uncheck_node_callback()})
+        return json.dumps({'result': ''})
+
     def on_show_contextmenu_callback(self, callback):
         self._show_contextmenu_callback = callback
+
+    def _process_show_contextmenu_callback(self):
+        if self._show_contextmenu_callback is not None:
+            return json.dumps({'result': self._show_contextmenu_callback()})
+        return json.dumps({'result': ''})
 
     def on_search_callback(self, callback):
         self._search_callback = callback
 
+    def _process_search_callback(self):
+        if self._search_callback is not None:
+            return json.dumps({'result': self._search_callback()})
+        return json.dumps({'result': ''})
+
     def on_clear_search_callback(self, callback):
         self._clear_search_callback = callback
+
+    def _process_clear_search_callback(self):
+        if self._clear_search_callback is not None:
+            return json.dumps({'result': self._clear_search_callback()})
+        return json.dumps({'result': ''})
 
     def _attach_event_handlers(self):       # noqa
         handlers = ""
@@ -776,169 +1000,169 @@ class JSTree(Widget):
             handlers += """
                             selector.on('ready.jstree', function(e, data){
 
-                            });
+                            });\n
                         """
         if self._load_node_callback is not None:
             handlers += """
                             selector.on('load_node.jstree', function(node, status){
 
-                            });
+                            });\n
                         """
         if self._model_callback is not None:
             handlers += """
                             selector.on('model.jstree', function(nodes, parent){
 
-                            });
+                            });\n
                         """
         if self._redraw_callback is not None:
             handlers += """
                             selector.on('redraw.jstree', function(nodes){
 
-                            });
+                            });\n
                         """
         if self._before_open_callback is not None:
             handlers += """
                             selector.on('before_open.jstree', function(node){
 
-                            });
+                            });\n
                         """
         if self._open_node_callback is not None:
             handlers += """
                             selector.on('open_node.jstree', function(node){
 
-                            });
+                            });\n
                         """
         if self._after_open_callback is not None:
             handlers += """
                             selector.on('after_open.jstree', function(node){
 
-                            });
+                            });\n
                         """
         if self._close_node_callback is not None:
             handlers += """
                             selector.on('close_node.jstree', function(node){
 
-                            });
+                            });\n
                         """
         if self._after_close_callback is not None:
             handlers += """
                             selector.on('after_close.jstree', function(node){
 
-                            });
+                            });\n
                         """
         if self._activate_node_callback is not None:
             handlers += """
                             selector.on('activate_node.jstree', function(node, event){
 
-                            });
+                            });\n
                         """
         if self._hover_node_callback is not None:
             handlers += """
                             selector.on('hover_node.jstree', function(node){
 
-                            });
+                            });\n
                         """
         if self._dehover_node_callback is not None:
             handlers += """
                             selector.on('dehover_node.jstree', function(node){
 
-                            });
+                            });\n
                         """
         if self._select_node_callback is not None:
             handlers += """
                             selector.on('select_node.jstree', function(node, selected, event){
 
-                            });
+                            });\n
                         """
         if self._changed_callback is not None:
             handlers += """
                             selector.on('changed.jstree', function(node, action, selected. event){
 
-                            });
+                            });\n
                         """
         if self._set_text_callback is not None:
             handlers += """
                             selector.on('set_text.jstree', function(e, data){
 
-                            });
+                            });\n
                         """
         if self._create_node_callback is not None:
             handlers += """
                             selector.on('create_node.jstree', function(node, parent, position){
 
-                            });
+                            });\n
                         """
         if self._rename_node_callback is not None:
             handlers += """
                             selector.on('rename_node.jstree', function(node, text, old){
 
-                            });
+                            });\n
                         """
         if self._delete_node_callback is not None:
             handlers += """
                             selector.on('delete_node.jstree', function(node, parent){
 
-                            });
+                            });\n
                         """
         if self._move_node_callback is not None:
             handlers += """
                             selector.on('move_node.jstree', function(node, parent, position, old_parent, old_position, is_multi, old_instance, new_instance){           //# noqa
 
-                            });
+                            });\n
                         """
         if self._copy_node_callback is not None:
             handlers += """
                             selector.on('copy_node.jstree', function(node, parent, position, old_parent, old_position, is_multi, old_instance, new_instance){           //# noqa
 
-                            });
+                            });\n
                         """
         if self._copy_callback is not None:
             handlers += """
                             selector.on('copy.jstree', function(nodes){
 
-                            });
+                            });\n
                         """
         if self._cut_callback is not None:
             handlers += """
                             selector.on('cut.jstree', function(nodes){
 
-                            });
+                            });\n
                         """
         if self._paste_callback is not None:
             handlers += """
                             selector.on('paste.jstree', function(parent, node, mode){
 
-                            });
+                            });\n
                         """
         if self._check_node_callback is not None:
             handlers += """
                             selector.on('check_node.jstree', function(node, selected, event){
 
-                            });
+                            });\n
                         """
         if self._uncheck_node_callback is not None:
             handlers += """
                             selector.on('uncheck_node.jstree', function(node, selected, event){
 
-                            });
+                            });\n
                         """
         if self._show_contextmenu_callback is not None:
             handlers += """
                             selector.on('show_contextmenu.jstree', function(node, x, y){
 
-                            });
+                            });\n
                         """
         if self._search_callback is not None:
             handlers += """
                             selector.on('search.jstree', function(nodes, str, res){
 
-                            });
+                            });\n
                         """
         if self._clear_search_callback is not None:
             handlers += """
                             selector.on('clear_search.jstree', function(nodes, str, res){
 
-                            });
+                            });\n
                         """
         handlers += """
                     })();
@@ -949,5 +1173,5 @@ class JSTree(Widget):
     def render(self):
         content = self._render_pre_content('div')
         content += self._render_post_content('div')
-        content += self._attach_script()
+        content += self._attach_script() + "\n" + self._attach_event_handlers()
         return content
