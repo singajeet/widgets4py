@@ -219,6 +219,7 @@ class JSTree(Widget):
     _core_chk_callbk_copy_node = None
     _core_chk_callbk_edit = None
     _checkbox_keep_selected_style = None
+    _checkbox_tie_selection = None
     _checkbox_visible = None
     _checkbox_three_state = None
     _checkbox_whole_node = None
@@ -254,8 +255,9 @@ class JSTree(Widget):
                  core_chk_callbk_create_node=None, core_chk_callbk_rename_node=None,
                  core_chk_callbk_delete_node=None, core_chk_callbk_move_node=None,
                  core_chk_callbk_copy_node=None, core_chk_callbk_edit=None,
-                 checkbox_keep_selected_style=None, checkbox_visible=None, checkbox_three_state=None,
-                 checkbox_whole_node=None, ctx_menu_select_node=None, ctx_menu_show_at_node=None,
+                 checkbox_keep_selected_style=None, checkbox_tie_selection=None, checkbox_visible=None,
+                 checkbox_three_state=None, checkbox_whole_node=None,
+                 ctx_menu_select_node=None, ctx_menu_show_at_node=None,
                  ctx_submenu_items=None, dnd_copy=None, dnd_always_copy=None, dnd_drag_selection=None,
                  dnd_drag_selected_touch=None, dnd_large_drop_target=None, dnd_large_drag_target=None,
                  dnd_use_html5=None, search_ajax_url=None, search_callback=None, search_case_sensitive=None,
@@ -293,6 +295,7 @@ class JSTree(Widget):
         self._core_chk_callbk_copy_node = core_chk_callbk_copy_node
         self._core_chk_callbk_edit = core_chk_callbk_edit
         self._checkbox_keep_selected_style = checkbox_keep_selected_style
+        self._checkbox_tie_selection = checkbox_tie_selection
         self._checkbox_visible = checkbox_visible
         self._checkbox_three_state = checkbox_three_state
         self._checkbox_whole_node = checkbox_whole_node
@@ -496,6 +499,7 @@ class JSTree(Widget):
                                 plugins: [%s],
                                 checkbox: {
                                     keep_selected_style: %s,
+                                    tie_selection: %s,
                                     visible: %s,
                                     three_state: %s,
                                     whole_node: %s,
@@ -572,73 +576,6 @@ class JSTree(Widget):
                                     }
                                 }
                             });
-                            var selector = $('#%s');
-                            selector.on('loaded.jstree', function(e, data){
-
-                            });
-                            selector.on('ready.jstree', function(e, data){
-
-                            });
-                            selector.on('load_node.jstree', function(node, status){
-
-                            });
-                            selector.on('model.jstree', function(nodes, parent){
-
-                            });
-                            selector.on('redraw.jstree', function(e, data){
-
-                            });
-                            selector.on('before_open.jstree', function(e, data){
-
-                            });
-                            selector.on('open_node.jstree', function(e, data){
-
-                            });
-                            selector.on('after_open.jstree', function(e, data){
-
-                            });
-                            selector.on('close_node.jstree', function(e, data){
-
-                            });
-                            selector.on('after_close.jstree', function(e, data){
-
-                            });
-                            selector.on('activate_node.jstree', function(e, data){
-
-                            });
-                            selector.on('hover_node.jstree', function(e, data){
-
-                            });
-                            selector.on('dehover_node.jstree', function(e, data){
-
-                            });
-                            selector.on('select_node.jstree', function(e, data){
-
-                            });
-                            selector.on('changed.jstree', function(e, data){
-
-                            });
-                            selector.on('set_text.jstree', function(e, data){
-
-                            });
-                            selector.on('create_node.jstree', function(e, data){
-
-                            });
-                            selector.on('rename_node.jstree', function(e, data){
-
-                            });
-                            selector.on('delete_node.jstree', function(e, data){
-
-                            });
-                            selector.on('move_node.jstree', function(e, data){
-
-                            });
-                            selector.on('copy.jstree', function(e, data){
-
-                            });
-                            selector.on('cut.jstree', function(e, data){
-
-                            });
                         })();
                     </script>
                 """ % (self._name, data,
@@ -670,6 +607,8 @@ class JSTree(Widget):
                        plugins,
                        json.dumps(self._checkbox_keep_selected_style
                                   if self._checkbox_keep_selected_style is not None else False),
+                       json.dumps(self._checkbox_tie_selection
+                                  if self._checkbox_tie_selection is not None else True),
                        json.dumps(self._checkbox_visible if self._checkbox_visible is not None else True),
                        json.dumps(self._checkbox_three_state if self._checkbox_three_state is not None else True),
                        json.dumps(self._checkbox_whole_node if self._checkbox_whole_node is not None else False),
@@ -699,10 +638,240 @@ class JSTree(Widget):
                        types,
                        json.dumps(self._unique_case_sensitive if self._unique_case_sensitive is not None else False),
                        json.dumps(self._unique_trim_whitespace if self._unique_trim_whitespace is not None else False),
-                       self._unique_duplicate_url,
-                       self._name
+                       self._unique_duplicate_url
                        )
         return script
+
+    def on_loaded_event(self, callback):
+        self._loaded_callback = callback
+
+    def on_ready_event(self, callback):
+        self._ready_callback = callback
+
+    def on_load_node_event(self, callback):
+        self._load_node_callback = callback
+
+    def on_model_event(self, callback):
+        self._model_callback = callback
+
+    def on_redraw_event(self, callback):
+        self._redraw_callback = callback
+
+    def on_before_open_event(self, callback):
+        self._on_before_open_callback = callback
+
+    def on_open_node_event(self, callback):
+        self._open_node_callback = callback
+
+    def on_after_open_event(self, callback):
+        self._after_open_callback = callback
+
+    def on_close_node_event(self, callback):
+        self._close_node_callback = callback
+
+    def on_after_close_event(self, callback):
+        self._after_close_callback = callback
+
+    def on_activate_node_event(self, callback):
+        self._activate_node_callback = callback
+
+    def on_hover_node_event(self, callback):
+        self._hover_node_callback = callback
+
+    def on_unhover_node_event(self, callback):
+        self._unhover_node_callback = callback
+
+    def on_select_node_event(self, callback):
+        self._select_node_callback = callback
+
+    def on_changed_event(self, callback):
+        self._changed_callback = callback
+
+    def _attach_event_handlers(self):       # noqa
+        handlers = ""
+        handlers += """<script>
+                        $(function(){
+                            var selector = $('#%s');\n
+                    """
+        if self._loaded_callback is not None:
+            handlers += """
+                            selector.on('loaded.jstree', function(e, data){
+
+                            });\n
+                        """
+        if self._ready_callback is not None:
+            handlers += """
+                            selector.on('ready.jstree', function(e, data){
+
+                            });
+                        """
+        if self._load_node_callback is not None:
+            handlers += """
+                            selector.on('load_node.jstree', function(node, status){
+
+                            });
+                        """
+        if self._model_callback is not None:
+            handlers += """
+                            selector.on('model.jstree', function(nodes, parent){
+
+                            });
+                        """
+        if self._redraw_callback is not None:
+            handlers += """
+                            selector.on('redraw.jstree', function(nodes){
+
+                            });
+                        """
+        if self._before_open_callback is not None:
+            handlers += """
+                            selector.on('before_open.jstree', function(node){
+
+                            });
+                        """
+        if self._open_node_callback is not None:
+            handlers += """
+                            selector.on('open_node.jstree', function(node){
+
+                            });
+                        """
+        if self._after_open_callback is not None:
+            handlers += """
+                            selector.on('after_open.jstree', function(node){
+
+                            });
+                        """
+        if self._close_node_callback is not None:
+            handlers += """
+                            selector.on('close_node.jstree', function(node){
+
+                            });
+                        """
+        if self._after_close_callback is not None:
+            handlers += """
+                            selector.on('after_close.jstree', function(node){
+
+                            });
+                        """
+        if self._activate_node_callback is not None:
+            handlers += """
+                            selector.on('activate_node.jstree', function(node, event){
+
+                            });
+                        """
+        if self._hover_node_callback is not None:
+            handlers += """
+                            selector.on('hover_node.jstree', function(node){
+
+                            });
+                        """
+        if self._dehover_node_callback is not None:
+            handlers += """
+                            selector.on('dehover_node.jstree', function(node){
+
+                            });
+                        """
+        if self._select_node_callback is not None:
+            handlers += """
+                            selector.on('select_node.jstree', function(node, selected, event){
+
+                            });
+                        """
+        if self._changed_callback is not None:
+            handlers += """
+                            selector.on('changed.jstree', function(node, action, selected. event){
+
+                            });
+                        """
+        if self._set_text_callback is not None:
+            handlers += """
+                            selector.on('set_text.jstree', function(e, data){
+
+                            });
+                        """
+        if self._create_node_callback is not None:
+            handlers += """
+                            selector.on('create_node.jstree', function(node, parent, position){
+
+                            });
+                        """
+        if self._rename_node_callback is not None:
+            handlers += """
+                            selector.on('rename_node.jstree', function(node, text, old){
+
+                            });
+                        """
+        if self._delete_node_callback is not None:
+            handlers += """
+                            selector.on('delete_node.jstree', function(node, parent){
+
+                            });
+                        """
+        if self._move_node_callback is not None:
+            handlers += """
+                            selector.on('move_node.jstree', function(node, parent, position, old_parent, old_position, is_multi, old_instance, new_instance){           //# noqa
+
+                            });
+                        """
+        if self._copy_node_callback is not None:
+            handlers += """
+                            selector.on('copy_node.jstree', function(node, parent, position, old_parent, old_position, is_multi, old_instance, new_instance){           //# noqa
+
+                            });
+                        """
+        if self._copy_callback is not None:
+            handlers += """
+                            selector.on('copy.jstree', function(nodes){
+
+                            });
+                        """
+        if self._cut_callback is not None:
+            handlers += """
+                            selector.on('cut.jstree', function(nodes){
+
+                            });
+                        """
+        if self._paste_callback is not None:
+            handlers += """
+                            selector.on('paste.jstree', function(parent, node, mode){
+
+                            });
+                        """
+        if self._check_node_callback is not None:
+            handlers += """
+                            selector.on('check_node.jstree', function(node, selected, event){
+
+                            });
+                        """
+        if self._uncheck_node_callback is not None:
+            handlers += """
+                            selector.on('uncheck_node.jstree', function(node, selected, event){
+
+                            });
+                        """
+        if self._show_contextmenu_callback is not None:
+            handlers += """
+                            selector.on('show_contextmenu.jstree', function(node, x, y){
+
+                            });
+                        """
+        if self._search_callback is not None:
+            handlers += """
+                            selector.on('search.jstree', function(nodes, str, res){
+
+                            });
+                        """
+        if self._clear_search_callback is not None:
+            handlers += """
+                            selector.on('clear_search.jstree', function(nodes, str, res){
+
+                            });
+                        """
+        handlers += """
+                    })();
+                    </script>
+                    """
+        return handlers
 
     def render(self):
         content = self._render_pre_content('div')
