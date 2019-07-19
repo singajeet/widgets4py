@@ -6,7 +6,7 @@ This module will handle the functionality to render the tree at frontend and set
 communication between the client and server side code.
 """
 from widgets4py.base import Widget
-from flask import json  # , request
+from flask import json, request
 
 
 class JSTreeNode(Widget):
@@ -421,9 +421,14 @@ class JSTree(Widget):
                                            self._unique_duplicate_url, self._process_unique_duplicate_callback)
 
     def _process_unique_duplicate_callback(self):
+        name = ""
+        counter = 0
+        if request.args.__len__() > 0:
+            name = request.args['name']
+            counter = int(request.args['counter'])
         if self._unique_duplicate_callback is not None:
-            return json.dumps({'result': self._unique_duplicate_callback()})
-        return json.dumps({'result': ''})
+            return json.dumps({'result': self._unique_duplicate_callback(name, counter)})
+        return json.dumps({'result': name + '(' + str(counter) + ')'})
 
     def on_duplicate_node_event(self, callback):
         self._unique_duplicate_callback = callback
@@ -632,7 +637,7 @@ class JSTree(Widget):
                                             dataType: 'json',
                                             data: {'name': name, 'counter': counter},
                                             success: function(status){
-                                                name_str = status;
+                                                name_str = status.result;
                                             },
                                             error: function(err_status){
                                                 name_str = name + '(' + counter + ')';
@@ -715,7 +720,7 @@ class JSTree(Widget):
     def _register_url(self, url, callback):
         if self._app is not None:
             found = False
-            for rule in self._app.map_url.iter_urls():
+            for rule in self._app.url_map.iter_rules():
                 if rule.endpoint == url:
                     found = True
             if not found:
@@ -723,34 +728,91 @@ class JSTree(Widget):
 
     def _prepare_callback_urls(self):
         self._loaded_url = str(__name__ + "_" + self._name + "_loaded").replace('.', '_')
+        self._register_url(self._loaded_url, self._process_loaded_callback)
+        #
         self._ready_url = str(__name__ + "_" + self._name + "_loaded").replace('.', '_')
-        self._load_node_url = None
-        self._model_url = None
-        self._redraw_url = None
-        self._before_open_url = None
-        self._open_node_url = None
-        self._after_open_url = None
-        self._close_node_url = None
-        self._after_close_url = None
-        self._activate_node_url = None
-        self._hover_node_url = None
-        self._dehover_node_url = None
-        self._select_node_url = None
-        self._changed_url = None
-        self._set_text_url = None
-        self._create_node_url = None
-        self._rename_node_url = None
-        self._delete_node_url = None
-        self._move_node_url = None
-        self._copy_node_url = None
-        self._copy_url = None
-        self._cut_url = None
-        self._paste_url = None
-        self._check_node_url = None
-        self._uncheck_node_url = None
-        self._show_contextmenu_url = None
-        self._search_url = None
-        self._clear_search_url = None
+        self._register_url(self._ready_url, self._process_loaded_callback)
+        #
+        self._load_node_url = str(__name__ + "_" + self._name + "_load_node").replace('.', '_')
+        self._register_url(self._load_node_url, self._process_load_node_callback)
+        #
+        self._model_url = str(__name__ + "_" + self._name + "_model").replace('.', '_')
+        self._register_url(self._model_url, self._process_model_callback)
+        #
+        self._redraw_url = str(__name__ + "_" + self._name + "_redraw").replace('.', '_')
+        self._register_url(self._redraw_url, self._process_redraw_callback)
+        #
+        self._before_open_url = str(__name__ + "_" + self._name + "_before_open").replace('.', '_')
+        self._register_url(self._before_open_url, self._process_before_open_callback)
+        #
+        self._open_node_url = str(__name__ + "_" + self._name + "_open_node").replace('.', '_')
+        self._register_url(self._open_node_url, self._process_open_node_callback)
+        #
+        self._after_open_url = str(__name__ + "_" + self._name + "_after_open").replace('.', '_')
+        self._register_url(self._after_open_url, self._process_after_open_callback)
+        #
+        self._close_node_url = str(__name__ + "_" + self._name + "_close_node").replace('.', '_')
+        self._register_url(self._close_node_url, self._process_close_node_callback)
+        #
+        self._after_close_url = str(__name__ + "_" + self._name + "_after_close").replace('.', '_')
+        self._register_url(self._after_close_url, self._process_after_close_callback)
+        #
+        self._activate_node_url = str(__name__ + "_" + self._name + "_activate_node").replace('.', '_')
+        self._register_url(self._activate_node_url, self._process_activate_node_callback)
+        #
+        self._hover_node_url = str(__name__ + "_" + self._name + "_hover_node").replace('.', '_')
+        self._register_url(self._hover_node_url, self._process_hover_node_callback)
+        #
+        self._dehover_node_url = str(__name__ + "_" + self._name + "_dehover_node").replace('.', '_')
+        self._register_url(self._dehover_node_url, self._process_dehover_node_callback)
+        #
+        self._select_node_url = str(__name__ + "_" + self._name + "_select_node").replace('.', '_')
+        self._register_url(self._select_node_url, self._process_select_node_callback)
+        #
+        self._changed_url = str(__name__ + "_" + self._name + "_changed").replace('.', '_')
+        self._register_url(self._changed_url, self._process_changed_callback)
+        #
+        self._set_text_url = str(__name__ + "_" + self._name + "_set_text").replace('.', '_')
+        self._register_url(self._set_text_url, self._process_set_text_callback)
+        #
+        self._create_node_url = str(__name__ + "_" + self._name + "_create_node").replace('.', '_')
+        self._register_url(self._create_node_url, self._process_create_node_callback)
+        #
+        self._rename_node_url = str(__name__ + "_" + self._name + "_rename_node").replace('.', '_')
+        self._register_url(self._rename_node_url, self._process_rename_node_callback)
+        #
+        self._delete_node_url = str(__name__ + "_" + self._name + "_delete_node").replace('.', '_')
+        self._register_url(self._delete_node_url, self._process_delete_node_callback)
+        #
+        self._move_node_url = str(__name__ + "_" + self._name + "_move_node").replace('.', '_')
+        self._register_url(self._move_node_url, self._process_move_node_callback)
+        #
+        self._copy_node_url = str(__name__ + "_" + self._name + "_copy_node").replace('.', '_')
+        self._register_url(self._copy_node_url, self._process_copy_node_callback)
+        #
+        self._copy_url = str(__name__ + "_" + self._name + "_copy").replace('.', '_')
+        self._register_url(self._copy_url, self._process_copy_callback)
+        #
+        self._cut_url = str(__name__ + "_" + self._name + "_cut").replace('.', '_')
+        self._register_url(self._cut_url, self._process_cut_callback)
+        #
+        self._paste_url = str(__name__ + "_" + self._name + "_paste").replace('.', '_')
+        self._register_url(self._paste_url, self._process_paste_callback)
+        #
+        self._check_node_url = str(__name__ + "_" + self._name + "_check_node").replace('.', '_')
+        self._register_url(self._check_node_url, self._process_check_node_callback)
+        #
+        self._uncheck_node_url = str(__name__ + "_" + self._name + "_uncheck_node").replace('.', '_')
+        self._register_url(self._uncheck_node_url, self._process_uncheck_node_callback)
+        #
+        self._show_contextmenu_url = str(__name__ + "_" + self._name + "_show_contextmenu").replace('.', '_')
+        self._register_url(self._show_contextmenu_url, self._process_show_contextmenu_callback)
+        #
+        self._search_url = str(__name__ + "_" + self._name + "_search_url").replace('.', '_')
+        self._register_url(self._search_url, self._process_search_callback)
+        #
+        self._clear_search_url = str(__name__ + "_" + self._name + "_clear_search").replace('.', '_')
+        self._register_url(self._clear_search_url, self._process_clear_search_callback)
 
     def on_loaded_event(self, callback):
         self._loaded_callback = callback
@@ -989,181 +1051,471 @@ class JSTree(Widget):
         handlers += """<script>
                         $(function(){
                             var selector = $('#%s');\n
-                    """
+                    """ % (self._name)
         if self._loaded_callback is not None:
             handlers += """
                             selector.on('loaded.jstree', function(e, data){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._loaded_url)
         if self._ready_callback is not None:
             handlers += """
                             selector.on('ready.jstree', function(e, data){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._ready_url)
         if self._load_node_callback is not None:
             handlers += """
                             selector.on('load_node.jstree', function(node, status){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._load_node_url)
         if self._model_callback is not None:
             handlers += """
                             selector.on('model.jstree', function(nodes, parent){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._model_url)
         if self._redraw_callback is not None:
             handlers += """
                             selector.on('redraw.jstree', function(nodes){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._redraw_url)
         if self._before_open_callback is not None:
             handlers += """
                             selector.on('before_open.jstree', function(node){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._before_open_url)
         if self._open_node_callback is not None:
             handlers += """
                             selector.on('open_node.jstree', function(node){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._open_node_url)
         if self._after_open_callback is not None:
             handlers += """
                             selector.on('after_open.jstree', function(node){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._after_open_url)
         if self._close_node_callback is not None:
             handlers += """
                             selector.on('close_node.jstree', function(node){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._close_node_url)
         if self._after_close_callback is not None:
             handlers += """
                             selector.on('after_close.jstree', function(node){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._after_close_url)
         if self._activate_node_callback is not None:
             handlers += """
                             selector.on('activate_node.jstree', function(node, event){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._activate_node_url)
         if self._hover_node_callback is not None:
             handlers += """
                             selector.on('hover_node.jstree', function(node){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._hover_node_callback)
         if self._dehover_node_callback is not None:
             handlers += """
                             selector.on('dehover_node.jstree', function(node){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._dehover_node_url)
         if self._select_node_callback is not None:
             handlers += """
                             selector.on('select_node.jstree', function(node, selected, event){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._select_node_url)
         if self._changed_callback is not None:
             handlers += """
                             selector.on('changed.jstree', function(node, action, selected. event){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._changed_url)
         if self._set_text_callback is not None:
             handlers += """
                             selector.on('set_text.jstree', function(e, data){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._set_text_url)
         if self._create_node_callback is not None:
             handlers += """
                             selector.on('create_node.jstree', function(node, parent, position){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._create_node_url)
         if self._rename_node_callback is not None:
             handlers += """
                             selector.on('rename_node.jstree', function(node, text, old){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._rename_node_url)
         if self._delete_node_callback is not None:
             handlers += """
                             selector.on('delete_node.jstree', function(node, parent){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._delete_node_url)
         if self._move_node_callback is not None:
             handlers += """
                             selector.on('move_node.jstree', function(node, parent, position, old_parent, old_position, is_multi, old_instance, new_instance){           //# noqa
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._move_node_url)
         if self._copy_node_callback is not None:
             handlers += """
                             selector.on('copy_node.jstree', function(node, parent, position, old_parent, old_position, is_multi, old_instance, new_instance){           //# noqa
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._copy_node_url)
         if self._copy_callback is not None:
             handlers += """
                             selector.on('copy.jstree', function(nodes){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._copy_url)
         if self._cut_callback is not None:
             handlers += """
                             selector.on('cut.jstree', function(nodes){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._cut_url)
         if self._paste_callback is not None:
             handlers += """
                             selector.on('paste.jstree', function(parent, node, mode){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._paste_url)
         if self._check_node_callback is not None:
             handlers += """
                             selector.on('check_node.jstree', function(node, selected, event){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._check_node_url)
         if self._uncheck_node_callback is not None:
             handlers += """
                             selector.on('uncheck_node.jstree', function(node, selected, event){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._uncheck_node_url)
         if self._show_contextmenu_callback is not None:
             handlers += """
                             selector.on('show_contextmenu.jstree', function(node, x, y){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._show_contextmenu_url)
         if self._search_callback is not None:
             handlers += """
                             selector.on('search.jstree', function(nodes, str, res){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._search_url)
         if self._clear_search_callback is not None:
             handlers += """
                             selector.on('clear_search.jstree', function(nodes, str, res){
-
+                                $.ajax({
+                                    url: '/%s',
+                                    type: 'get',
+                                    dataType: 'json',
+                                    success: function(status){},
+                                    error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                    }
+                                });
                             });\n
-                        """
+                        """ % (self._clear_search_url)
         handlers += """
                     })();
                     </script>
@@ -1171,6 +1523,7 @@ class JSTree(Widget):
         return handlers
 
     def render(self):
+        self._prepare_callback_urls()
         content = self._render_pre_content('div')
         content += self._render_post_content('div')
         content += self._attach_script() + "\n" + self._attach_event_handlers()

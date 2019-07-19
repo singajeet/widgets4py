@@ -137,7 +137,8 @@ class PageTest:
                            plugin_unique=True, plugin_checkbox=True,
                            core_chk_callbk_create_node=True, core_chk_callbk_rename_node=True,
                            core_chk_callbk_edit=True, core_chk_callbk_delete_node=True,
-                           core_chk_callbk_copy_node=True, core_chk_callbk_move_node=True)
+                           core_chk_callbk_copy_node=True, core_chk_callbk_move_node=True, app=app)
+        self.tree.on_open_node_event(self.tree_node_opened)
         # self.tree.add_ctx_menu_item('Item1', self.ctx_item1)
         # self.tree.add_ctx_menu_item('Item2', self.ctx_item2)
         # self.tree.add_ctx_menu_item('Item3', self.ctx_item3)
@@ -339,6 +340,10 @@ class PageTest:
         # pg.add(self.pop)
         content = pg.render()
         return content
+
+    def tree_node_opened(self):
+        print("Node opened successfully!")
+        return "success"
 
     def w2ui_form_submitted(self, form):
         print("Form has been submitted with data: " + str(form))
