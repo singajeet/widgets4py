@@ -3,7 +3,7 @@ import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
 from widgets4py.layouts import SimpleGridLayout
-# from widgets4py.html5.app_ui import TextBox, Button  # , CheckBox, Color, Date
+from widgets4py.html5.app_ui import Button  # ,TextBox, CheckBox, Color, Date
 # from widgets4py.html5.app_ui import DateTimeLocal, Email, File, Image, Month
 # from widgets4py.html5.app_ui import Number, Password, Radio, Range
 # from widgets4py.html5.app_ui import Form, Label, DropDown
@@ -117,12 +117,24 @@ class PageTest:
     node1 = None
     node2 = None
     node3 = None
-    ctx_item1 = None
-    ctx_item2 = None
-    ctx_item21 = None
-    ctx_item22 = None
-    ctx_item3 = None
+    # ctx_item1 = None
+    # ctx_item2 = None
+    # ctx_item21 = None
+    # ctx_item22 = None
+    # ctx_item3 = None
     tree_node_type = None
+    btn_js_open_all = None
+    btn_js_close_all = None
+    btn_js_hide_all = None
+    btn_js_show_all = None
+    btn_js_sel_all = None
+    btn_js_desel_all = None
+    btn_js_show_stripes = None
+    btn_js_hide_stripes = None
+    btn_js_hide_chkbox = None
+    btn_js_show_chkbox = None
+    btn_js_chk_all = None
+    btn_js_unchk_all = None
 
     def show_layout(self):
         pg = Page('myPage', 'My Page')
@@ -247,6 +259,41 @@ class PageTest:
         sg.add_style("height", "500px")
         sg.add_style("width", "100%")
         sg.add(self.tree)
+        sg1 = SimpleGridLayout('Grid1', 6, 2)
+        sg1.add_style("height", "500px")
+        sg1.add_style("width", "100%")
+        sg.add(sg1)
+        self.btn_js_open_all = Button('btn_js_open_all', 'Open All', onclick_callback=self._modify_tree_open, app=app)
+        self.btn_js_close_all = Button('btn_js_close_all', 'Close All',
+                                       onclick_callback=self._modify_tree_close, app=app)
+        self.btn_js_hide_all = Button('btn_js_hide_all', 'Hide All', onclick_callback=self._modify_tree_hide, app=app)
+        self.btn_js_show_all = Button('btn_js_show_all', 'Show All', onclick_callback=self._modify_tree_show, app=app)
+        self.btn_js_sel_all = Button('btn_js_sel_all', 'Select All', onclick_callback=self._modify_tree_sel, app=app)
+        self.btn_js_desel_all = Button('btn_js_desel_all', 'Deselect All',
+                                       onclick_callback=self._modify_tree_unsel, app=app)
+        self.btn_js_show_stripes = Button('btn_js_show_stripes', 'Show Stripes',
+                                          onclick_callback=self._modify_tree_show_stps, app=app)
+        self.btn_js_hide_stripes = Button('btn_js_hide_stripes', 'Hide Stripes',
+                                          onclick_callback=self._modify_tree_hide_stps, app=app)
+        self.btn_js_hide_chkbox = Button('btn_js_hide_chkbox', 'Hide Checkbox',
+                                         onclick_callback=self._modify_tree_hide_chk, app=app)
+        self.btn_js_show_chkbox = Button('btn_js_show_chkbox', 'Show Checkbox',
+                                         onclick_callback=self._modify_tree_show_chk, app=app)
+        self.btn_js_chk_all = Button('btn_js_chk_all', 'Check All', onclick_callback=self._modify_tree_chk_all, app=app)
+        self.btn_js_unchk_all = Button('btn_js_unchk_all', 'Uncheck All',
+                                       onclick_callback=self._modify_tree_unchk_all, app=app)
+        sg1.add(self.btn_js_open_all)
+        sg1.add(self.btn_js_close_all)
+        sg1.add(self.btn_js_hide_all)
+        sg1.add(self.btn_js_show_all)
+        sg1.add(self.btn_js_sel_all)
+        sg1.add(self.btn_js_desel_all)
+        sg1.add(self.btn_js_show_stripes)
+        sg1.add(self.btn_js_hide_stripes)
+        sg1.add(self.btn_js_hide_chkbox)
+        sg1.add(self.btn_js_show_chkbox)
+        sg1.add(self.btn_js_chk_all)
+        sg1.add(self.btn_js_unchk_all)
         # sg.add(self.sidebar)
         # sg.add(self.grid)
         # self.btn = Button('btn', 'Push', app=app, onclick_callback=self.change_btn_title)
@@ -340,6 +387,42 @@ class PageTest:
         # pg.add(self.pop)
         content = pg.render()
         return content
+
+    def _modify_tree_show_stps(self):
+        self.tree.show_stripes()
+
+    def _modify_tree_hide_stps(self):
+        self.tree.hide_stripes()
+
+    def _modify_tree_hide_chk(self):
+        self.tree.hide_checkboxes()
+
+    def _modify_tree_show_chk(self):
+        self.tree.show_checkboxes()
+
+    def _modify_tree_chk_all(self):
+        self.tree.check_all()
+
+    def _modify_tree_unchk_all(self):
+        self.tree.uncheck_all()
+
+    def _modify_tree_open(self):
+        self.tree.open_all()
+
+    def _modify_tree_close(self):
+        self.tree.close_all()
+
+    def _modify_tree_hide(self):
+        self.tree.hide_all()
+
+    def _modify_tree_show(self):
+        self.tree.show_all()
+
+    def _modify_tree_sel(self):
+        self.tree.select_all()
+
+    def _modify_tree_unsel(self):
+        self.tree.deselect_all()
 
     def tree_node_opened(self):
         print("Node opened successfully!")

@@ -20,13 +20,32 @@ class JSTreeNode(Widget):
     _is_disabled = None
     _icon = None
     _text = None
-    # _is_leaf = None
     _li_attr = None
     _a_attr = None
     _type = None
 
     def __init__(self, name, text, icon=None, is_opened=None, is_selected=None, is_disabled=None,
                  child_nodes=None, li_attr=None, a_attr=None, n_type=None):
+        """This class represents an item or node in the JSTree. A node can be a parent to other
+        nodes or it can be an leaf which means it doesn't have any child nodes. A node represents
+        an data in the tree and shows the parent-child replationship visually. Each node should
+        have an id (or name) and text (i.e., label) associated with it. A node is rendered using
+        the HTML "li" tag, hence all the HTML attributes for an "li" tag can be applied to the
+        node. The node's text (or lable) is wrapped in the "a" HTML tag and attributes related to
+        "a" tag can also be applied on the node.
+
+            Args:
+                name (string, required): a unique identifier or name of the node
+                text (string, required): Label to be shown for the current node in the JSTree
+                icon (string): A CSS class name containing the icon information
+                is_opened (boolean): Initial state of the node to show it as open or closed
+                is_selected (boolean): If set True, node will be rendered selected in the tree
+                is_disabled (boolean): If True, node will be rendered as disabled in the tree
+                child_nodes (list): List of direct child nodes of type `JSTreeNode` for the current node
+                li_attr (string): A list of HTML attributes which will be applied to underlying <li> tag
+                a_attr (string): A list of HTML attributes to be applied on the uderlying <a> tag
+                n_type (`JSTreeNodeType`): An instance of the class `JSTreeNodeType`
+        """
         Widget.__init__(self, name)
         self._icon = icon
         self._text = text
@@ -52,6 +71,8 @@ class JSTreeNode(Widget):
 
     @property
     def icon(self):
+        """The name of the CSS class containing the icon to be shown for this node
+        """
         return self._icon
 
     @icon.setter
@@ -60,6 +81,7 @@ class JSTreeNode(Widget):
 
     @property
     def text(self):
+        """The label to be shown for the current node"""
         return self._text
 
     @text.setter
@@ -68,6 +90,7 @@ class JSTreeNode(Widget):
 
     @property
     def li_attr(self):
+        """The HTML "li" attributes to be applied to current node"""
         return self._li_attr
 
     @li_attr.setter
@@ -76,6 +99,7 @@ class JSTreeNode(Widget):
 
     @property
     def a_attr(self):
+        """The HTML "a" attributes to be applied to the current node's label"""
         return self._a_attr
 
     @a_attr.setter
@@ -84,7 +108,7 @@ class JSTreeNode(Widget):
 
     @property
     def is_open(self):
-        """Returns whether current node is opened or not"""
+        """Returns whether current node is opened or closed"""
         return self._is_opened
 
     @is_open.setter
@@ -111,30 +135,32 @@ class JSTreeNode(Widget):
 
     @property
     def is_parent(self):
-        """Returns whether the current node is parent or not"""
+        """Returns whether the current node is parent to other child nodes or not"""
         if self._child_widgets.__len__() > 0:
             return True
         return False
 
     @property
     def is_leaf(self):
-        """Returns true if current node is leaf else false"""
+        """Returns `True` if current node is an leaf else returns `False`"""
         if self._child_widgets.__len__() > 0:
             return False
         return True
 
     @property
     def is_closed(self):
-        """Returns True if current node is closed else False"""
+        """Returns `True` if current node is closed else returns `False`"""
         if self._is_opened:
             return False
         return True
 
     def get_children_dom(self):
-        """Returns the children nodes of current node"""
+        """Returns the list of all the child nodes available under the current `JSTreeNode`"""
         return self._child_widgets
 
     def get_next_dom(self, strict):
+        """Returns the next visible node that is below the current node. If strict is set to `True`
+        only sibling nodes are returned """
         if not strict:
             if self._child_widgets is not None and\
                     self._child_widgets.__len__() > 0:
@@ -149,6 +175,8 @@ class JSTreeNode(Widget):
         return None
 
     def get_prev_dom(self, strict):
+        """Returns the previous visible node that is above the current node. If strict is set to
+        `True` only sibling nodes are returned"""
         if not strict:
             if self._parent_widget is not None:
                 return self._parent_widget
@@ -158,7 +186,7 @@ class JSTreeNode(Widget):
         return None
 
     def get_path(self):
-        """Returns the path from root to current node"""
+        """Returns the path from root node to current node separated by front slash (/)"""
         path = "/" + self._name
         node = self
         while node is not None:
@@ -169,6 +197,7 @@ class JSTreeNode(Widget):
         return path
 
     def render(self):
+        """Renders the content of the `JSTreeNode` within the parent widget (i.e., `JSTree`) of this node"""
         content = "{\n"
         content += "id: '" + self._name + "',\n"
         content += "text: '" + self._text + "',\n"
@@ -193,10 +222,10 @@ class JSTreeNode(Widget):
 
 class JSTreeNodeType:
     """Type of the JSTree Node. Be default there are two types provided by the framework
-    which are '#' and 'default'. Types have some properties associated with it and applies
-    to all those nodes which have this style. For example, if type `ABCType` has a specific
-    icon defined 'myIcon', all nodes having 'type': 'ABCType' will get the icon value as
-    'myIcon'
+    which are '#' (aka, root) and 'default'. Types have some properties associated with it and
+    it applies to all those nodes which are of that type. For example, if type `ABCType` has a
+    specific icon property defined as 'myIcon', all nodes having its 'type': 'ABCType' will get the
+    icon value as 'myIcon'
     """
 
     _name = None
@@ -209,6 +238,17 @@ class JSTreeNodeType:
 
     def __init__(self, name, max_children=None, max_depth=None, valid_children=None, icon=None,
                  li_attr=None, a_attr=None):
+        """Following are the parameters to the constructor of this class:
+
+            Args:
+                name (string, required): A unique identifier for the given type
+                max_children (int): Maximum number of child nodes, a parent node can have
+                max_depth (int): Maximum level of child nodes, a parent node can have
+                valid_children (boolean): Set to `True` if all the child nodes are valid
+                icon (string): The CSS class name which contains the icon information
+                li_attr (string): A list of HTML "li" attributes that can be applied to the node
+                a_attr (string): A list of HTML "a" attributes that the current node can have
+        """
         self._name = name
         self._max_children = max_children
         self._max_depth = max_depth
@@ -218,6 +258,9 @@ class JSTreeNodeType:
         self._a_attr = a_attr
 
     def render(self):
+        """Renders the JavaScript code for the `JSTreeNodeType` which is further used by the
+        framework to work with types in `JSTreeNode`
+        """
         content = "'" + self._name + "': {\n"
         if self._max_children is not None:
             content += "max_children: " + str(self._max_children) + ",\n"
@@ -237,9 +280,13 @@ class JSTreeNodeType:
 
 class ContextMenuItem:
     """A JSTree's context menu item that will appear in the context menu of a node.
-    Each item must have the following two attributes as mandatory: label and action,
-    other attributes are optional. An `dict` of objects should be passed to JSTree
-    having each element an key and object of this class
+    A item can be a submenu or can be a leaf menu with an action associated with it.
+    Each item must have the following two attributes as mandatory: `label` and `action`,
+    other attributes in this class are optional.
+
+    To build the context menu for `JSTree`, an `dict` should be passed to JSTree, having each
+    of its element as a key and object pair. The `key` represents the label of the menu item
+    and the object is the instace of this class with desired properties filled
     """
 
     _sep_before = None
@@ -270,15 +317,24 @@ class ContextMenuItem:
             self._submenu = {}
 
     def add(self, key, item):
-        """Adds submenu item to the current menu item"""
+        """Adds submenu item or the leaf menu item to the current menu
+
+            Args:
+                key (string): Key and the label of menu item
+                item (ContextMenuItem): An instance of this class having its desired properties filled
+        """
         self._submenu[key] = item
 
     def remove(self, key):
-        """Removes the submenu item from the current menu item"""
+        """Removes the submenu item from the current menu item
+
+            Args:
+                key (string): A key associated with the context menu item
+        """
         self._submenu.pop(key)
 
     def render(self):
-        """Renders the context menu """
+        """Renders the JavaScript to build the context menu for the `JSTree`"""
         content = "'" + self._label + "': {\n"
         if self._sep_before is not None:
             content += "seperator_before: %s,\n" % json.dumps(self._sep_before)
@@ -456,9 +512,21 @@ class JSTree(Widget):
                                             instead of just selecting the tree node
                 plugin_checkbox (boolean): Whether to enable or disable checkbox plugin which
                                             helps in rendering a checkbox in front of each node
+                plugin_contextmenu (boolean): Enables or disables an context menu to be associated
+                                                with the `JSTree`. Depending upon the configuration
+                                                a context menu can have system populated items such
+                                                as "Create", "Rename", "Delete", etc or it can have
+                                                custom menu items as configured for the JSTree
                 plugin_dnd (boolean): Enables or disable the drag & drop plugin. The plugin
                                         helps in dragging and dropping tree nodes, which also
                                         helps visiualization of cut, copy & paste commands
+                plugin_massload (boolean): This plugin helps in the getting the mass load of the nodes
+                                            through AJAX calls
+                plugin_search (boolean): This plugin helps in making the JSTree as searchable. A user
+                                            can submit the search query which could be processed at
+                                            either client side or server side depending upon the
+                                            configuration. Search helps in finding the `JSTreeNode`
+                                            and filtering out the nodes which are of no interset
         """
         Widget.__init__(self, name)
         self._app = app
@@ -1909,7 +1977,6 @@ class JSTree(Widget):
                                     selector = $.jstree.reference('#%s');
                                     if(selector != undefined){
                                         if(props.cmd != undefined){
-                                        alert(props.cmd);
                                             switch(props.cmd){
                                                 case 'DESTROY':
                                                     selector.destroy();
