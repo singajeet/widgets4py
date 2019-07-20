@@ -20,7 +20,7 @@ class JSTreeNode(Widget):
     _is_disabled = None
     _icon = None
     _text = None
-    _is_leaf = None
+    # _is_leaf = None
     _li_attr = None
     _a_attr = None
     _type = None
@@ -49,6 +49,83 @@ class JSTreeNode(Widget):
             self._child_widgets = child_nodes
         else:
             self._child_widgets = []
+
+    @property
+    def is_open(self):
+        """Returns whether current node is opened or not"""
+        return self._is_opened
+
+    @is_open.setter
+    def is_open(self, val):
+        self._is_opened = val
+
+    @property
+    def is_selected(self):
+        """Returns whether current node is selected or not"""
+        return self._is_selected
+
+    @is_selected.setter
+    def is_selected(self, val):
+        self._is_selected = val
+
+    @property
+    def is_disabled(self):
+        """Returns whether the current node is disabled or not"""
+        self._is_disabled
+
+    @is_disabled.setter
+    def is_disabled(self, val):
+        self._is_disabled = val
+
+    @property
+    def is_parent(self):
+        """Returns whether the current node is parent or not"""
+        if self._child_widgets.__len__() > 0:
+            return True
+        return False
+
+    @property
+    def is_leaf(self):
+        """Returns true if current node is leaf else false"""
+        if self._child_widgets.__len__() > 0:
+            return False
+        return True
+
+    @property
+    def is_closed(self):
+        """Returns True if current node is closed else False"""
+        if self._is_opened:
+            return False
+        return True
+
+    def get_children_dom(self):
+        """Returns the children nodes of current node"""
+        return self._child_widgets
+
+    def get_next_dom(self, strict):
+        if not strict:
+            if self._child_widgets is not None and\
+                    self._child_widgets.__len__() > 0:
+                for child in self._child_widgets:
+                    if not child.is_disabled:
+                        return child
+        elif self._parent_widget is not None:
+            if self._parent_widget._child_widgets is not None and\
+                    self._parent_widget._child_widgets.__len__() > 0:
+                siblings = self._parent_widget._child_widgets
+                return siblings
+        return None
+
+    def get_path(self):
+        """Returns the path from root to current node"""
+        path = "/" + self._name
+        node = self
+        while node is not None:
+            parent_node = node.get_parent()
+            if parent_node is not None:
+                path = "/" + parent_node._name + path
+            node = parent_node
+        return path
 
     def render(self):
         content = "{\n"
@@ -190,7 +267,9 @@ class ContextMenuItem:
 class JSTree(Widget):
     """The JSTree class collects all the child nodes and renders the HTML content. Also,
     it handles some of the events fired on JSTree and further calls the callbacks
-    associated with the Tree
+    associated with the Tree. JSTree have a lot of configurations which can be configured
+    through the constructor of this class. Also, this class have a lot of events associated
+    which can be used to register handlers with it.
     """
 
     _app = None
@@ -245,6 +324,7 @@ class JSTree(Widget):
     _unique_trim_whitespace = None
     _unique_duplicate_url = None
     _unique_duplicate_callback = None
+    _cmd_queue = None
     # ========= Events ============= #
     _loaded_callback = None
     _ready_callback = None
@@ -324,6 +404,21 @@ class JSTree(Widget):
                  search_show_only_matches=None, search_close_opened_onclear=None, sort_callback=None,
                  sort_url=None, types=None, unique_case_sensitive=None, unique_trim_whitespace=None,
                  unique_duplicate_url=None, unique_duplicate_callback=None):
+        """Constructor parameters defined below...
+
+            Args:
+                name (string, required): An id or name of the widget to be used internally
+                app (Flask): An instance of `Flask` class as application object
+                child_nodes (JSTreeNode): A list of direct child nodes of this class
+                plugin_whole_row (boolean): Whether to enable 'whole_row' plugin or not. The
+                                            whole_row plugins to select whole row of the tree
+                                            instead of just selecting the tree node
+                plugin_checkbox (boolean): Whether to enable or disable checkbox plugin which
+                                            helps in rendering a checkbox in front of each node
+                plugin_dnd (boolean): Enables or disable the drag & drop plugin. The plugin
+                                        helps in dragging and dropping tree nodes, which also
+                                        helps visiualization of cut, copy & paste commands
+        """
         Widget.__init__(self, name)
         self._app = app
         if child_nodes is not None:
@@ -419,6 +514,7 @@ class JSTree(Widget):
                 if not found:
                     self._app.add_url_rule('/' + self._unique_duplicate_url,
                                            self._unique_duplicate_url, self._process_unique_duplicate_callback)
+        self._cmd_queue = []
 
     def _process_unique_duplicate_callback(self):
         name = ""
@@ -1564,6 +1660,50 @@ class JSTree(Widget):
                     </script>
                     """
         return handlers
+
+    def _command_processor(self):
+        if self._cmd_queue is not None and self._cmd_queue.__len__() > 0:
+            cmd = self._cmd_queue.pop()
+            if cmd is not None:
+                return json.dumps(cmd)
+
+    def _attach_polling(self):
+        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
+        if self._app is not None:
+            found = False
+            for rule in self._app.url_map.iter_rules():
+                if rule.endpoint == url:
+                    found = True
+            if not found:
+                self._app.add_url_rule('/' + url, url, self._command_processor)
+        script = """
+                <script>
+                    (function %s_poll(){
+                        setTimeout(function(){
+                            $.ajax({
+                                url: '/%s',
+                                type: 'get',
+                                dataType: 'json',
+                                success: function(props){
+                                    selector = $.jstree.reference('#%s');
+                                    if(selector != undefined){
+                                        if(props.cmd != undefined){
+                                            switch(props.cmd){
+                                                case 'DESTROY':
+                                                    selector.destroy();
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                },
+                                error: function(err_status){}
+                            });
+                            %s_poll();
+                        }, 10000);
+                    })();
+                </script>
+                """ % (url, url, url)
+        return script
 
     def render(self):
         self._prepare_callback_urls()

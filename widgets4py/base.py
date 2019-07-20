@@ -138,6 +138,7 @@ class Widget:
                 child (Widget): An child of the current widget
         """
         child.set_root_widget(self._root_widget)
+        child.set_parent(self)
         self._child_widgets.append(child)
 
     def remove(self, child):
@@ -269,6 +270,18 @@ class Widget:
                 css_cls (str): Name of the class that needs to be removed
         """
         self._css_classes.pop(css_cls)
+
+    def set_parent(self, widget):
+        """Sets the provided widget in argument as parent of current node
+
+            Args:
+                widget (Widget): Parent widget of current widget
+        """
+        self._parent_widget = widget
+
+    def get_parent(self):
+        """Returns the parent widget of current widget"""
+        return self._parent_widget
 
     def _render_pre_content(self, tag):
         """Renders the pre markup code to write start HTML tag id,
