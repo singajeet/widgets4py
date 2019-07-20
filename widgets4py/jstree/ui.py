@@ -1707,6 +1707,186 @@ class JSTree(Widget):
             cmd = self._cmd_queue.pop()
             if cmd is not None:
                 return json.dumps(cmd)
+        return json.dumps({'cmd': 'NONE'})
+
+    def destroy(self):
+        """Destroy all the resources used by JSTree at client side"""
+        self._cmd_queue.append({'cmd': 'DESTROY'})
+
+    def redraw(self):
+        self._cmd_queue.append({'cmd': 'REDRAW'})
+
+    def open_node(self, node):
+        self._cmd_queue.append({'cmd': 'OPEN-NODE', 'arg0': node})
+
+    def close_node(self, node):
+        self._cmd_queue.append({'cmd': 'CLOSE-NODE', 'arg0': node})
+
+    def toggle_node(self, node):
+        self._cmd_queue.append({'cmd': 'TOGGLE-NODE', 'arg0': node})
+
+    def open_all(self):
+        self._cmd_queue.append({'cmd': 'OPEN-ALL'})
+
+    def close_all(self):
+        self._cmd_queue.append({'cmd': 'CLOSE-ALL'})
+
+    def enable_node(self, node):
+        self._cmd_queue.append({'cmd': 'ENABLE-NODE', 'arg0': node})
+
+    def disable_node(self, node):
+        self._cmd_queue.append({'cmd': 'DISABLE-NODE', 'arg0': node})
+
+    def hide_node(self, node):
+        self._cmd_queue.append({'cmd': 'HIDE-NODE', 'arg0': node})
+
+    def show_node(self, node):
+        self._cmd_queue.append({'cmd': 'SHOW-NODE', 'arg0': node})
+
+    def hide_all(self):
+        self._cmd_queue.append({'cmd': 'HIDE-ALL'})
+
+    def show_all(self):
+        self._cmd_queue.append({'cmd': 'SHOW-ALL'})
+
+    def select_node(self, node, supress_event=False):
+        self._cmd_queue.append({'cmd': 'SELECT-NODE', 'arg0': node, 'arg1': supress_event})
+
+    def deselect_node(self, node, supress_event=False):
+        self._cmd_queue.append({'cmd': 'DESELECT-NODE', 'arg0': node, 'arg1': supress_event})
+
+    def select_all(self, supress_event=False):
+        self._cmd_queue.append({'cmd': 'SELECT-ALL', 'arg0': supress_event})
+
+    def deselect_all(self, supress_event=False):
+        self._cmd_queue.append({'cmd': 'DESELECT-ALL', 'arg0': supress_event})
+
+    def refresh(self):
+        self._cmd_queue.append({'cmd': 'REFRESH'})
+
+    def refresh_node(self, node):
+        self._cmd_queue.append({'cmd': 'REFRESH-NODE', 'arg0': node})
+
+    def set_id(self, node, id):
+        self._cmd_queue.append({'cmd': 'SET-ID', 'arg0': node, 'arg1': id})
+
+    def create_node(self, parent=None, data=None, index=None):
+        if parent is not None and index is not None and data is not None:
+            self._cmd_queue.append({'cmd': 'CREATE-NODE', 'arg0': parent, 'arg1': data, 'arg2': index})
+        elif parent is not None and data is not None and index is None:
+            self._cmd_queue.append({'cmd': 'CREATE-NODE', 'arg0': parent, 'arg1': data})
+        elif parent is not None and index is None and data is None:
+            self._cmd_queue.append({'cmd': 'CREATE-NODE', 'arg0': parent})
+        else:
+            self._cmd_queue.append({'cmd': 'CREATE-NODE'})
+
+    def rename_node(self, node, name):
+        self._cmd_queue.append({'cmd': 'RENAME-NODE', 'arg0': node, 'arg1': name})
+
+    def delete_node(self, node):
+        self._cmd_queue.append({'cmd': 'DELETE-NODE', 'arg0': node})
+
+    def move_node(self, node, parent):
+        self._cmd_queue.append({'cmd': 'MOVE-NODE', 'arg0': node, 'arg1': parent})
+
+    def copy_node(self, node, parent):
+        self._cmd_queue.append({'cmd': 'COPY-NODE', 'arg0': node, 'arg1': parent})
+
+    def cut(self, nodes):
+        self._cmd_queue.append({'cmd': 'CUT', 'arg0': nodes})
+
+    def copy(self, nodes):
+        self._cmd_queue.append({'cmd': 'COPY', 'arg0': nodes})
+
+    def paste(self, parent):
+        self._cmd_queue.append({'cmd': 'PASTE', 'arg0': parent})
+
+    def clear_buffer(self):
+        self._cmd_queue.append({'cmd': 'CLEAR-BUFFER'})
+
+    def edit(self, node):
+        self._cmd_queue.append({'cmd': 'EDIT', 'arg0': node})
+
+    def show_stripes(self):
+        self._cmd_queue.append({'cmd': 'SHOW-STRIPES'})
+
+    def hide_stripes(self):
+        self._cmd_queue.append({'cmd': 'HIDE-STRIPES'})
+
+    def toggle_stripes(self):
+        self._cmd_queue.append({'cmd': 'TOGGLE-STRIPES'})
+
+    def show_dots(self):
+        self._cmd_queue.append({'cmd': 'SHOW-DOTS'})
+
+    def hide_dots(self):
+        self._cmd_queue.append({'cmd': 'HIDE-DOTS'})
+
+    def toggle_dots(self):
+        self._cmd_queue.append({'cmd': 'TOGGLE-DOTS'})
+
+    def show_icons(self):
+        self._cmd_queue.append({'cmd': 'SHOW-ICONS'})
+
+    def hide_icons(self):
+        self._cmd_queue.append({'cmd': 'HIDE-ICONS'})
+
+    def toggle_icons(self):
+        self._cmd_queue.append({'cmd': 'TOGGLE-ICONS'})
+
+    def show_ellipses(self):
+        self._cmd_queue.append({'cmd': 'SHOW-ELLIPSES'})
+
+    def hide_ellipses(self):
+        self._cmd_queue.append({'cmd': 'HIDE-ELLIPSES'})
+
+    def toggle_ellipses(self):
+        self._cmd_queue.append({'cmd': 'TOGGLE-ELLIPSES'})
+
+    def show_checkboxes(self):
+        self._cmd_queue.append({'cmd': 'SHOW-CHECKBOXES'})
+
+    def hide_checkboxes(self):
+        self._cmd_queue.append({'cmd': 'HIDE-CHECKBOXES'})
+
+    def toggle_checkboxes(self):
+        self._cmd_queue.append({'cmd': 'TOGGLE-CHECKBOXES'})
+
+    def disable_checkbox(self, nodes):
+        self._cmd_queue.append({'cmd': 'DISABLE-CHECKBOX', 'arg0': nodes})
+
+    def enable_checkbox(self, nodes):
+        self._cmd_queue.append({'cmd': 'ENABLE-CHECKBOX', 'arg0': nodes})
+
+    def check_node(self, nodes):
+        self._cmd_queue.append({'cmd': 'CHECK-NODE', 'arg0': nodes})
+
+    def uncheck_node(self, nodes):
+        self._cmd_queue.append({'cmd': 'UNCHECK-NODE', 'arg0': nodes})
+
+    def check_all(self):
+        self._cmd_queue.append({'cmd': 'CHECK-ALL'})
+
+    def uncheck_all(self):
+        self._cmd_queue.append({'cmd': 'UNCHECK-ALL'})
+
+    def show_contextmenu(self):
+        self._cmd_queue.append({'cmd': 'SHOW-CONTEXTMENU'})
+
+    def search(self, query, search_on_client):
+        self._cmd_queue.append({'cmd': 'SEARCH', 'arg0': query, 'arg1': search_on_client})
+
+    def clear_search(self):
+        self._cmd_queue.append({'cmd': 'CLEAR-SEARCH'})
+
+    def save_state(self):
+        self._cmd_queue.append({'cmd': 'SAVE-STATE'})
+
+    def restore_state(self):
+        self._cmd_queue.append({'cmd': 'RESTORE-STATE'})
+
+    def clear_state(self):
+        self._cmd_queue.append({'cmd': 'CLEAR-STATE'})
 
     def _attach_polling(self):
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
@@ -1729,6 +1909,7 @@ class JSTree(Widget):
                                     selector = $.jstree.reference('#%s');
                                     if(selector != undefined){
                                         if(props.cmd != undefined){
+                                        alert(props.cmd);
                                             switch(props.cmd){
                                                 case 'DESTROY':
                                                     selector.destroy();
@@ -1736,7 +1917,7 @@ class JSTree(Widget):
                                                 case 'REDRAW':
                                                     selector.redraw(props.arg0);
                                                     break;
-                                                case 'OPEN-NODE':
+                                                 case 'OPEN-NODE':
                                                     selector.open_node(props.arg0);
                                                     break;
                                                 case 'CLOSE-NODE':
@@ -1900,7 +2081,7 @@ class JSTree(Widget):
                                                     selector.check_all();
                                                     break;
                                                 case 'UNCHECK-ALL':
-                                                    selector.uncheck_all()l
+                                                    selector.uncheck_all();
                                                     break;
                                                 case 'SHOW-CONTEXTMENU':
                                                     selector.show_contextmenu();
@@ -1908,7 +2089,7 @@ class JSTree(Widget):
                                                 case 'SEARCH':
                                                     if(props.arg1 != undfined){
                                                         selector.search(props.arg0, props.arg1);
-                                                    } else 
+                                                    } else
                                                     {
                                                         selector.search(props.arg0);
                                                     }
@@ -1929,7 +2110,11 @@ class JSTree(Widget):
                                         }
                                     }
                                 },
-                                error: function(err_status){}
+                                error: function(err_status){
+                                        alertify.error("Status Code: "
+                                        + err_status.status + "<br />" + "Error Message:"
+                                        + err_status.statusText);
+                                }
                             });
                             %s_poll();
                         }, 10000);
@@ -1942,5 +2127,6 @@ class JSTree(Widget):
         self._prepare_callback_urls()
         content = self._render_pre_content('div')
         content += self._render_post_content('div')
-        content += self._attach_script() + "\n" + self._attach_event_handlers() + "\n" + _attach_polling()
+        content += self._attach_script() + "\n" + self._attach_event_handlers()\
+            + "\n" + self._attach_polling()
         return content
