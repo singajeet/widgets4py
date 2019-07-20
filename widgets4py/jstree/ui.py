@@ -51,6 +51,38 @@ class JSTreeNode(Widget):
             self._child_widgets = []
 
     @property
+    def icon(self):
+        return self._icon
+
+    @icon.setter
+    def icon(self, val):
+        self._icon = val
+
+    @property
+    def text(self):
+        return self._text
+
+    @text.setter
+    def text(self, val):
+        self._text = val
+
+    @property
+    def li_attr(self):
+        return self._li_attr
+
+    @li_attr.setter
+    def li_attr(self, val):
+        self._li_attr = val
+
+    @property
+    def a_attr(self):
+        return self._a_attr
+
+    @a_attr.setter
+    def a_attr(self, val):
+        self._a_attr = val
+
+    @property
     def is_open(self):
         """Returns whether current node is opened or not"""
         return self._is_opened
@@ -114,6 +146,15 @@ class JSTreeNode(Widget):
                     self._parent_widget._child_widgets.__len__() > 0:
                 siblings = self._parent_widget._child_widgets
                 return siblings
+        return None
+
+    def get_prev_dom(self, strict):
+        if not strict:
+            if self._parent_widget is not None:
+                return self._parent_widget
+        elif self._parent_widget is not None:
+            siblings = self._parent_widget._child_widgets
+            return siblings
         return None
 
     def get_path(self):
@@ -1692,6 +1733,198 @@ class JSTree(Widget):
                                                 case 'DESTROY':
                                                     selector.destroy();
                                                     break;
+                                                case 'REDRAW':
+                                                    selector.redraw(props.arg0);
+                                                    break;
+                                                case 'OPEN-NODE':
+                                                    selector.open_node(props.arg0);
+                                                    break;
+                                                case 'CLOSE-NODE':
+                                                    selector.close_node(props.arg0);
+                                                    break;
+                                                case 'TOGGLE-NODE':
+                                                    selector.toggle_node(props.arg0);
+                                                    break;
+                                                case 'OPEN-ALL':
+                                                    selector.open_all();
+                                                    break;
+                                                case 'CLOSE-ALL':
+                                                    selector.close_all();
+                                                    break;
+                                                case 'ENABLE-NODE':
+                                                    selector.enable_node(props.arg0);
+                                                    break;
+                                                case 'DISABLE-NODE':
+                                                    selector.disable_node(props.arg0);
+                                                    break;
+                                                case 'HIDE-NODE':
+                                                    selector.hide_node(props.arg0);
+                                                    break;
+                                                case 'SHOW-NODE':
+                                                    selector.show_node(props.arg0);
+                                                    break;
+                                                case 'HIDE-ALL':
+                                                    selector.hide_all();
+                                                    break;
+                                                case 'SHOW-ALL':
+                                                    selector.show_all();
+                                                    break;
+                                                case 'SELECT-NODE':
+                                                    if(props.arg1 != undefined){
+                                                        selector.select_node(props.arg0, props.arg1);
+                                                    } else {
+                                                        selector.select_node(props.arg0);
+                                                    }
+                                                    break;
+                                                case 'DESELECT-NODE':
+                                                    if(props.arg1 != undefined){
+                                                        selector.deselect_node(props.arg0, props.arg1);
+                                                    } else {
+                                                        selector.deselect_node(props.arg0);
+                                                    }
+                                                    break;
+                                                case 'SELECT-ALL':
+                                                    selector.select_all(props.arg0);
+                                                    break;
+                                                case 'DESELECT-ALL':
+                                                    selector.deselect_all(props.arg0);
+                                                    break;
+                                                case 'REFRESH':
+                                                    selector.refresh();
+                                                    break;
+                                                case 'REFRESH-NODE':
+                                                    selector.refresh_node(props.arg0);
+                                                    break;
+                                                case 'SET-ID':
+                                                    selector.set_id(props.arg0, props.arg1);
+                                                    break;
+                                                case 'CREATE-NODE':
+                                                    if(props.arg2 != undefined && props.arg1 != undefined && props.arg0 != undefined) //# noqa
+                                                    {
+                                                        selector.create_node(props.arg0, props.arg1, props.arg2);
+                                                    } else if(props.arg1 != undefined && props.arg0 != undefined)
+                                                    {
+                                                        selector.create_node(props.arg0, props.arg1);
+                                                    } else if (props.arg0 != undefined)
+                                                    {
+                                                        selector.create_node(props.arg0);
+                                                    } else {
+                                                        selector.create_node();
+                                                    }
+                                                    break;
+                                                case 'RENAME-NODE':
+                                                    selector.rename_node(props.arg0, props.arg1);
+                                                    break;
+                                                case 'DELETE-NODE':
+                                                    selector.delete_node(props.arg0);
+                                                    break;
+                                                case 'MOVE-NODE':
+                                                    selector.move_node(props.arg0, props.arg1);
+                                                    break;
+                                                case 'COPY-NODE':
+                                                    selector.copy_node(props.arg0, props.arg1);
+                                                    break;
+                                                case 'CUT':
+                                                    selector.cut(props.arg0);
+                                                    break;
+                                                case 'COPY':
+                                                    selector.copy(props.arg0);
+                                                    break;
+                                                case 'PASTE':
+                                                    selector.paste(props.arg0);
+                                                    break;
+                                                case 'CLEAR-BUFFER':
+                                                    selector.clear_buffer();
+                                                    break;
+                                                case 'EDIT':
+                                                    selector.edit(props.arg0);
+                                                    break;
+                                                case 'SHOW-STRIPES':
+                                                    selector.show_stripes();
+                                                    break;
+                                                case 'HIDE-STRIPES':
+                                                    selector.hide_stripes();
+                                                    break;
+                                                case 'TOGGLE-STRIPES':
+                                                    selector.toggle_stripes();
+                                                    break;
+                                                case 'SHOW-DOTS':
+                                                    selector.show_dots();
+                                                    break;
+                                                case 'HIDE-DOTS':
+                                                    selector.hide_dots();
+                                                    break;
+                                                case 'TOGGLE-DOTS':
+                                                    selector.toggle_dots();
+                                                    break;
+                                                case 'SHOW-ICONS':
+                                                    selector.show_icons();
+                                                    break;
+                                                case 'HIDE-ICONS':
+                                                    selector.hide_icons();
+                                                    break;
+                                                case 'TOGGLE-ICONS':
+                                                    selector.toggle_icons();
+                                                    break;
+                                                case 'SHOW-ELLIPSIS':
+                                                    selector.show_ellipsis();
+                                                    break;
+                                                case 'HIDE-ELLIPSIS':
+                                                    selector.hide_ellipsis();
+                                                    break;
+                                                case 'TOGGLE-ELLIPSIS':
+                                                    selector.toggle_ellipsis();
+                                                    break;
+                                                case 'SHOW-CHECKBOXES':
+                                                    selector.show_checkboxes();
+                                                    break;
+                                                case 'HIDE-CHECKBOXES':
+                                                    selector.hide_checkboxes();
+                                                    break;
+                                                case 'TOGGLE-CHECKBOXES':
+                                                    selector.toggle_checkboxes()
+                                                    break;
+                                                case 'DISABLE-CHECKBOX':
+                                                    selector.disable_checkbox(props.arg0);
+                                                    break;
+                                                case 'ENABLE-CHECKBOX':
+                                                    selector.enable_checkbox(props.arg0);
+                                                    break;
+                                                case 'CHECK-NODE':
+                                                    selector.check_node(props.arg0);
+                                                    break;
+                                                case 'UNCHECK-NODE':
+                                                    selector.uncheck_node(props.arg0);
+                                                    break;
+                                                case 'CHECK-ALL':
+                                                    selector.check_all();
+                                                    break;
+                                                case 'UNCHECK-ALL':
+                                                    selector.uncheck_all()l
+                                                    break;
+                                                case 'SHOW-CONTEXTMENU':
+                                                    selector.show_contextmenu();
+                                                    break;
+                                                case 'SEARCH':
+                                                    if(props.arg1 != undfined){
+                                                        selector.search(props.arg0, props.arg1);
+                                                    } else 
+                                                    {
+                                                        selector.search(props.arg0);
+                                                    }
+                                                    break;
+                                                case 'CLEAR-SEARCH':
+                                                    selector.clear_search();
+                                                    break;
+                                                case 'SAVE-STATE':
+                                                    selector.save_state();
+                                                    break;
+                                                case 'RESTORE-STATE':
+                                                    selector.restore_state();
+                                                    break;
+                                                case 'CLEAR-STATE':
+                                                    selector.clear_state();
+                                                    break;
                                             }
                                         }
                                     }
@@ -1702,12 +1935,12 @@ class JSTree(Widget):
                         }, 10000);
                     })();
                 </script>
-                """ % (url, url, url)
+                """ % (url, url, self._name, url)
         return script
 
     def render(self):
         self._prepare_callback_urls()
         content = self._render_pre_content('div')
         content += self._render_post_content('div')
-        content += self._attach_script() + "\n" + self._attach_event_handlers()
+        content += self._attach_script() + "\n" + self._attach_event_handlers() + "\n" + _attach_polling()
         return content
