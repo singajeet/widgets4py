@@ -1382,7 +1382,7 @@ class JSTree(Widget):
                         """ % (self._redraw_url)
         if self._before_open_callback is not None:
             handlers += """
-                            selector.on('before_open.jstree', function(node){
+                            selector.on('before_open.jstree', function(data){
                                 $.ajax({
                                     url: '/%s',
                                     type: 'get',

@@ -151,6 +151,7 @@ class PageTest:
                            core_chk_callbk_edit=True, core_chk_callbk_delete_node=True,
                            core_chk_callbk_copy_node=True, core_chk_callbk_move_node=True, app=app)
         self.tree.on_open_node_event(self.tree_node_opened)
+        self.tree.on_before_open_event(self.tree_node_opened)
         # self.tree.add_ctx_menu_item('Item1', self.ctx_item1)
         # self.tree.add_ctx_menu_item('Item2', self.ctx_item2)
         # self.tree.add_ctx_menu_item('Item3', self.ctx_item3)
