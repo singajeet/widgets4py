@@ -97,15 +97,9 @@ class GridColumn:
         self._sortable = val
 
     def render(self):
-        # content = """{ field: '%s', caption: '%s', size: '%d%%'"""
-        # content = content % (self._field_name, self._caption, self._size)
-        # if self._attributes is not None:
-        #     content += ", attr: '" + self._attributes + "'"
-        # if self._render is not None:
-        #     content += ", render: '" + self._render + "'"
-        # if self._sortable is not None:
-        #     content += ", sortable: " + json.dumps(self._sortable)
-        # content += "}"
+        """Renders the GridColumn as `dict` object which will be converted to JSON
+        for final rendering on the browser
+        """
         obj = {}
         obj['field'] = self._field_name
         obj['caption'] = self._caption
@@ -116,7 +110,7 @@ class GridColumn:
             obj['render'] = self._render
         if self._sortable is not None:
             obj['sortable'] = self._sortable
-        return json.dumps(obj)
+        return obj
 
 
 class GridColumnCollection:
@@ -158,19 +152,19 @@ class GridColumnCollection:
         self._columns = val
 
     def render(self):
-        """Renders the columns collection as JavaScript list"""
-        # content = "["
-        # for col in self._columns:
-        #     content += col.render() + ",\n"
-        # content += "]"
-        # return content
-        return json.dumps(self._columns)
+        """Collect all the columns and render it as JSON array on the browser"""
+        content = []
+        for col in self._columns:
+            content.append(col.render())
+        return json.dumps(content)
 
 
 class GridRecord:
     """A row or record in the dataset of a Grid widget. This class
-    takes an `dict` object containing all columns and its values
-    and renders it in JavaScript format"""
+    keeps all the fields or cells for an given record along its values.
+    The object or instace of this class is rendered as `dict` object,
+    which further is converted to JSON by the collection class
+    """
 
     _cells = None
     _style = None
@@ -214,17 +208,9 @@ class GridRecord:
         self._style = val
 
     def render(self):
-        """Renders the record in JavaScript format and returns to parent widget"""
-        # content = "{"
-        # for cell in self._cells:
-        #     if type(self._cells.get(cell)) == int:
-        #         content += cell + ": " + str(self._cells.get(cell)) + ", "
-        #     else:
-        #         content += cell + ": '" + self._cells.get(cell) + "', "
-        # if self._style is not None:
-        #     content += "w2ui: { style: '" + self._style + "'}"
-        # content += "}"
-        # return content
+        """Renders the instance of this class as `dict` object which will be
+        further used by the collection class
+        """
         obj = {}
         for cell in self._cells:
             obj[cell] = self._cells.get(cell)
@@ -232,7 +218,7 @@ class GridRecord:
             style = {}
             style['style'] = self._style
             obj['w2ui'] = style
-        return json.dumps(obj)
+        return obj
 
 
 class SummaryGridRecord(GridRecord):
@@ -245,22 +231,15 @@ class SummaryGridRecord(GridRecord):
     """
 
     def render(self):
-        """Renders the summary record at the last of the Grid widget"""
-        # content = "{ w2ui: { summary: true },\n"
-        # for cell in self._cells:
-        #     if type(self._cells.get(cell)) == int:
-        #         content += cell + ": " + str(self._cells.get(cell)) + ", "
-        #     else:
-        #         content += cell + ": '" + self._cells.get(cell) + "', "
-        # content += "}"
-        # return content
+        """Renders the summary record as `dict` object. The summary record is always
+        rendered as the last record of an Grid widget"""
         summary = {}
         summary['summary'] = True
         obj = {}
         obj['w2ui'] = summary
         for cell in self._cells:
             obj[cell] = self._cells.get(cell)
-        return json.dumps(obj)
+        return obj
 
 
 class GridRecordCollection:
@@ -316,13 +295,11 @@ class GridRecordCollection:
         self._records.pop(record)
 
     def render(self):
-        """Function to render all records in the JavaScript list format"""
-        # content = "["
-        # for rec in self._records:
-        #     content += rec.render() + ",\n"
-        # content += "]"
-        # return content
-        return json.dumps(self._records)
+        """Function to render all the records in the JSON list format"""
+        content = []
+        for rec in self._records:
+            content.append(rec.render())
+        return json.dumps(content)
 
 
 class GridSearch:
@@ -387,13 +364,6 @@ class GridSearch:
 
         def render(self):
             """Renders the search options to be included in the grid"""
-            # content = "{"
-            # content += " field: %s, caption: %s, type: %s" % (self._field,
-            #                                                   self._caption, self._type)
-            # if self._options is not None:
-            #     content += ", options: { items: " + str(self._options) + "}"
-            # content += "}"
-            # return content
             obj = {}
             obj['field'] = self._field
             obj['caption'] = self._caption
@@ -455,19 +425,27 @@ class GridSearchCollection:
         self._searches.pop(search)
 
     def render(self):
-        """Function to render all searches in the JavaScript list format"""
-        # content = "["
-        # for search in self._searches:
-        #     content += search.render() + ",\n"
-        # content += "]"
-        # return content
-        return json.dumps(self._searches)
+        """Function to render the search collection as JSON list format"""
+        content = []
+        for search in self._searches:
+            content.append(search.render())
+        return json.dumps(content)
 
 
 class Grid(Widget):
-    """A class to render W2UI grid and attach its event to server side events
-    .This class works a wrapper of JavaScript and generates JS code to render
-    W2UI widget in the browser or app
+    """Grid renders the columns and records in crosstab format. Grid can have any number
+    of columns and records in the Grid should follow the column structure as defined by
+    the collection of columns. The Grid widget can have its data loaded at the server side
+    during rendering of the widget or it can be populated dynamically from the client side
+    using the callback interface. Grid widget provides the option to perform the CRUD
+    (Create, Rename, Update and Delete) operations though the method calls and the AJAX
+    framework syncup the data at client side dynamically. Further it provides the options
+    to select, filter, search, etc operations and also have events defined which can call
+    the methods/callbacks defined at server side.
+
+    This class is an wrapper on top of the Grid widget from W2UI and almost provides all
+    the functionalities available in W2UI Grid widget through serve-side method calls.
+    Please visit http://www.w2ui.com to get more information about this widget.
     """
 
     _header = None
@@ -546,14 +524,31 @@ class Grid(Widget):
                 toolbarDelete (boolean): Show or hide the Delete button in toolbar
                 toolbarSave (boolean): Show or hide the Save button in toolbar
                 toolbarEdit (boolean): Show or hide the Edit button in toolbar
-                toolbar_add_client_script (string): JS script to be added for execution at client
-                toolbar_add_callback (callable): It will be called at server side when add button is clicked
-                toolbar_delete_client_script (string): JS script to be added for execution at client
-                toolbar_delete_callback (callable): It will be called at server side when delete button is clicked
-                toolbar_save_client_script (string): JS script to be added for execution at client
-                toolbar_save_callback (callable): It will be called at server side when save button is clicked
-                toolbar_edit_client_script (string): JS script to be added for execution at client
-                toolbar_edit_callback (callable): It will be called at server side when edit button is clicked
+                toolbar_add_client_script (string): This attribute provides the options to add your
+                                                    custom javascript code to be included and
+                                                    rendered in the client browser. The script
+                                                    can use the JQuery which is already included in
+                                                    the module. Use "$" for JQuery version 3.xx or
+                                                    use "$2" for version 2.xx. The script will be
+                                                    called in browser when the add button event is
+                                                    fired
+                toolbar_add_callback (callable): This callback will be executed during the Add button
+                                                    click event at the server-side. So in case any
+                                                    custom action needs to be done at server, same
+                                                    can be hooked to this attribute by attaching the
+                                                    callback
+                toolbar_delete_client_script (string): Same as `toolbar_add_client_script` but is
+                                                        executed on "delete" button click event
+                toolbar_delete_callback (callable): Same as `toolbar_add_callback` but is called on
+                                                    "delete" button click event
+                toolbar_save_client_script (string): Same as `toolbar_add_client_script` but is
+                                                        executed on "save" button click event
+                toolbar_save_callback (callable): Same as `toolbar_add_callback` but is called on
+                                                    "save" button click event
+                toolbar_edit_client_script (string): Same as `toolbar_add_client_script` but is
+                                                        executed on "edit" button click event
+                toolbar_edit_callback (callable): Same as `toolbar_add_callback` but is called on
+                                                    "edit" button click event
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
@@ -1078,9 +1073,12 @@ class Grid(Widget):
     def _process_data_load_callback(self):
         record_collection = self._data_load_callback()
         self._row_collection = record_collection
-        result = "{\n'total': " + record_collection.records.__len__() + ",\n"
-        result += "'records': " + record_collection.render()
-        return result
+        # result = "{\n'total': " + record_collection.records.__len__() + ",\n"
+        # result += "'records': " + record_collection.render()
+        result = {}
+        result['total'] = record_collection.__len__()
+        result['records'] = record_collection.render()
+        return json.dumps(result)
 
     def _process_toolbar_add_callback(self):
         if self._toolbar_add_callback is not None:
@@ -1152,10 +1150,6 @@ class Grid(Widget):
             cmd = self._queue.pop()
             return json.dumps(cmd)
         return json.dumps({'result': ''})
-        # if cmd['cmd'] == "HIDE":
-        #     return json.dumps(cmd)
-        # if cmd['cmd'] == "ADD-RECORD":
-        #     return json.dumps(cmd)
 
     def _attach_polling(self):
         if self._app is None:
@@ -1171,11 +1165,11 @@ class Grid(Widget):
                                     selector = $2("#%s");
                                     if(selector != undefined){
                                         if(props.cmd != undefined){
-                                            if(props.cmd == "HIDE"){
-                                                w2ui.grid.toggleColumn(JSON.parse(props.arg0));
+                                            if(props.cmd === "HIDE"){
+                                                w2ui.grid.toggleColumn(props.arg0);
                                             }
                                             if(props.cmd == "ADD-RECORD"){
-                                                w2ui['%s'].add(JSON.parse(props.arg0));
+                                                w2ui['%s'].add(props.arg0);
                                             }
                                             if(props.cmd == "SELECT-ALL"){
                                                 w2ui.grid.selectAll();
