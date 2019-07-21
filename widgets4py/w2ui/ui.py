@@ -97,16 +97,26 @@ class GridColumn:
         self._sortable = val
 
     def render(self):
-        content = """{ field: '%s', caption: '%s', size: '%d%%'"""
-        content = content % (self._field_name, self._caption, self._size)
+        # content = """{ field: '%s', caption: '%s', size: '%d%%'"""
+        # content = content % (self._field_name, self._caption, self._size)
+        # if self._attributes is not None:
+        #     content += ", attr: '" + self._attributes + "'"
+        # if self._render is not None:
+        #     content += ", render: '" + self._render + "'"
+        # if self._sortable is not None:
+        #     content += ", sortable: " + json.dumps(self._sortable)
+        # content += "}"
+        obj = {}
+        obj['field'] = self._field_name
+        obj['caption'] = self._caption
+        obj['size'] = self._size
         if self._attributes is not None:
-            content += ", attr: '" + self._attributes + "'"
+            obj['attr'] = self._attributes
         if self._render is not None:
-            content += ", render: '" + self._render + "'"
+            obj['render'] = self._render
         if self._sortable is not None:
-            content += ", sortable: " + json.dumps(self._sortable)
-        content += "}"
-        return content
+            obj['sortable'] = self._sortable
+        return json.dumps(obj)
 
 
 class GridColumnCollection:
@@ -149,11 +159,12 @@ class GridColumnCollection:
 
     def render(self):
         """Renders the columns collection as JavaScript list"""
-        content = "["
-        for col in self._columns:
-            content += col.render() + ",\n"
-        content += "]"
-        return content
+        # content = "["
+        # for col in self._columns:
+        #     content += col.render() + ",\n"
+        # content += "]"
+        # return content
+        return json.dumps(self._columns)
 
 
 class GridRecord:
@@ -204,16 +215,24 @@ class GridRecord:
 
     def render(self):
         """Renders the record in JavaScript format and returns to parent widget"""
-        content = "{"
+        # content = "{"
+        # for cell in self._cells:
+        #     if type(self._cells.get(cell)) == int:
+        #         content += cell + ": " + str(self._cells.get(cell)) + ", "
+        #     else:
+        #         content += cell + ": '" + self._cells.get(cell) + "', "
+        # if self._style is not None:
+        #     content += "w2ui: { style: '" + self._style + "'}"
+        # content += "}"
+        # return content
+        obj = {}
         for cell in self._cells:
-            if type(self._cells.get(cell)) == int:
-                content += cell + ": " + str(self._cells.get(cell)) + ", "
-            else:
-                content += cell + ": '" + self._cells.get(cell) + "', "
+            obj[cell] = self._cells.get(cell)
         if self._style is not None:
-            content += "w2ui: { style: '" + self._style + "'}"
-        content += "}"
-        return content
+            style = {}
+            style['style'] = self._style
+            obj['w2ui'] = style
+        return json.dumps(obj)
 
 
 class SummaryGridRecord(GridRecord):
@@ -227,14 +246,21 @@ class SummaryGridRecord(GridRecord):
 
     def render(self):
         """Renders the summary record at the last of the Grid widget"""
-        content = "{ w2ui: { summary: true },\n"
+        # content = "{ w2ui: { summary: true },\n"
+        # for cell in self._cells:
+        #     if type(self._cells.get(cell)) == int:
+        #         content += cell + ": " + str(self._cells.get(cell)) + ", "
+        #     else:
+        #         content += cell + ": '" + self._cells.get(cell) + "', "
+        # content += "}"
+        # return content
+        summary = {}
+        summary['summary'] = True
+        obj = {}
+        obj['w2ui'] = summary
         for cell in self._cells:
-            if type(self._cells.get(cell)) == int:
-                content += cell + ": " + str(self._cells.get(cell)) + ", "
-            else:
-                content += cell + ": '" + self._cells.get(cell) + "', "
-        content += "}"
-        return content
+            obj[cell] = self._cells.get(cell)
+        return json.dumps(obj)
 
 
 class GridRecordCollection:
@@ -291,11 +317,12 @@ class GridRecordCollection:
 
     def render(self):
         """Function to render all records in the JavaScript list format"""
-        content = "["
-        for rec in self._records:
-            content += rec.render() + ",\n"
-        content += "]"
-        return content
+        # content = "["
+        # for rec in self._records:
+        #     content += rec.render() + ",\n"
+        # content += "]"
+        # return content
+        return json.dumps(self._records)
 
 
 class GridSearch:
@@ -308,18 +335,18 @@ class GridSearch:
     _type = None
     _options = None
 
-    def __init__(self, field, caption, ftype, options=None):
+    def __init__(self, field, caption, fld_type, options=None):
         """Default constructor parameters
 
             field (string): Name of the existing field in the Grid widget
             caption (string): A title of the field used for search
-            type (string): type of the field that will be used to search
+            fld_type (string): type of the field that will be used to search
             options (dict): shows a predefined options to select in the search toolbar
                             e.g., ['ABC', 'DEF', 'GHI']
         """
         self._field = field
         self._caption = caption
-        self._ftype = ftype
+        self._fld_type = fld_type
         self._options = options
 
         @property
@@ -341,13 +368,13 @@ class GridSearch:
             self._caption = val
 
         @property
-        def ftype(self):
+        def fld_type(self):
             """Type (eg int, text, list, etc) of the field used in search"""
-            return self._ftype
+            return self._fld_type
 
-        @ftype.setter
-        def ftype(self, val):
-            self._ftype = val
+        @fld_type.setter
+        def fld_type(self, val):
+            self._fld_type = val
 
         @property
         def options(self):
@@ -360,13 +387,22 @@ class GridSearch:
 
         def render(self):
             """Renders the search options to be included in the grid"""
-            content = "{"
-            content += " field: %s, caption: %s, type: %s" % (self._field,
-                                                              self._caption, self._type)
+            # content = "{"
+            # content += " field: %s, caption: %s, type: %s" % (self._field,
+            #                                                   self._caption, self._type)
+            # if self._options is not None:
+            #     content += ", options: { items: " + str(self._options) + "}"
+            # content += "}"
+            # return content
+            obj = {}
+            obj['field'] = self._field
+            obj['caption'] = self._caption
+            obj['type'] = self._fld_type
             if self._options is not None:
-                content += ", options: { items: " + str(self._options) + "}"
-            content += "}"
-            return content
+                items = {}
+                items['items'] = self._options
+                obj['options'] = items
+            return json.dumps(obj)
 
 
 class GridSearchCollection:
@@ -420,11 +456,12 @@ class GridSearchCollection:
 
     def render(self):
         """Function to render all searches in the JavaScript list format"""
-        content = "["
-        for search in self._searches:
-            content += search.render() + ",\n"
-        content += "]"
-        return content
+        # content = "["
+        # for search in self._searches:
+        #     content += search.render() + ",\n"
+        # content += "]"
+        # return content
+        return json.dumps(self._searches)
 
 
 class Grid(Widget):
@@ -1135,10 +1172,10 @@ class Grid(Widget):
                                     if(selector != undefined){
                                         if(props.cmd != undefined){
                                             if(props.cmd == "HIDE"){
-                                                w2ui.grid.toggleColumn(props.arg0);
+                                                w2ui.grid.toggleColumn(JSON.parse(props.arg0));
                                             }
                                             if(props.cmd == "ADD-RECORD"){
-                                                w2ui['%s'].add(props.arg0);
+                                                w2ui['%s'].add(JSON.parse(props.arg0));
                                             }
                                             if(props.cmd == "SELECT-ALL"){
                                                 w2ui.grid.selectAll();
@@ -1147,10 +1184,10 @@ class Grid(Widget):
                                                 w2ui.grid.selectNone();
                                             }
                                             if(props.cmd == "SELECT"){
-                                                w2ui.grid.select(props.arg0);
+                                                w2ui.grid.select(JSON.parse(props.arg0));
                                             }
                                             if(props.cmd == "UNSELECT"){
-                                                w2ui.grid.unselect(props.arg0);
+                                                w2ui.grid.unselect(JSON.parse(props.arg0));
                                             }
                                         } else {
                                             alertify.warning("No command to process");
@@ -1247,17 +1284,16 @@ class ToolbarButton(Widget):
 
     def render(self):
         """Renders the widget under parent widget"""
-        content = "{"
-        content += "type: '" + self._type + "', "
-        content += "id: '" + self._name + "', "
+        obj = {}
+        obj['type'] = self._type
+        obj['id'] = self._name
         if self._title is not None:
-            content += "text: '" + self._title + "', "
+            obj['text'] = self._title
         if self._icon is not None:
-            content += "icon: '" + self._icon + "', "
+            obj['icon'] = self._icon
         if self._group is not None:
-            content += "group: '" + self._group + "', "
-        content += "}"
-        return content
+            obj['group'] = self._group
+        return json.dumps(obj)
 
 
 class ToolbarCheck(ToolbarButton):
@@ -1315,33 +1351,53 @@ class ToolbarMenu(ToolbarButton):
         self._type = 'menu'
 
     def add_item(self, text, icon=None, count=None, disabled=None):
-        item = "{ text: '" + text + "', "
+        # item = "{ text: '" + text + "', "
+        # if icon is not None:
+        #     item += "icon: '" + icon + "', "
+        # if count is not None:
+        #     item += "count: " + str(count) + ", "
+        # if disabled is not None and disabled:
+        #     item += "disabled: true "
+        # item += "}"
+        item = {}
+        item['text'] = text
         if icon is not None:
-            item += "icon: '" + icon + "', "
+            item['icon'] = icon
         if count is not None:
-            item += "count: " + str(count) + ", "
-        if disabled is not None and disabled:
-            item += "disabled: true "
-        item += "}"
+            item['count'] = count
+        if disabled is not None:
+            item['disabled'] = disabled
         self._items.append(item)
 
     def render(self):
-        items = "[\n"
-        for itm in self._items:
-            items += itm + ",\n"
-        items += "\n]"
-        content = "{ type: '" + self._type + "', "
-        content += "id: '" + self._name + "', "
+        # items = "[\n"
+        # for itm in self._items:
+        #     items += itm + ",\n"
+        # items += "\n]"
+        # content = "{ type: '" + self._type + "', "
+        # content += "id: '" + self._name + "', "
+        # if self._title is not None:
+        #     content += "text: '" + self._title + "', "
+        # if self._icon is not None:
+        #     content += "icon: '" + self._icon + "', "
+        # if self._count is not None:
+        #     content += "count: " + str(self._count) + ", "
+        # if self._items is not None:
+        #     content += "items: " + items
+        # content += "}"
+        # return content
+        obj = {}
+        obj['type'] = self._type
+        obj['id'] = self._name
         if self._title is not None:
-            content += "text: '" + self._title + "', "
+            obj['text'] = self._title
         if self._icon is not None:
-            content += "icon: '" + self._icon + "', "
+            obj['icon'] = self._icon
         if self._count is not None:
-            content += "count: " + str(self._count) + ", "
+            obj['count'] = self._count
         if self._items is not None:
-            content += "items: " + items
-        content += "}"
-        return content
+            obj['items'] = self._items
+        return json.dumps(obj)
 
 
 class ToolbarMenuRadio(ToolbarMenu):
@@ -1354,28 +1410,44 @@ class ToolbarMenuRadio(ToolbarMenu):
         self._type = 'menu-radio'
 
     def add_item(self, id, text, icon=None):
-        item = "{ id: '" + id + "', "
-        item += "text: '" + text + "', "
+        # item = "{ id: '" + id + "', "
+        # item += "text: '" + text + "', "
+        # if icon is not None:
+        #     item += "icon: '" + icon + "', "
+        # item += "}"
+        # self._items.append(item)
+        obj = {}
+        obj['id'] = id
+        obj['text'] = text
         if icon is not None:
-            item += "icon: '" + icon + "', "
-        item += "}"
-        self._items.append(item)
+            obj['icon'] = icon
+        self._items.append(obj)
 
     def render(self):
-        items = "[\n"
-        for itm in self._items:
-            items += itm + ",\n"
-        items += "\n]"
-        content = "{ type: '" + self._type + "', "
-        content += "id: '" + self._name + "', "
+        # items = "[\n"
+        # for itm in self._items:
+        #     items += itm + ",\n"
+        # items += "\n]"
+        # content = "{ type: '" + self._type + "', "
+        # content += "id: '" + self._name + "', "
+        # if self._title is not None:
+        #     content += "text: '" + self._title + "', "
+        # if self._icon is not None:
+        #     content += "icon: '" + self._icon + "', "
+        # if self._items is not None:
+        #     content += "items: " + items
+        # content += "}"
+        # return content
+        obj = {}
+        obj['type'] = self._type
+        obj['id'] = self._id
         if self._title is not None:
-            content += "text: '" + self._title + "', "
+            obj['text'] = self._title
         if self._icon is not None:
-            content += "icon: '" + self._icon + "', "
+            obj['icon'] = self._icon
         if self._items is not None:
-            content += "items: " + items
-        content += "}"
-        return content
+            obj['items'] = self._items
+        return json.dumps(obj)
 
 
 class ToolbarMenuCheck(ToolbarMenu):
@@ -1388,11 +1460,16 @@ class ToolbarMenuCheck(ToolbarMenu):
         self._type = 'menu-check'
 
     def add_item(self, id, text, icon=None):
-        item = "{ id: '" + id + "', "
-        item += "text: '" + text + "', "
+        # item = "{ id: '" + id + "', "
+        # item += "text: '" + text + "', "
+        # if icon is not None:
+        #     item += "icon: '" + icon + "', "
+        # item += "}"
+        item = {}
+        item['id'] = id
+        item['text'] = text
         if icon is not None:
-            item += "icon: '" + icon + "', "
-        item += "}"
+            item['icon'] = icon
         self._items.append(item)
 
 
@@ -1410,18 +1487,29 @@ class ToolbarDropDown(ToolbarButton):
 
     def render(self):
         """Renders the widget under parent widget"""
-        content = "{"
-        content += "type: '" + self._type + "', "
-        content += "id: '" + self._name + "', "
-        content += "html: '" + self._html + "', "
+        # content = "{"
+        # content += "type: '" + self._type + "', "
+        # content += "id: '" + self._name + "', "
+        # content += "html: '" + self._html + "', "
+        # if self._title is not None:
+        #     content += "text: '" + self._title + "', "
+        # if self._icon is not None:
+        #     content += "icon: '" + self._icon + "', "
+        # if self._group is not None:
+        #     content += "group: '" + self._group + "', "
+        # content += "}"
+        # return content
+        obj = {}
+        obj['type'] = self._type
+        obj['id'] = self._id
+        obj['html'] = self._html
         if self._title is not None:
-            content += "text: '" + self._title + "', "
+            obj['text'] = self._title
         if self._icon is not None:
-            content += "icon: '" + self._icon + "', "
+            obj['icon'] = self._icon
         if self._group is not None:
-            content += "group: '" + self._group + "', "
-        content += "}"
-        return content
+            obj['group'] = self._group
+        return json.dumps(obj)
 
 
 class ToolbarHTML(ToolbarDropDown):
@@ -1559,7 +1647,7 @@ class Toolbar(Widget):
                                                 selector.disable(props.arg0);
                                             }
                                             if(props.cmd == "ADD-ITEM"){
-                                                selector.add(props.arg0);
+                                                selector.add(JSON.parse(props.arg0));
                                             }
                                             if(props.cmd == "INSERT-ITEM"){
                                                 selector.insert(props.ref, props.arg0);
