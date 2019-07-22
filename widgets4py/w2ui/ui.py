@@ -1954,10 +1954,9 @@ class Sidebar(Widget):
             Args:
                 items (list): List of SidebarNode items
         """
-        content = "[\n"
+        content = []
         for item in items:
-            content += item.render() + ",\n"
-        content += "\n]"
+            content.append(item.render())
         self._queue.append({'cmd': 'ADD-ITEMS', 'arg0': content})
 
     def insert_items(self, items, ref_item):
@@ -1967,10 +1966,9 @@ class Sidebar(Widget):
                 items (list): List of sidebar nodes
                 ref_item (string): Name of the referenced item
         """
-        content = "[\n"
+        content = []
         for item in items:
-            content += item.render() + ",\n"
-        content += "\n]"
+            content.append(item.render())
         self._queue.append({'cmd': 'INSERT-ITEMS', 'arg0': content, 'ref': ref_item})
 
     def remove_items(self, items):
@@ -2082,10 +2080,10 @@ class Sidebar(Widget):
                                     selector = w2ui['%s'];
                                     if(selector != undefined){
                                         if(props.cmd != undefined){
-                                            if(props.cmd == "HIDE-ITEM"){
+                                            if(props.cmd == "HIDE-ITEMS"){
                                                 selector.hide(JSON.parse(props.arg0));
                                             }
-                                            if(props.cmd == "SHOW-ITEM"){
+                                            if(props.cmd == "SHOW-ITEMS"){
                                                 selector.show(JSON.parse(props.arg0));
                                             }
                                             if(props.cmd == "ENABLE-ITEM"){
@@ -2094,13 +2092,13 @@ class Sidebar(Widget):
                                             if(props.cmd == "DISABLE-ITEM"){
                                                 selector.disable(props.arg0);
                                             }
-                                            if(props.cmd == "ADD-ITEM"){
+                                            if(props.cmd == "ADD-ITEMS"){
                                                 selector.add(props.arg0);
                                             }
-                                            if(props.cmd == "INSERT-ITEM"){
+                                            if(props.cmd == "INSERT-ITEMS"){
                                                 selector.insert(props.ref, props.arg0);
                                             }
-                                            if(props.cmd == "REMOVE-ITEM"){
+                                            if(props.cmd == "REMOVE-ITEMS"){
                                                 selector.remove(JSON.parse(props.arg0));
                                             }
                                             if(props.cmd == "COLLAPSE-ITEM"){
