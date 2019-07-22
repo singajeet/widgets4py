@@ -2,8 +2,6 @@ import os
 import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
-from widgets4py.layouts import SimpleGridLayout
-from widgets4py.html5.app_ui import Button
 from widgets4py.w2ui.ui import Toolbar, ToolbarButton, ToolbarCheck
 from widgets4py.w2ui.ui import ToolbarHTML, ToolbarMenu, ToolbarMenuCheck
 from widgets4py.w2ui.ui import ToolbarMenuRadio, ToolbarRadio, ToolbarSeparator
@@ -36,7 +34,7 @@ class W2UIPage:
         self.tool_chk = ToolbarCheck('tool_chk', 'Check')
         self.tool_dd = ToolbarDropDown('tool_dd', 'My DropDown content', 'DropDown')
         self.tool_html = ToolbarHTML('tool_html', '<input type=text />', 'Html')
-        self.tool_menu = ToolbarMenu('tool_menu', 'Menu')
+        self.tool_menu = ToolbarMenu('tool_menu', 'Actions')
         self.tool_menu.add_item('Add')
         self.tool_menu.add_item('Insert')
         self.tool_menu.add_item('Remove')

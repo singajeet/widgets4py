@@ -1330,6 +1330,17 @@ class ToolbarMenu(ToolbarButton):
     _items = None
 
     def __init__(self, name, title=None, icon=None, group=None, count=None, items=None):
+        """Renders menu in the toolbar with submenu as its child nodes
+
+            Args:
+                name (string, required): A unique identifier for instance of this class
+                title (string): Title to be shown on the the menu, if not provided only icon
+                                will be visible
+                icon (string): An icon CSS class, if not provided only Title will be visible
+                group (string): Group menus under one category
+                count (int): An integer value that will be shown next to title in the menu
+                items (Item): Sub menus or items of this object
+        """
         ToolbarButton.__init__(self, name, title, icon, group)
         if count is None:
             if items is not None and items.__len__() > 0:
@@ -1345,14 +1356,15 @@ class ToolbarMenu(ToolbarButton):
         self._type = 'menu'
 
     def add_item(self, text, icon=None, count=None, disabled=None):
-        # item = "{ text: '" + text + "', "
-        # if icon is not None:
-        #     item += "icon: '" + icon + "', "
-        # if count is not None:
-        #     item += "count: " + str(count) + ", "
-        # if disabled is not None and disabled:
-        #     item += "disabled: true "
-        # item += "}"
+        """Adds an submenu or item to the instance of main menu class
+
+            Args:
+                text (string): Title to be shown on the the menu, if not provided only icon
+                                will be visible
+                icon (string): An icon CSS class, if not provided only Title will be visible
+                count (int): An integer value that will be shown next to title in the menu
+                disabled (boolean): Whether to enable or disable the menu item
+        """
         item = {}
         item['text'] = text
         if icon is not None:
@@ -1364,22 +1376,7 @@ class ToolbarMenu(ToolbarButton):
         self._items.append(item)
 
     def render(self):
-        # items = "[\n"
-        # for itm in self._items:
-        #     items += itm + ",\n"
-        # items += "\n]"
-        # content = "{ type: '" + self._type + "', "
-        # content += "id: '" + self._name + "', "
-        # if self._title is not None:
-        #     content += "text: '" + self._title + "', "
-        # if self._icon is not None:
-        #     content += "icon: '" + self._icon + "', "
-        # if self._count is not None:
-        #     content += "count: " + str(self._count) + ", "
-        # if self._items is not None:
-        #     content += "items: " + items
-        # content += "}"
-        # return content
+        """Renders the content of Menu as JSON format """
         obj = {}
         obj['type'] = self._type
         obj['id'] = self._name
@@ -1400,16 +1397,30 @@ class ToolbarMenuRadio(ToolbarMenu):
     """
 
     def __init__(self, name, title=None, icon=None, group=None, count=None, items=None):
+        """Renders menu in the toolbar with radiobuttons as its child nodes
+
+            Args:
+                name (string, required): A unique identifier for instance of this class
+                title (string): Title to be shown on the the menu, if not provided only icon
+                                will be visible
+                icon (string): An icon CSS class, if not provided only Title will be visible
+                group (string): Group menus under one category
+                count (int): An integer value that will be shown next to title in the menu
+                items (Item): Sub menus or items of this object
+        """
         ToolbarMenu.__init__(self, name, title, icon, group, count, items)
         self._type = 'menu-radio'
 
     def add_item(self, id, text, icon=None):
-        # item = "{ id: '" + id + "', "
-        # item += "text: '" + text + "', "
-        # if icon is not None:
-        #     item += "icon: '" + icon + "', "
-        # item += "}"
-        # self._items.append(item)
+        """Adds an radiobutton to the instance of main menu class
+
+            Args:
+                id (string, required): A unique identifier for instance of this class
+                text (string): Title to be shown on the the menu, if not provided only icon
+                                will be visible
+                icon (string): An icon CSS class, if not provided only Title will be
+                                visible
+        """
         obj = {}
         obj['id'] = id
         obj['text'] = text
@@ -1418,20 +1429,7 @@ class ToolbarMenuRadio(ToolbarMenu):
         self._items.append(obj)
 
     def render(self):
-        # items = "[\n"
-        # for itm in self._items:
-        #     items += itm + ",\n"
-        # items += "\n]"
-        # content = "{ type: '" + self._type + "', "
-        # content += "id: '" + self._name + "', "
-        # if self._title is not None:
-        #     content += "text: '" + self._title + "', "
-        # if self._icon is not None:
-        #     content += "icon: '" + self._icon + "', "
-        # if self._items is not None:
-        #     content += "items: " + items
-        # content += "}"
-        # return content
+        """Renders the content of menu with radiobuttons as it child items"""
         obj = {}
         obj['type'] = self._type
         obj['id'] = self._id
@@ -1445,20 +1443,34 @@ class ToolbarMenuRadio(ToolbarMenu):
 
 
 class ToolbarMenuCheck(ToolbarMenu):
-    """Adds an dropdown menu of radio buttons for selection. The selected radio button will
-    appear as the text of the dropdown menu
+    """Adds an dropdown menu of checkbox buttons for selection.
     """
 
     def __init__(self, name, title=None, icon=None, group=None, count=None, items=None):
+        """Renders menu in the toolbar with checkboxes as its child nodes
+
+            Args:
+                name (string, required): A unique identifier for instance of this class
+                title (string): Title to be shown on the the menu, if not provided only icon
+                                will be visible
+                icon (string): An icon CSS class, if not provided only Title will be visible
+                group (string): Group menus under one category
+                count (int): An integer value that will be shown next to title in the menu
+                items (Item): Sub menus or items of this object
+        """
         ToolbarMenu.__init__(self, name, title, icon, group, count, items)
         self._type = 'menu-check'
 
     def add_item(self, id, text, icon=None):
-        # item = "{ id: '" + id + "', "
-        # item += "text: '" + text + "', "
-        # if icon is not None:
-        #     item += "icon: '" + icon + "', "
-        # item += "}"
+        """Adds an checkbox to the instance of main menu class
+
+            Args:
+                id (string, required): A unique identifier for instance of this class
+                text (string): Title to be shown on the the menu, if not provided only icon
+                                will be visible
+                icon (string): An icon CSS class, if not provided only Title will be
+                                visible
+        """
         item = {}
         item['id'] = id
         item['text'] = text
@@ -1475,24 +1487,22 @@ class ToolbarDropDown(ToolbarButton):
     _html = None
 
     def __init__(self, name, html, title=None, icon=None, group=None):
+        """Below are the parameters for this class's constructor
+
+            Args:
+                name (string, required): A unique identifier for instance of this class
+                html (string): An HTML to be displayed inside of the dropdown box
+                title (string): Title to be shown on the the menu, if not provided only icon
+                                will be visible
+                icon (string): An icon CSS class, if not provided only Title will be visible
+                group (string): Group menus under one category
+        """
         ToolbarButton.__init__(self, name, title, icon, group)
         self._html = html
         self._type = 'drop'
 
     def render(self):
         """Renders the widget under parent widget"""
-        # content = "{"
-        # content += "type: '" + self._type + "', "
-        # content += "id: '" + self._name + "', "
-        # content += "html: '" + self._html + "', "
-        # if self._title is not None:
-        #     content += "text: '" + self._title + "', "
-        # if self._icon is not None:
-        #     content += "icon: '" + self._icon + "', "
-        # if self._group is not None:
-        #     content += "group: '" + self._group + "', "
-        # content += "}"
-        # return content
         obj = {}
         obj['type'] = self._type
         obj['id'] = self._id
@@ -1513,6 +1523,16 @@ class ToolbarHTML(ToolbarDropDown):
     """
 
     def __init__(self, name, html, title=None, icon=None):
+        """Below are the parameters for this class's constructor
+
+            Args:
+                name (string, required): A unique identifier for instance of this class
+                html (string): An HTML to be displayed inside of the dropdown box
+                title (string): Title to be shown on the the menu, if not provided only icon
+                                will be visible
+                icon (string): An icon CSS class, if not provided only Title will be visible
+                group (string): Group menus under one category
+        """
         ToolbarDropDown.__init__(self, name, html, title=title, icon=icon, group=None)
         self._type = 'html'
 
@@ -1760,6 +1780,20 @@ class SidebarNode(Widget):
 
     def __init__(self, name, text=None, icon=None, is_leaf=None, expanded=None,
                  img=None, group=None, count=None, nodes=None):
+        """Below are the parameters of the SidebarNode class
+
+            Args:
+                name (string, required): A unique identifier for instance of this class
+                text (string): Text to be displayed as label on the Sidebar
+                icon (string): An CSS class icon to be displayed along label
+                is_leaf (boolean): Tells whether the current node have child nodes or not
+                expanded (boolean): Renders the sidebar with have current node and its child
+                                    displayed as expanded
+                img (string): Image to be displayed if icon attribute is None
+                group (string): Group nodes under one category
+                count (int): An integer value to be displayed next to the label of node
+                nodes (SidebarNode): The child nodes of the current node
+        """
         Widget.__init__(self, name)
         self._text = text
         self._icon = icon
@@ -1798,37 +1832,33 @@ class SidebarNode(Widget):
     def render(self):
         """Renders an node or leaf depending upon the value of `is_leaf' attribute
         """
-        content = ""
+        obj = {}
         if self._is_leaf:
-            content += "{ id: '" + self._name + "', "
+            obj['id'] = self._name
             if self._text is not None:
-                content += "text: '" + self._text + "', "
+                obj['text'] = self._text
             if self._icon is not None:
-                content += "icon: '" + self._icon + "', "
+                obj['icon'] = self._icon
             if self._count is not None:
-                content += "count: " + self._count + ", "
-            content += "}"
-            return content
+                obj['count'] = self._count
+            return obj
         else:
-            content += "{ id: '" + self._name + "', "
+            obj['id'] = self._name
             if self._text is not None:
-                content += "text: '" + self._text + "', "
-            if self._img is not None:
-                content += "img: '" + self._img + "', "
-            if self._expanded is not None:
-                content += "expanded: " + json.dumps(self._expanded) + ", "
-            if self._group is not None:
-                content += "group: " + json.dumps(self._group) + ", "
+                obj['text'] = self._text
+            if self._icon is not None:
+                obj['img'] = self._img
             if self._count is not None:
-                content += "count: " + self._count + ", "
+                obj['count'] = self._count
+            if self._group is not None:
+                obj['group'] = self._group
+            if self._expanded is not None:
+                obj['expanded'] = self._expanded
             if self._child_widgets is not None:
-                content += "nodes: [\n"
-                for node in self._child_widgets:
-                    content += node.render() + ",\n"
-                content += "]"
-            content += "}"
-            return content
-        return content
+                obj['nodes'] = []
+                for child in self._child_widgets:
+                    obj['nodes'].append(child.render())
+            return obj
 
 
 class Sidebar(Widget):
@@ -2133,7 +2163,7 @@ class Sidebar(Widget):
                 self._app.add_url_rule('/' + url, url, self._process_onclick_callback)
         child_widgets = "[\n"
         for child in self._child_widgets:
-            child_widgets += child.render() + ",\n"
+            child_widgets += json.dumps(child.render()) + ",\n"
         child_widgets += "\n]"
         script = """
                     <script>
