@@ -2678,7 +2678,7 @@ class Popup(Widget):
         """
         self._queue.append({'cmd': 'LOCK', 'arg0': message, 'arg1': json.dumps(showSpinner)})
 
-    def lockScreen(self, options=None):
+    def lock_screen(self, options=None):
         """Locks the whole screen using the overlay"""
         self._queue.append({'cmd': 'LOCK-SCREEN', 'arg0': options})
 
@@ -2698,9 +2698,12 @@ class Popup(Widget):
         """
         self._queue.append({'cmd': 'MSG', 'arg0': json.dumps(options)})
 
-    def resize(self, height, width, callback):
+    def resize(self, height, width, callback=None):
         """Resize the popup to desired size and calls the callback"""
-        self._queue.append({'cmd': 'RESIZE', 'arg0': width, 'arg1': height, 'arg2': json.dumps(callback)})
+        if callback is not None:
+            self._queue.append({'cmd': 'RESIZE', 'arg0': width, 'arg1': height, 'arg2': json.dumps(callback)})
+        else:
+            self._queue.append({'cmd': 'RESIZE', 'arg0': width, 'arg1': height})
 
     def unlock(self):
         """Unlocks the locked popup"""
