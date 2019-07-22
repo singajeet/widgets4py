@@ -1644,7 +1644,7 @@ class Toolbar(Widget):
                                                 selector.add(JSON.parse(props.arg0));
                                             }
                                             if(props.cmd == "INSERT-ITEM"){
-                                                selector.insert(props.ref, props.arg0);
+                                                selector.insert(props.ref, JSON.parse(props.arg0));
                                             }
                                             if(props.cmd == "REMOVE-ITEM"){
                                                 selector.remove(props.arg0);
