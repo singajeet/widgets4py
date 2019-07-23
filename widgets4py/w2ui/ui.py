@@ -1551,11 +1551,12 @@ class Toolbar(Widget):
 
     def __init__(self, name, items=None, onclick_callback=None, onclick_client_script=None, app=None):
         """
-            name (string): Name or Id for internal use
-            items (Widget): Child items like, ToolbarButton, ToolbarRadio, etc
-            onclick_callback (callable): will be called when mouse is clicked on any child item
-            onclick_client_script (string): JS to be called when mouse is clicked on any item
-            app (Flask): An instance of Flask app
+            Args:
+                name (string): Name or Id for internal use
+                items (Widget): Child items like, ToolbarButton, ToolbarRadio, etc
+                onclick_callback (callable): will be called when mouse is clicked on any child item
+                onclick_client_script (string): JS to be called when mouse is clicked on any item
+                app (Flask): An instance of Flask app
         """
         Widget.__init__(self, name)
         if items is not None:
@@ -1879,14 +1880,15 @@ class Sidebar(Widget):
     def __init__(self, name, nodes=None, onclick_callback=None, onclick_client_script=None, app=None,
                  topHTML=None, bottomHTML=None, flatButton=None):
         """
-            name (string): Name or Id for internal use
-            nodes (Widget): Sub Nodes or leaves of the current node
-            onclick_callback (callable): will be called when mouse is clicked on any child item
-            onclick_client_script (string): JS to be called when mouse is clicked on any item
-            app (Flask): An instance of Flask app
-            topHTML (string): HTML to show at the top of the sidebar
-            bottomHTML (string): HTML to be shown on the bottom of sidebar
-            flatButton (boolean): If true, it will show button to minimize or flat the sidebar
+            Args:
+                name (string): Name or Id for internal use
+                nodes (Widget): Sub Nodes or leaves of the current node
+                onclick_callback (callable): will be called when mouse is clicked on any child item
+                onclick_client_script (string): JS to be called when mouse is clicked on any item
+                app (Flask): An instance of Flask app
+                topHTML (string): HTML to show at the top of the sidebar
+                bottomHTML (string): HTML to be shown on the bottom of sidebar
+                flatButton (boolean): If true, it will show button to minimize or flat the sidebar
         """
         Widget.__init__(self, name)
         if nodes is not None:
@@ -2217,6 +2219,18 @@ class FormFieldText(Widget):
 
     def __init__(self, name, required=None, options=None, items=None,
                  caption=None, attributes=None):
+        """
+            Args:
+                name (string, required): A unique  identifier for the object
+                required (boolean): Whether this field is required or not
+                options (boolean): Whether the current field have any options
+                                    associated. If True, the options must be
+                                    given through items parameter
+                items (dict): The various options for this field in dict format
+                caption (string): A title to be shown along the field. If empty,
+                                    field's name will used to show the lable
+                attributes (dict): Any other attributes as comma sep list
+        """
         Widget.__init__(self, name)
         self._type = 'text'
         if required is not None:
@@ -2371,6 +2385,20 @@ class Form(Widget):
 
     def __init__(self, name, url=None, header=None, fields=None,
                  submit_callback=None, reset_callback=None, app=None):
+        """
+            Args:
+                name (string, required): Name or unique id of the object
+                url (string): Url to which data should be posted. If not
+                            provided, the data will be submitted internally
+                            to the submit callback handler
+                header (string): An title to be shown on top of the form
+                fields (FormFieldxxx): Objects of FormFfieldxxx type to read
+                                        input from users
+                submit_callback (callable): Gets called when form is submitted
+                                            and Url parameter is None
+                reset_callback (callable): Called when user clicks on the form's
+                                            reset button
+        """
         Widget.__init__(self, name)
         self._app = app
         if url is not None:
@@ -2559,6 +2587,35 @@ class Popup(Widget):
                  show_close=None, show_max=None, keyboard=None, on_open_callback=None,
                  on_close_callback=None, on_max_callback=None, on_min_callback=None,
                  on_toggle_callback=None, on_keydown_callback=None, app=None):
+        """
+            Args:
+                name (string, required): A unique identifier for the current object
+                title (string): Title of the popup box
+                body (string): The text to be displayed in the body of Popup. It can
+                                be an HTML script also to display formatted text
+                buttons (string): An HTML string consisting of HTML input tag of type
+                                Button. In line, javascript can also be provided in the
+                                string
+                style (string): An string which contains CSS style attributes for Popup
+                modal (boolean): Whether the popup should be opened as modal or not
+                width (int): Width of the popup box
+                height (int): Height of the popup box
+                url (string): An url to load the content of popup from
+                color (string): An string having color name or hex value of color
+                opacity (float): The background opacity in decimal format
+                speed (int): The speed by which animation should run if specified
+                transistion (string): An transistion to use while opening or closing popup
+                show_close (boolean): Whether to show close button on top right corner
+                show_max (boolean): Whether to show max button on top right corner of popup
+                keyboard (boolean): Whether to enable keyboard interaction
+                on_open_callback (callable): Will be executed on popup open event
+                on_close_callback (callable): Executes on close event of popup
+                on_max_callback (callable): Executes on maximize event of popup
+                on_min_callback (callable): Executes on minimize event of popup
+                on_toggle_callback (callable): Executes when popup's state is toggled
+                on_keydown_callback (callable): Executes on key pressed event on popup
+                app (Flask): An instance of flask app
+        """
         Widget.__init__(self, name)
         self._title = title
         self._body = body
