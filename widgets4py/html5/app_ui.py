@@ -50,6 +50,7 @@ class Button(Widget):
     _app = None
     _title = None
     _disabled = None
+    _queue = None
 
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
                  disabled=False, required=False,
@@ -65,7 +66,15 @@ class Button(Widget):
                 attr (list): list of objects to be added as attributes of HTML tag
                 disabled (Boolean): Enabled or Disabled state of widget
                 required (Boolean): Widget is required to be filled-in or not
-                onclick_callback (function): A function to be called back on onclick event
+                onclick_callback (callable): A function to be called back on onclick event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onclick_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
                 app (Flask): An instance of Flask class
                 css_cls (list): An list of CSS class names to be added to current widget
         """
@@ -81,6 +90,7 @@ class Button(Widget):
             self.add_attribute('required')
         self._onclick_callback = onclick_callback
         self._app = app
+        self._queue = []
         self._attach_onclick()
 
     def _attach_onclick(self):
@@ -111,43 +121,47 @@ class Button(Widget):
                                        self._process_onclick_callback)
 
     def _process_onclick_callback(self):
+        props = {}
         if request.args.__len__() > 0:
             tit = request.args['title']
             if tit is not None:
                 self._title = tit
+                props['title'] = tit
             dsbld = request.args['disabled']
             if dsbld is not None:
                 self._disabled = True if dsbld == "true" else False
-        return json.dumps({"result": self._onclick_callback()})
+                props['disabled'] = dsbld
+        return json.dumps({"result": self._onclick_callback(self._name, props)})
 
-    def set_title(self, title):
-        """Sets the title of button widget
-
-            Args:
-                title (string): title of the button
-        """
+    def _set_title(self, title):
         self._title = title
+        self._add_cmd()
 
-    def get_title(self):
-        """Returns the title of Button widget"""
+    def _get_title(self):
         return self._title
 
-    def set_disabled(self, disabled):
-        """Sets Button widget as disabled
+    title = property(_get_title, _set_title, doc="Title of the button widget")
 
-            Args:
-                disabled (Boolean): state of the button
-        """
+    def _set_disabled(self, disabled):
         self._disabled = disabled
+        self._add_cmd()
 
-    def get_disabled(self):
-        """Returns the disabled state of the Button"""
+    def _get_disabled(self):
         return self._disabled
 
+    disabled = property(_get_disabled, _set_disabled, doc="Returns the disabled state of the Button")
+
     def _sync_properties(self):
-        return json.dumps({'title': self._title,
-                           'disabled': self._disabled if self._disabled is not None else False
-                           })
+        if self._queue.__len__() > 0:
+            cmd = self._queue.pop()
+            return cmd
+        return json.dumps({'result': ''})
+
+    def _add_cmd(self):
+        self._queue.append(json.dumps({'title': self._title,
+                           'disabled': self._disabled
+                                       })
+                           )
 
     def _attach_polling(self):
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
@@ -158,11 +172,12 @@ class Button(Widget):
                                     url: "/%s",
                                     success: function(props){
                                         selector = $('#%s');
-
-                                        selector.val(props.title);
-                                        selector.prop('disabled', props.disabled);
-
-                                        //alertify.success(props.title +"-" + props.readonly + "-" + props.disabled);
+                                        if(props.title != undefined){
+                                            selector.val(props.title);
+                                        }
+                                        if(props.disabled != undefined){
+                                            selector.prop('disabled', props.disabled);
+                                        }
                                         //poll again
                                         %s_poll();
                                     },
@@ -221,6 +236,28 @@ class TextBox(Widget):
     def __init__(self, name, text=None, desc=None, prop=None, style=None, attr=None,
                  readonly=False, disabled=False, required=False, css_cls=None,
                  app=None, onchange_callback=None):
+        """
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the button widget
+                desc (string): description of the button widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                required (Boolean): Widget is required to be filled-in or not
+                onchange_callback (callable): A function to be called back on onchange event of textbox.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the textbox for which this event is fired
+                        props: Dict object having three props: Text, Disabled & ReadOnly
+                app (Flask): An instance of Flask class
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self.add_property('type', 'text')
@@ -230,9 +267,13 @@ class TextBox(Widget):
         if readonly:
             self.add_attribute('readonly')
             self._readonly = readonly
+        else:
+            self._readonly = False
         if disabled:
             self.add_attribute('disabled')
             self._disabled = disabled
+        else:
+            self._disabled = False
         if required:
             self.add_attribute('required')
         self._app = app
@@ -267,17 +308,21 @@ class TextBox(Widget):
                 self._app.add_url_rule('/' + url, url, self._process_onchange_callback)
 
     def _process_onchange_callback(self):
+        props = {}
         if request.args.__len__() > 0:
             txt = request.args['text']
             if txt is not None:
                 self._text = txt
+                props['text'] = txt
             rdOnly = request.args['readOnly']
             if rdOnly is not None:
                 self._readonly = True if rdOnly == "true" else False
+                props['readonly'] = rdOnly
             dsbld = request.args['disabled']
             if dsbld is not None:
                 self._disabled = True if dsbld == "true" else False
-        return json.dumps({"result": self._onchange_callback()})
+                props['disabled'] = dsbld
+        return json.dumps({"result": self._onchange_callback(self._name, props)})
 
     def on_change(self, onchange_callback, app=None):
         """Attaches an callback handler to an Textbox"""
@@ -285,28 +330,34 @@ class TextBox(Widget):
         self._app = app
         self._attach_onchange()
 
-    def set_text(self, txt):
+    def _set_text(self, txt):
         self._text = txt
 
-    def get_text(self):
+    def _get_text(self):
         return self._text
 
-    def set_readonly(self, readonly):
+    text = property(_get_text, _set_text, doc="Text value of the Textbox widget")
+
+    def _set_readonly(self, readonly):
         self._readonly = readonly
 
-    def get_readonly(self):
+    def _get_readonly(self):
         return self._readonly
 
-    def set_disabled(self, disabled):
+    readonly = property(_get_readonly, _set_readonly, doc="Set or Get whether the widget is in readonly mode or not")
+
+    def _set_disabled(self, disabled):
         self._disabled = disabled
 
-    def get_disabled(self):
+    def _get_disabled(self):
         return self._disabled
+
+    disabled = property(_get_disabled, _set_disabled, doc="Set or get whether textbox is enabled or disabled")
 
     def _sync_properties(self):
         return json.dumps({'text': self._text,
-                           'readonly': self._readonly if self._readonly is not None else False,
-                           'disabled': self._disabled if self._disabled is not None else False
+                           'readonly': self._readonly,
+                           'disabled': self._disabled
                            })
 
     def _attach_polling(self):
@@ -366,6 +417,30 @@ class CheckBox(Widget):
     def __init__(self, name, title, value=None, checked=False, desc=None,
                  prop=None, style=None, attr=None, disabled=False,
                  required=False, css_cls=None, app=None, onclick_callback=None):
+        """
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the button widget
+                value (string): Value of checkbox when checked else empty
+                check (boolean): Whether the checkbox is chexked or not
+                desc (string): description of the button widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                required (Boolean): Widget is required to be filled-in or not
+                onclick_callback (callable): A function to be called back on onclick event of checkbox.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the checkbox for which this event is fired
+                        props: Dict object having four props: title, value, checked & disabled
+                app (Flask): An instance of Flask class
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self._title = title
@@ -378,11 +453,15 @@ class CheckBox(Widget):
         if disabled:
             self.add_attribute('disabled')
             self._disabled = disabled
+        else:
+            self._disabled = False
         if required:
             self.add_attribute('required')
         if checked:
             self.add_attribute('checked')
             self._checked = checked
+        else:
+            self._checked = False
         self._attach_onclick()
 
     def _attach_onclick(self):
@@ -419,49 +498,62 @@ class CheckBox(Widget):
                                        self._process_onclick_callback)
 
     def _process_onclick_callback(self):
+        props = {}
         if request.args.__len__() > 0:
             tit = request.args['title']
             if tit is not None:
                 self._title = tit
+                props['title'] = tit
             chk = request.args['checked']
             if chk is not None:
                 self._checked = chk
+                props['checked'] = chk
             dsbl = request.args["disabled"]
             if dsbl is not None:
                 self._disabled = dsbl
+                props['disabled'] = dsbl
             val = request.args["value"]
             if val is not None:
                 self._value = val
-        return json.dumps({"result": self._onclick_callback()})
+                props['value'] = val
+        return json.dumps({"result": self._onclick_callback(self._name, props)})
 
-    def set_title(self, title):
+    def _set_title(self, title):
         self._title = title
 
-    def get_title(self):
+    def _get_title(self):
         return self._title
 
-    def set_disabled(self, disabled):
+    title = property(_get_title, _set_title, doc="The title or label of the checkbox")
+
+    def _set_disabled(self, disabled):
         self._disabled = disabled
 
-    def get_disabled(self):
+    def _get_disabled(self):
         return self._disabled
 
-    def set_value(self, val):
+    disabled = property(_get_disabled, _set_disabled, doc="Enabled or Disabled state of the checkbox")
+
+    def _set_value(self, val):
         self._value = val
 
-    def get_value(self):
+    def _get_value(self):
         return self._value
 
-    def set_checked(self, chk):
+    value = property(_get_value, _set_value, doc="The current value of the checkbox")
+
+    def _set_checked(self, chk):
         self._checked = chk
 
-    def get_checked(self):
+    def _get_checked(self):
         return self._checked
+
+    checked = property(_get_checked, _set_checked, doc="Checked or Unchecked state of checkbox")
 
     def _sync_properties(self):
         return json.dumps({'title': self._title,
-                           'checked': self._checked if self._checked is not None else 'false',
-                           'disabled': self._disabled if self._disabled is not None else 'false',
+                           'checked': self._checked,
+                           'disabled': self._disabled,
                            'value': self._value
                            })
 
@@ -477,16 +569,9 @@ class CheckBox(Widget):
                                         selector = $('#%s');
                                         selector_lbl = $('#%s_lbl');
                                         selector_lbl.text(props.title);
-                                        if(props.checked == true){
-                                            selector.attr('checked', props.checked);
-                                        }
-                                        if(props.disabled == true){
-                                            selector.prop('disabled', props.disabled);
-                                        }
-                                        if(props.value != undefined){
-                                            selector.val(props.value);
-                                        }
-                                        //alertify.success(props.title+ "<br />" + props.checked);
+                                        selector.attr('checked', props.checked);
+                                        selector.prop('disabled', props.disabled);
+                                        selector.val(props.value);
                                         //poll again
                                         %s_poll();
                                     },
@@ -511,6 +596,12 @@ class CheckBox(Widget):
         return script
 
     def on_click(self, onclick_callback, app=None):
+        """To register the callback handler to the checkbox
+
+            Args:
+                onclick_callback (callable): Method or function to be called on mouse click event
+                app (Flask): An instance of the Flask app
+        """
         if app is not None:
             self._app = app
         self._onclick_callback = onclick_callback
