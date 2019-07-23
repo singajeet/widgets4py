@@ -159,7 +159,7 @@ class Button(Widget):
 
     def _add_cmd(self):
         self._queue.append(json.dumps({'title': self._title,
-                           'disabled': self._disabled
+                                       'disabled': self._disabled
                                        })
                            )
 
@@ -232,6 +232,7 @@ class TextBox(Widget):
     _text = None
     _disabled = None
     _readonly = None
+    _queue = None
 
     def __init__(self, name, text=None, desc=None, prop=None, style=None, attr=None,
                  readonly=False, disabled=False, required=False, css_cls=None,
@@ -277,6 +278,7 @@ class TextBox(Widget):
         if required:
             self.add_attribute('required')
         self._app = app
+        self._queue = []
         self._onchange_callback = onchange_callback
         self._attach_onchange()
 
@@ -332,6 +334,7 @@ class TextBox(Widget):
 
     def _set_text(self, txt):
         self._text = txt
+        self._add_cmd()
 
     def _get_text(self):
         return self._text
@@ -340,6 +343,7 @@ class TextBox(Widget):
 
     def _set_readonly(self, readonly):
         self._readonly = readonly
+        self._add_cmd()
 
     def _get_readonly(self):
         return self._readonly
@@ -348,6 +352,7 @@ class TextBox(Widget):
 
     def _set_disabled(self, disabled):
         self._disabled = disabled
+        self._add_cmd()
 
     def _get_disabled(self):
         return self._disabled
@@ -355,10 +360,17 @@ class TextBox(Widget):
     disabled = property(_get_disabled, _set_disabled, doc="Set or get whether textbox is enabled or disabled")
 
     def _sync_properties(self):
-        return json.dumps({'text': self._text,
-                           'readonly': self._readonly,
-                           'disabled': self._disabled
-                           })
+        if self._queue.__len__() > 0:
+            cmd = self._queue.pop()
+            return cmd
+        return json.dumps({'result': ''})
+
+    def _add_cmd(self):
+        self._queue.append(json.dumps({'text': self._text,
+                                       'readonly': self._readonly,
+                                       'disabled': self._disabled
+                                       })
+                           )
 
     def _attach_polling(self):
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
@@ -369,9 +381,15 @@ class TextBox(Widget):
                                     url: "/%s",
                                     success: function(props){
                                         selector = $('#%s');
-                                        selector.val(props.text);
-                                        selector.prop('readOnly', props.readonly);
-                                        selector.prop('disabled', props.disabled);
+                                        if(props.text != undefined){
+                                            selector.val(props.text);
+                                        }
+                                        if(props.readonly != undefined){
+                                            selector.prop('readOnly', props.readonly);
+                                        }
+                                        if(props.disabled != undefined){
+                                            selector.prop('disabled', props.disabled);
+                                        }
 
                                         //poll again
                                         %s_poll();
@@ -413,6 +431,7 @@ class CheckBox(Widget):
     _disabled = None
     _app = None
     _onclick_callback = None
+    _queue = None
 
     def __init__(self, name, title, value=None, checked=False, desc=None,
                  prop=None, style=None, attr=None, disabled=False,
@@ -462,6 +481,7 @@ class CheckBox(Widget):
             self._checked = checked
         else:
             self._checked = False
+        self._queue = []
         self._attach_onclick()
 
     def _attach_onclick(self):
@@ -520,6 +540,7 @@ class CheckBox(Widget):
 
     def _set_title(self, title):
         self._title = title
+        self._add_cmd()
 
     def _get_title(self):
         return self._title
@@ -528,6 +549,7 @@ class CheckBox(Widget):
 
     def _set_disabled(self, disabled):
         self._disabled = disabled
+        self._add_cmd()
 
     def _get_disabled(self):
         return self._disabled
@@ -536,6 +558,7 @@ class CheckBox(Widget):
 
     def _set_value(self, val):
         self._value = val
+        self._add_cmd()
 
     def _get_value(self):
         return self._value
@@ -544,6 +567,7 @@ class CheckBox(Widget):
 
     def _set_checked(self, chk):
         self._checked = chk
+        self._add_cmd()
 
     def _get_checked(self):
         return self._checked
@@ -551,11 +575,18 @@ class CheckBox(Widget):
     checked = property(_get_checked, _set_checked, doc="Checked or Unchecked state of checkbox")
 
     def _sync_properties(self):
-        return json.dumps({'title': self._title,
-                           'checked': self._checked,
-                           'disabled': self._disabled,
-                           'value': self._value
-                           })
+        if self._queue.__len__() > 0:
+            cmd = self._queue.pop()
+            return cmd
+        return json.dumps({'result': ''})
+
+    def _add_cmd(self):
+        self._queue.append(json.dumps({'title': self._title,
+                                       'checked': self._checked,
+                                       'disabled': self._disabled,
+                                       'value': self._value
+                                       })
+                           )
 
     def _attach_polling(self):
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
@@ -568,10 +599,18 @@ class CheckBox(Widget):
                                     success: function(props){
                                         selector = $('#%s');
                                         selector_lbl = $('#%s_lbl');
-                                        selector_lbl.text(props.title);
-                                        selector.attr('checked', props.checked);
-                                        selector.prop('disabled', props.disabled);
-                                        selector.val(props.value);
+                                        if(props.title != undefined){
+                                            selector_lbl.text(props.title);
+                                        }
+                                        if(props.checked != undefined){
+                                            selector.attr('checked', props.checked);
+                                        }
+                                        if(props.disabled != undefined){
+                                            selector.prop('disabled', props.disabled);
+                                        }
+                                        if(props.value != undefined){
+                                            selector.val(props.value);
+                                        }
                                         //poll again
                                         %s_poll();
                                     },
@@ -633,10 +672,35 @@ class Color(Widget):
     _onclick_callback = None
     _onchange_callback = None
     _app = None
+    _queue = None
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  disabled=False, required=False, css_cls=None, onclick_callback=None,
                  onchange_callback=None, app=None):
+        """
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the button widget
+                value (string): Value of checkbox when checked else empty
+                desc (string): description of the button widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                required (Boolean): Widget is required to be filled-in or not
+                onclick_callback (callable): A function to be called back on onclick event of color.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onclick_handler(source, props):
+                            pass
+
+                        source: Name of the color widget for which this event is fired
+                        props: Dict object having four props: value & disabled
+                onchange_callback (callback): Similar to `onclick_callback` but fires on change event
+                app (Flask): An instance of Flask class
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self._value = value
@@ -645,10 +709,13 @@ class Color(Widget):
         if disabled:
             self.add_attribute('disabled')
             self._disabled = disabled
+        else:
+            self._disabled = False
         if required:
             self.add_attribute('required')
         self._onchange_callback = onchange_callback
         self._onclick_callback = onclick_callback
+        self._queue = []
         self._attach_onclick()
         self._attach_onchange()
 
@@ -712,46 +779,91 @@ class Color(Widget):
                                        self._process_onchange_callback)
 
     def _process_onclick_callback(self):
-        return json.dumps({'result': self._onclick_callback()})
+        props = {}
+        return json.dumps({'result': self._onclick_callback(self._name, props)})
 
     def _process_onchange_callback(self):
+        props = {}
         if request.args.__len__() > 0:
             val = request.args["value"]
             if val is not None:
                 self._value = val
+                props['value'] = val
             dsbld = request.args["disabled"]
             if dsbld is not None:
                 self._disabled = dsbld
-        return json.dumps({'result': self._onchange_callback()})
+                props['disabled'] = dsbld
+        return json.dumps({'result': self._onchange_callback(self._name, props)})
 
-    def set_value(self, val):
+    def _set_value(self, val):
         self._value = val
+        self._add_cmd()
 
-    def get_value(self):
+    def _get_value(self):
         return self._value
 
-    def set_disabled(self, val):
-        self._disabled = val
+    value = property(_get_value, _set_value, doc="Current value of the color widget")
 
-    def get_disabled(self):
+    def _set_disabled(self, val):
+        self._disabled = val
+        self._add_cmd()
+
+    def _get_disabled(self):
         return self._disabled
 
+    disabled = property(_get_disabled, _set_disabled, doc="Enabled or disabled state of the widget")
+
     def on_click(self, onclick_callback, app=None):
+        """Attaches the onclick callback handler to the onclick event
+
+            Args:
+                onclick_callback (callable): The function or method that needs to be called
+                                    The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                                def onclick_handler(source, props):
+                                    pass
+
+                                source: Name of the color widget for which this event is fired
+                                props: Dict object having two props: value & disabled
+                app (Flask): An instance of the Flask app
+        """
         if app is not None:
             self._app = app
         self._onclick_callback = onclick_callback
         self._attach_onclick()
 
     def on_change(self, onchange_callback, app=None):
+        """Attaches the onchange callback handler to the onclick event
+
+            Args:
+                onchange_callback (callable): The function or method that needs to be called
+                                    The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                                def onchange_handler(source, props):
+                                    pass
+
+                                source: Name of the color widget for which this event is fired
+                                props: Dict object having two props: value & disabled
+                app (Flask): An instance of the Flask app
+        """
         if app is not None:
             self._app = app
         self._onchange_callback = onchange_callback
         self._attach_onchange()
 
     def _sync_properties(self):
-        return json.dumps({'disabled': self._disabled if self._disabled is not None else 'false',
-                           'value': self._value
-                           })
+        if self._queue.__len__() > 0:
+            cmd = self._queue.pop()
+            return cmd
+        return json.dumps({'result': ''})
+
+    def _add_cmd(self):
+        self._queue.append(json.dumps({'disabled': self._disabled,
+                                       'value': self._value
+                                       })
+                           )
 
     def _attach_polling(self):
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
@@ -763,13 +875,13 @@ class Color(Widget):
                                     type: "get",
                                     success: function(props){
                                         selector = $('#%s');
-                                        if(props.disabled == true){
+
+                                        if(props.disabled != undefined){
                                             selector.prop('disabled', props.disabled);
                                         }
                                         if(props.value != undefined){
                                             selector.val(props.value);
                                         }
-                                        //alertify.success(props.title+ "<br />" + props.checked);
                                         //poll again
                                         %s_poll();
                                     },
@@ -812,11 +924,40 @@ class Date(Widget):
     _min = None
     _max = None
     _app = None
+    _queue = None
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  min=None, max=None, readonly=False, disabled=False,
                  required=False, css_cls=None, onclick_callback=None, onchange_callback=None,
                  app=None):
+        """
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the button widget
+                value (string): Value of checkbox when checked else empty
+                desc (string): description of the button widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                min (string): The minimum date range. Value less than it can't be selected
+                                Format: MM-DD-YYYY
+                max (string): The maximum date range. Value above it can't be selected
+                                Format: MM-DD-YYYY
+                disabled (Boolean): Enabled or Disabled state of widget
+                required (Boolean): Widget is required to be filled-in or not
+                onclick_callback (callable): A function to be called back on onclick event of date widget.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onclick_handler(source, props):
+                            pass
+
+                        source: Name of the date widget for which this event is fired
+                        props: Dict object having five props: value, disabled, min, max & readOnly
+                onchange_callback (callback): Similar to `onclick_callback` but fires on change event
+                app (Flask): An instance of Flask class
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self.add_property('type', 'date')
@@ -832,14 +973,19 @@ class Date(Widget):
         if readonly:
             self.add_attribute('readonly')
             self._readonly = readonly
+        else:
+            self._readonly = False
         if disabled:
             self.add_attribute('disabled')
             self._disabled = disabled
+        else:
+            self._disabled = False
         if required:
             self.add_attribute('required')
         self._app = app
         self._onchange_callback = onchange_callback
         self._onclick_callback = onclick_callback
+        self._queue = []
         self._attach_onclick()
         self._attach_onchange()
 
@@ -906,76 +1052,130 @@ class Date(Widget):
                                        self._process_onchange_callback)
 
     def _process_onclick_callback(self):
-        return json.dumps({'result': self._onclick_callback()})
+        props = {}
+        return json.dumps({'result': self._onclick_callback(self._name, props)})
 
     def _process_onchange_callback(self):
+        props = {}
         if request.args.__len__() > 0:
             val = request.args["value"]
             if val is not None:
                 self._value = val
+                props['value'] = val
             dsbld = request.args["disabled"]
             if dsbld is not None:
                 self._disabled = dsbld
+                props['disabled'] = dsbld
             min = request.args["min"]
             if min is not None:
                 self._min = min
+                props['min'] = min
             max = request.args["max"]
             if max is not None:
                 self._max = max
+                props['max'] = max
             rdOnly = request.args["readOnly"]
             if rdOnly is not None:
                 self._readonly = rdOnly
-        return json.dumps({'result': self._onchange_callback()})
+        return json.dumps({'result': self._onchange_callback(self._name, props)})
 
-    def set_value(self, val):
+    def _set_value(self, val):
         self._value = val
+        self._add_cmd()
 
-    def get_value(self):
+    def _get_value(self):
         return self._value
 
-    def set_min(self, val):
-        self._min = val
+    value = property(_get_value, _set_value, doc="Current value of the date widget")
 
-    def get_min(self):
+    def _set_min(self, val):
+        self._min = val
+        self._add_cmd()
+
+    def _get_min(self):
         return self._min
 
-    def set_max(self, val):
-        self._max = val
+    min = property(_get_min, _set_min, doc="The minimum date allowed to be selected")
 
-    def get_max(self):
+    def _set_max(self, val):
+        self._max = val
+        self._add_cmd()
+
+    def _get_max(self):
         return self._max
 
-    def set_readonly(self, val):
-        self._readonly = val
+    max = property(_get_max, _set_max, doc="The maximum date allowed to be selected")
 
-    def get_readonly(self):
+    def _set_readonly(self, val):
+        self._readonly = val
+        self._add_cmd()
+
+    def _get_readonly(self):
         return self._readonly
 
-    def set_disabled(self, val):
-        self._disabled = val
+    readonly = property(_get_readonly, _set_readonly, doc="The readonly state of the widget")
 
-    def get_disabled(self):
+    def _set_disabled(self, val):
+        self._disabled = val
+        self._add_cmd()
+
+    def _get_disabled(self):
         return self._disabled
 
+    disabled = property(_get_disabled, _set_disabled, doc="Enabled or disabled state of the widget")
+
     def on_click(self, onclick_callback, app=None):
+        """
+        Attaches the onclick handler to this widget
+        Args:
+            onclick_callback (callable): A function to be called back on onclick event of date.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onclick_handler(source, props):
+                            pass
+
+                        source: Name of the date widget for which this event is fired
+                        props: Dict object having five props: value, disabled, min, max & readOnly
+        """
         if app is not None:
             self._app = app
         self._onclick_callback = onclick_callback
         self._attach_onclick()
 
     def on_change(self, onchange_callback, app=None):
+        """
+        Attaches the onchange handler to this widget
+        Args:
+            onchange_callback (callable): A function to be called back on onchange event of date.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the date widget for which this event is fired
+                        props: Dict object having five props: value, disabled, min, max & readOnly
+        """
         if app is not None:
             self._app = app
         self._onchange_callback = onchange_callback
         self._attach_onchange()
 
     def _sync_properties(self):
-        return json.dumps({'disabled': self._disabled if self._disabled is not None else 'false',
-                           'value': self._value,
-                           'min': self._min,
-                           'max': self._max,
-                           'readOnly': self._readonly if self._readonly is not None else "false"
-                           })
+        if self._queue.__len__() > 0:
+            cmd = self._queue.pop()
+            return cmd
+        return json.dumps({'result': ''})
+
+    def _add_cmd(self):
+        self._queue.append(json.dumps({'disabled': self._disabled,
+                                       'value': self._value,
+                                       'min': self._min,
+                                       'max': self._max,
+                                       'readOnly': self._readonly
+                                       })
+                           )
 
     def _attach_polling(self):
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
@@ -987,13 +1187,13 @@ class Date(Widget):
                                     type: "get",
                                     success: function(props){
                                         selector = $('#%s');
-                                        if(props.disabled == true){
+                                        if(props.disabled != undefined){
                                             selector.prop('disabled', props.disabled);
                                         }
                                         if(props.value != undefined){
                                             selector.val(props.value);
                                         }
-                                        if(props.readOnly == true){
+                                        if(props.readOnly != undefined){
                                             selector.prop('readOnly', props.readOnly);
                                         }
                                         if(props.min != undefined){
@@ -1002,7 +1202,6 @@ class Date(Widget):
                                         if(props.max != undefined){
                                             selector.prop('max', props.max);
                                         }
-                                        //alertify.success(props.title+ "<br />" + props.checked);
                                         //poll again
                                         %s_poll();
                                     },

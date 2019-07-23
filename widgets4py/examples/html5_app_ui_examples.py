@@ -3,7 +3,7 @@ import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
 from widgets4py.layouts import SimpleGridLayout
-from widgets4py.html5.app_ui import Button, TextBox, CheckBox
+from widgets4py.html5.app_ui import Button, TextBox, CheckBox, Color, Date
 from multiprocessing import Process
 
 
@@ -22,6 +22,13 @@ class W2UIPage:
     chk = None
     btn_chk_dsbl = None
     btn_chk = None
+    clr = None
+    btn_clr_dsbl = None
+    dt = None
+    btn_dt_dsbl = None
+    btn_dt_rd = None
+    btn_dt_min = None
+    btn_dt_max = None
 
     def show_layout(self):
         self.pg = Page('pg', 'Forms')
@@ -47,10 +54,34 @@ class W2UIPage:
         sg3.add(self.chk)
         sg3.add(self.btn_chk)
         sg3.add(self.btn_chk_dsbl)
+        sg4 = SimpleGridLayout('sg4', 1, 2)
+        self.clr = Color('clr', app=app, onchange_callback=self.clr_changed)
+        self.btn_clr_dsbl = Button('btn_clr_dsbl', "Toggle Disabled", app=app, onclick_callback=self.btn_clicked)
+        sg4.add(self.clr)
+        sg4.add(self.btn_clr_dsbl)
+        sg5 = SimpleGridLayout('sg5', 1, 5)
+        self.dt = Date('dt', app=app, onchange_callback=self.dt_changed)
+        self.btn_dt_dsbl = Button('btn_dt_dsbl', 'Toggle Disable', app=app, onclick_callback=self.btn_clicked)
+        self.btn_dt_rd = Button('btn_dt_rd', 'Toggle Readonly', app=app, onclick_callback=self.btn_clicked)
+        self.btn_dt_min = Button('btn_dt_min', 'Change Min', app=app, onclick_callback=self.btn_clicked)
+        self.btn_dt_max = Button('btn_dt_max', 'Change Max', app=app, onclick_callback=self.btn_clicked)
+        sg5.add(self.dt)
+        sg5.add(self.btn_dt_dsbl)
+        sg5.add(self.btn_dt_rd)
+        sg5.add(self.btn_dt_min)
+        sg5.add(self.btn_dt_max)
         self.pg.add(sg1)
         self.pg.add(sg2)
         self.pg.add(sg3)
+        self.pg.add(sg4)
+        self.pg.add(sg5)
         return self.pg.render()
+
+    def dt_changed(self, source, props):
+        print(source + "'s date changed: " + props['value'] + ", " + props['min'] + ", " + props['max'])
+
+    def clr_changed(self, source, props):
+        print(source + "'s color changed: " + props['value'])
 
     def chk_clicked(self, source, props):
         print(source + "'s clicked: " + props['checked'] + ", " + props['value'])
@@ -76,6 +107,16 @@ class W2UIPage:
             self.chk.checked = not self.chk.checked
         elif source == 'btn_chk_dsbl':
             self.chk.disabled = not self.chk.disabled
+        elif source == 'btn_clr_dsbl':
+            self.clr.disabled = not self.clr.disabled
+        elif source == 'btn_dt_dsbl':
+            self.dt.disabled = not self.dt.disabled
+        elif source == 'btn_dt_rd':
+            self.dt.readonly = not self.dt.readonly
+        elif source == 'btn_dt_min':
+            self.dt.min = "12-03-1980"
+        elif source == 'btn_dt_max':
+            self.dt.max = "12-03-2050"
 
 
 def start_app():
