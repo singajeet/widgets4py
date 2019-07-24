@@ -2,10 +2,10 @@ import os
 import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
-from widgets4py.w2ui.ui import Toolbar, ToolbarButton, ToolbarCheck
-from widgets4py.w2ui.ui import ToolbarHTML, ToolbarMenu, ToolbarMenuCheck
-from widgets4py.w2ui.ui import ToolbarMenuRadio, ToolbarRadio, ToolbarSeparator
-from widgets4py.w2ui.ui import ToolbarDropDown, ToolbarSpacer
+from widgets4py.polling.w2ui.ui import Toolbar, ToolbarButton, ToolbarCheck
+from widgets4py.polling.w2ui.ui import ToolbarHTML, ToolbarMenu, ToolbarMenuCheck
+from widgets4py.polling.w2ui.ui import ToolbarMenuRadio, ToolbarRadio, ToolbarSeparator
+from widgets4py.polling.w2ui.ui import ToolbarDropDown, ToolbarSpacer
 from multiprocessing import Process
 
 

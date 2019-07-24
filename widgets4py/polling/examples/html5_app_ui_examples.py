@@ -3,7 +3,9 @@ import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
 from widgets4py.layouts import SimpleGridLayout
-from widgets4py.html5.app_ui import Button, TextBox, CheckBox, Color, Date, DateTimeLocal, Email, File
+from widgets4py.polling.html5.app_ui import Button, TextBox, CheckBox, Color, Date, DateTimeLocal, Email, File
+from widgets4py.polling.html5.app_ui import Image, Month, Number, Password, Radio, Reset, Range, Search, Submit
+from widgets4py.polling.html5.app_ui import Telephone, Time, URL, Week, Label, Form, DropDown
 from multiprocessing import Process
 
 
@@ -37,6 +39,20 @@ class W2UIPage:
     _file = None
     btn_fl_dsbl = None
     btn_fl_multi = None
+    img = None
+    mth = None
+    num = None
+    password = None
+    rd = None
+    rset = None
+    rng = None
+    srch = None
+    sbmt = None
+    tlph = None
+    time = None
+    url = None
+    week = None
+    dd = None
 
     def show_layout(self):
         self.pg = Page('pg', 'Forms')
@@ -47,11 +63,12 @@ class W2UIPage:
         sg1.add(self.btn_btn)
         sg1.add(self.btn_enb_dsbl)
         sg1.add(self.btn_title)
-        sg2 = SimpleGridLayout('sg2', 1, 3)
+        sg2 = SimpleGridLayout('sg2', 1, 4)
         self.txt = TextBox('txt', app=app, onchange_callback=self.text_changed)
         self.btn_txt_rd = Button('btn_txt_rd', 'Toggle ReadOnly', app=app, onclick_callback=self.btn_clicked)
         self.btn_txt_enb_dsbl = Button('btn_txt_enb_dsbl', 'Toggle Enable/Disable', app=app,
                                        onclick_callback=self.btn_clicked)
+        sg2.add(Label('lbl_txt', 'Text', self.txt))
         sg2.add(self.txt)
         sg2.add(self.btn_txt_rd)
         sg2.add(self.btn_txt_enb_dsbl)
@@ -67,33 +84,36 @@ class W2UIPage:
         self.btn_clr_dsbl = Button('btn_clr_dsbl', "Toggle Disabled", app=app, onclick_callback=self.btn_clicked)
         sg4.add(self.clr)
         sg4.add(self.btn_clr_dsbl)
-        sg5 = SimpleGridLayout('sg5', 1, 5)
+        sg5 = SimpleGridLayout('sg5', 1, 6)
         self.dt = Date('dt', app=app, onchange_callback=self.dt_changed)
         self.btn_dt_dsbl = Button('btn_dt_dsbl', 'Toggle Disable', app=app, onclick_callback=self.btn_clicked)
         self.btn_dt_rd = Button('btn_dt_rd', 'Toggle Readonly', app=app, onclick_callback=self.btn_clicked)
         self.btn_dt_min = Button('btn_dt_min', 'Change Min', app=app, onclick_callback=self.btn_clicked)
         self.btn_dt_max = Button('btn_dt_max', 'Change Max', app=app, onclick_callback=self.btn_clicked)
+        sg5.add(Label('lbl_sg5', 'Date', self.dt))
         sg5.add(self.dt)
         sg5.add(self.btn_dt_dsbl)
         sg5.add(self.btn_dt_rd)
         sg5.add(self.btn_dt_min)
         sg5.add(self.btn_dt_max)
-        sg6 = SimpleGridLayout('sg6', 1, 5)
+        sg6 = SimpleGridLayout('sg6', 1, 6)
         self.dtl = DateTimeLocal('dtl', app=app, onchange_callback=self.dt_changed)
         self.btn_dtl_dsbl = Button('btn_dtl_dsbl', 'Toggle Disable', app=app, onclick_callback=self.btn_clicked)
         self.btn_dtl_rd = Button('btn_dtl_rd', 'Toggle Readonly', app=app, onclick_callback=self.btn_clicked)
         self.btn_dtl_min = Button('btn_dtl_min', 'Change Min', app=app, onclick_callback=self.btn_clicked)
         self.btn_dtl_max = Button('btn_dtl_max', 'Change Max', app=app, onclick_callback=self.btn_clicked)
+        sg6.add(Label('lbl_sg6', 'DateTimeLocal', self.dtl))
         sg6.add(self.dtl)
         sg6.add(self.btn_dtl_dsbl)
         sg6.add(self.btn_dtl_rd)
         sg6.add(self.btn_dtl_min)
         sg6.add(self.btn_dtl_max)
-        sg7 = SimpleGridLayout('sg7', 1, 3)
+        sg7 = SimpleGridLayout('sg7', 1, 4)
         self.email = Email('email', app=app, onchange_callback=self.text_changed)
         self.btn_eml_rd = Button('btn_eml_rd', 'Toggle ReadOnly', app=app, onclick_callback=self.btn_clicked)
         self.btn_eml_enb_dsbl = Button('btn_eml_enb_dsbl', 'Toggle Enable/Disable', app=app,
                                        onclick_callback=self.btn_clicked)
+        sg7.add(Label('lbl_email', 'Email', self.email))
         sg7.add(self.email)
         sg7.add(self.btn_eml_rd)
         sg7.add(self.btn_eml_enb_dsbl)
@@ -104,6 +124,54 @@ class W2UIPage:
         sg8.add(self._file)
         sg8.add(self.btn_fl_dsbl)
         sg8.add(self.btn_fl_multi)
+        sg9 = SimpleGridLayout('sg9', 14, 2)
+        self.img = Image('img', 'src', app=app)
+        self.mth = Month('mth', app=app)
+        self.num = Number('num', app=app)
+        self.password = Password('password', app=app)
+        self.rd = Radio('rd', 'Radio', app=app)
+        self.rset = Reset('rset', 'Reset', app=app)
+        self.rng = Range('rng', app=app)
+        self.srch = Search('srch', app=app)
+        self.sbmt = Submit('sbmt', 'Submit', app=app)
+        self.tlph = Telephone('tlph', app=app)
+        self.time = Time('time', app=app)
+        self.url = URL('url', app=app)
+        self.week = Week('week', app=app)
+        self.dd = DropDown('dd', app=app)
+        self.dd.add_option('abc', 'ABC', True)
+        self.dd.add_option('def', 'DEF')
+        self.dd.add_option('ghi', 'GHI')
+        sg9.add(Label('lbl', 'Image', self.img))
+        sg9.add(self.img)
+        sg9.add(Label('lbl1', 'Month', self.mth))
+        sg9.add(self.mth)
+        sg9.add(Label('lbl', 'Number', self.num))
+        sg9.add(self.num)
+        sg9.add(Label('lbl', 'Password', self.password))
+        sg9.add(self.password)
+        sg9.add(Label('lbl', 'Radio', self.rd))
+        sg9.add(self.rd)
+        sg9.add(Label('lbl', 'Reset', self.rset))
+        sg9.add(self.rset)
+        sg9.add(Label('lbl', 'Range', self.rng))
+        sg9.add(self.rng)
+        sg9.add(Label('lbl', 'Search', self.srch))
+        sg9.add(self.srch)
+        sg9.add(Label('lbl', 'Submit', self.sbmt))
+        sg9.add(self.sbmt)
+        sg9.add(Label('lbl', 'Telephone', self.tlph))
+        sg9.add(self.tlph)
+        sg9.add(Label('lbl', 'Time', self.time))
+        sg9.add(self.time)
+        sg9.add(Label('lbl', 'Url', self.url))
+        sg9.add(self.url)
+        sg9.add(Label('lbl', 'Week', self.week))
+        sg9.add(self.week)
+        sg9.add(Label('dd_lbl', 'DropDown', self.dd))
+        sg9.add(self.dd)
+        self.frm = Form('frm', app=app, use_fieldset=True, legend="Form", on_form_submit=self.form_submitted)
+        self.frm.add(sg9)
         self.pg.add(sg1)
         self.pg.add(sg2)
         self.pg.add(sg3)
@@ -112,7 +180,11 @@ class W2UIPage:
         self.pg.add(sg6)
         self.pg.add(sg7)
         self.pg.add(sg8)
+        self.pg.add(self.frm)
         return self.pg.render()
+
+    def form_submitted(self, source, form_data):
+        print("Form Submitted: " + str(form_data))
 
     def file_changed(self, source, props):
         print(props['filename'] + " file has been loaded to path: " + props['upload_path'])

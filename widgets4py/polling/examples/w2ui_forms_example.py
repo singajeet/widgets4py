@@ -3,9 +3,9 @@ import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
 from multiprocessing import Process
-from widgets4py.w2ui.ui import Form, FormFieldAlpha, FormFieldCheckbox, FormFieldDate
-from widgets4py.w2ui.ui import FormFieldEnum, FormFieldFloat, FormFieldInt, FormFieldList
-from widgets4py.w2ui.ui import FormFieldRadio, FormFieldSelect, FormFieldText, FormFieldTextArea
+from widgets4py.polling.w2ui.ui import Form, FormFieldAlpha, FormFieldCheckbox, FormFieldDate
+from widgets4py.polling.w2ui.ui import FormFieldEnum, FormFieldFloat, FormFieldInt, FormFieldList
+from widgets4py.polling.w2ui.ui import FormFieldRadio, FormFieldSelect, FormFieldText, FormFieldTextArea
 
 
 app = Flask(__name__)

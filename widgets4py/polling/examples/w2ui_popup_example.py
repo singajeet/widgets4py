@@ -4,8 +4,8 @@ import time
 from flask import Flask  # , url_for
 from widgets4py.base import Page
 from multiprocessing import Process
-from widgets4py.w2ui.ui import Popup
-from widgets4py.html5.app_ui import Button
+from widgets4py.polling.w2ui.ui import Popup
+from widgets4py.polling.html5.app_ui import Button
 from widgets4py.layouts import SimpleGridLayout
 
 

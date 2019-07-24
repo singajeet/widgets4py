@@ -3,7 +3,7 @@ import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
 from multiprocessing import Process
-from widgets4py.w2ui.ui import SidebarNode, Sidebar
+from widgets4py.polling.w2ui.ui import SidebarNode, Sidebar
 
 
 app = Flask(__name__)

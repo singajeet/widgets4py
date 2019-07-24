@@ -871,9 +871,9 @@ class Date(Widget):
                 style (dict): dict of objects to be added as style elements to HTML tag
                 attr (list): list of objects to be added as attributes of HTML tag
                 min (string): The minimum date range. Value less than it can't be selected
-                                Format: MM-DD-YYYY
+                                Format: YYYY-MM-DD
                 max (string): The maximum date range. Value above it can't be selected
-                                Format: MM-DD-YYYY
+                                Format: YYYY-MM-DD
                 disabled (Boolean): Enabled or Disabled state of widget
                 required (Boolean): Widget is required to be filled-in or not
                 onclick_callback (callable): A function to be called back on onclick event of date widget.
@@ -1188,6 +1188,31 @@ class File(Widget):
                  disabled=False, required=False, multiple=False,
                  css_cls=None, onclick_callback=None, onchange_callback=None, app=None,
                  upload_folder=None, allowed_extensions=None):
+        """
+            Args:
+                name (string): name of the widget for internal use
+                desc (string): description of the button widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                required (Boolean): Widget is required to be filled-in or not
+                multiple (Boolean): Whether to allow multiple selection of files or not
+                onclick_callback (callable): A function to be called back on onclick event of date widget.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onclick_handler(source, props):
+                            pass
+
+                        source: Name of the date widget for which this event is fired
+                        props: Dict object having five props: value, disabled, min, max & readOnly
+                onchange_callback (callback): Similar to `onclick_callback` but fires on change event
+                app (Flask): An instance of Flask class
+                css_cls (list): An list of CSS class names to be added to current widget
+                upload_folder (string): The folder path of server where uploaded files will be saved
+                allowed_extensions (string): List of comma separated file ext which are allowed
+        """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
         self.add_property('type', 'file')
@@ -1369,7 +1394,6 @@ class File(Widget):
                                     type: "get",
                                     success: function(props){
                                         selector = $('#%s');
-                                        alert('Dsbl: ' + props.disabled + ', Multi: ' + props.multiple);
                                         selector.prop('disabled', props.disabled);
                                         selector.prop('multiple', props.multiple);
                                         //alertify.success(props.title+ "<br />" + props.checked);
@@ -1402,32 +1426,6 @@ class File(Widget):
         content += self._render_post_content('input')
         self._widget_content = content + "\n" + self._attach_polling()
         return self._widget_content
-
-
-# class Hidden(Widget):
-#     """A simple HTML hidden / input field"""
-
-#     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-#                  value=None, readonly=False, disabled=False, required=False,
-#                  css_cls=None):
-#         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
-#                         css_cls=css_cls)
-#         self.add_property('type', 'hidden')
-#         if value is not None:
-#             self.add_property('value', value)
-#         if readonly:
-#             self.add_attribute('readonly')
-#         if disabled:
-#             self.add_attribute('disabled')
-#         if required:
-#             self.add_attribute('required')
-
-#     def render(self):
-#         """Renders the content of hidden class"""
-#         content = self._render_pre_content('input')
-#         content += self._render_post_content('input')
-#         self._widget_content = content
-#         return self._widget_content
 
 
 class Image(Button):
@@ -1470,11 +1468,13 @@ class Number(TextBox):
                          app=app)
         self.add_property('type', 'number')
 
-    def set_number(self, numb):
+    def _set_number(self, numb):
         self.set_text(numb)
 
-    def get_number(self):
+    def _get_number(self):
         return self.get_text()
+
+    number = property(_get_number, _set_number, doc="Value of the number textbox")
 
 
 class Password(TextBox):
@@ -1489,11 +1489,13 @@ class Password(TextBox):
                          app=app)
         self.add_property('type', 'password')
 
-    def set_password(self, passwd):
+    def _set_password(self, passwd):
         self.set_text(passwd)
 
-    def get_password(self):
+    def _get_password(self):
         return self.get_text()
+
+    password = property(_get_password, _set_password, doc="Value of the password textbox")
 
 
 class Radio(CheckBox):
@@ -1547,7 +1549,7 @@ class Search(TextBox):
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  readonly=False, disabled=False, required=False, css_cls=None,
                  onchange_callback=None, app=None):
-        TextBox.__init__(self, name, value=value, desc=desc, prop=prop, style=style, attr=attr,
+        TextBox.__init__(self, name, text=value, desc=desc, prop=prop, style=style, attr=attr,
                          css_cls=css_cls, readonly=readonly, disabled=disabled, required=required,
                          onchange_callback=onchange_callback, app=app)
         self.add_property('type', 'search')
@@ -1562,7 +1564,7 @@ class Submit(Button):
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
                  disabled=False, required=False, css_cls=None, onclick_callback=None,
                  app=None):
-        Widget.__init__(self, name, title, desc=desc, prop=prop, style=style, attr=attr,
+        Button.__init__(self, name, title, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls, disabled=disabled, required=required, app=app,
                         onclick_callback=onclick_callback)
         self.add_property('type', 'submit')
@@ -1577,7 +1579,7 @@ class Telephone(TextBox):
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  pattern=None, readonly=False, disabled=False, required=False,
                  css_cls=None, onchange_callback=None, app=None):
-        TextBox.__init__(self, name, value=value, desc=desc, prop=prop, style=style, attr=attr,
+        TextBox.__init__(self, name, text=value, desc=desc, prop=prop, style=style, attr=attr,
                          css_cls=css_cls, readonly=readonly, disabled=disabled,
                          required=required, onchange_callback=onchange_callback,
                          app=app)
@@ -1592,7 +1594,7 @@ class Time(Date):
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  disabled=False, required=False, css_cls=None, onchange_callback=None,
                  app=None):
-        Date.__init__(self, name, value=value, desc=desc, prop=prop, style=style, attr=attr,
+        Date.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                       css_cls=css_cls, disabled=disabled, required=required,
                       onchange_callback=onchange_callback, app=app)
         self.add_property('type', 'time')
@@ -1607,7 +1609,7 @@ class URL(TextBox):
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  disabled=False, required=False, css_cls=None, onchange_callback=None,
                  app=None):
-        TextBox.__init__(self, name, value=value, desc=desc, prop=prop, style=style, attr=attr,
+        TextBox.__init__(self, name, text=value, desc=desc, prop=prop, style=style, attr=attr,
                          css_cls=css_cls, disabled=disabled, required=required,
                          onchange_callback=onchange_callback, app=app)
         self.add_property('type', 'url')
@@ -1619,11 +1621,11 @@ class Week(Date):
     """
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 disabled=False, required=False, css_cls=None, onchange_callback=None,
+                 disabled=None, required=False, css_cls=None, onchange_callback=None,
                  app=None):
-        Widget.__init__(self, name, value=value, desc=desc, prop=prop, style=style, attr=attr,
-                        css_cls=css_cls, disabled=disabled, required=required,
-                        onchange_callback=onchange_callback, app=app)
+        Date.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                      css_cls=css_cls, disabled=disabled, required=required,
+                      onchange_callback=onchange_callback, app=app)
         self.add_property('type', 'week')
 
 
@@ -1639,7 +1641,7 @@ class Form(Widget):
 
     _use_fieldset = False
     _legend = None
-    _on_form_submitted = None
+    _form_submit_callback = None
     _app = None
     _action = None
     _url = None
@@ -1647,7 +1649,7 @@ class Form(Widget):
 
     def __init__(self, name, desc=None, prop=None, style=None, attr=None,
                  use_fieldset=False, legend=None, app=None,
-                 submit_callback=None):
+                 on_form_submit=None):
         """Default constructor for Form class with below parameters...
         Args:
                 name (string): name of the widget for internal use
@@ -1658,17 +1660,20 @@ class Form(Widget):
                 app (Flask, optional): An instance of `Flask` class
                 use_fieldset (boolean, optional): Whether to use the fieldset to group the fields
                 legend (string, optional): The legend/title of the fieldset to be shown on top of frame
-                submit_callback (func, optional): A reference to callback function/method that \
+                on_form_submit (func, optional): A reference to callback function/method that \
                 will be called once the form is submitted successfully
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr)
-        if submit_callback is not None:
-            self._on_form_submitted = submit_callback
+        if on_form_submit is not None:
+            self._form_submit_callback = on_form_submit
         if app is not None:
             self._app = app
-        self._use_fieldset = use_fieldset
+        if use_fieldset is not None:
+            self._use_fieldset = use_fieldset
+        else:
+            self._use_fieldset = False
         self._legend = legend
-        if app is not None and submit_callback is not None:
+        if app is not None:
             self._url = self._register_rule()
 
     #  Event for the on form submit
@@ -1681,8 +1686,8 @@ class Form(Widget):
         """
         if app is not None:
             self._app = app
-        self._on_form_submitted = submit_callback
-        if self._app is not None and self._on_form_submitted is not None:
+        self._form_submit_callback = submit_callback
+        if self._app is not None:
             self._url = self._register_rule()
 
     def _register_rule(self):
@@ -1721,9 +1726,9 @@ class Form(Widget):
     def _process_on_form_submitted(self):
         if request.form.__len__() > 0:
             self._submitted_form_data = request.form
-        # call the callback handler
-        return self._on_form_submitted()
-        # return self._root_widget.render()
+        if self._form_submit_callback is not None:
+            return json.dumps({'result': self._form_submit_callback(self._name, request.form)})
+        return json.dumps({'result': ''})
 
     def get_submitted_form_data(self):
         """Returns the data submitted by the form in `dict` format. Value of each form elemet
@@ -1790,12 +1795,16 @@ class DropDown(Widget):
         if disabled:
             self.add_attribute('disabled')
             self._disabled = disabled
+        else:
+            self._disabled = False
         if required:
             self.add_attribute('required')
             self._required = required
         if size is not None:
             self.add_property('size', size)
             self._size = size
+        else:
+            self._size = 4
         if options is not None:
             self._options = options
         else:
@@ -1872,13 +1881,13 @@ class DropDown(Widget):
         if request.args.__len__() > 0:
             dsbld = request.args["disabled"]
             if dsbld is not None:
-                self._disabled = dsbld
+                self._disabled = True if dsbld == "true" else False
             val = request.args["value"]
             if val is not None:
                 self._value = val
         return json.dumps({'result': self._onchange_callback()})
 
-    def set_size(self, size):
+    def _set_size(self, size):
         """Sets the size of the dropdown's height based on number of rows passed
         in `size` param. Ex, if size=3, 3 rows will be displayed in dropdown at a
         time and rest of it can be scrolled
@@ -1888,13 +1897,15 @@ class DropDown(Widget):
         """
         self._size = size
 
-    def get_size(self):
+    def _get_size(self):
         """Returns the number of rows that are displayed in the dropdown
 
             Returns:
                 int: Number of rows that are displayed by dropdown
         """
         return self._size
+
+    size = property(_get_size, _set_size, doc="Set or returns the number of rows that are displayed in the dropdown")
 
     def add_option(self, value, title=None, is_selected=False):
         """Adds a new option to the list of dropdown and
@@ -1954,8 +1965,8 @@ class DropDown(Widget):
         self._attach_onchange()
 
     def _sync_properties(self):
-        return json.dumps({'disabled': self._disabled if self._disabled is not None else 'false',
-                           'value': self._value if self._value is not None else ''
+        return json.dumps({'disabled': self._disabled,
+                           'value': self._value
                            })
 
     def _attach_polling(self):
@@ -1968,12 +1979,9 @@ class DropDown(Widget):
                                     type: "get",
                                     success: function(props){
                                         selector = $('#%s');
-                                        if(props.disabled === true){
-                                            selector.prop('disabled', props.disabled);
-                                        }
-                                        if(props.value != undefined){
-                                            selector.val(props.value)
-                                        }
+                                        selector.prop('disabled', props.disabled);
+                                        selector.val(props.value)
+
                                         //alertify.success(props.title+ "<br />" + props.checked);
                                         //poll again
                                         %s_poll();

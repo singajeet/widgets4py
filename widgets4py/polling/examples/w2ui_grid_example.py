@@ -3,9 +3,9 @@ import webview
 from flask import Flask  # , url_for
 from widgets4py.base import Page
 from widgets4py.layouts import SimpleGridLayout
-from widgets4py.w2ui.ui import GridColumn, GridColumnCollection
-from widgets4py.w2ui.ui import GridRecord, GridRecordCollection, Grid
-from widgets4py.html5.app_ui import Button
+from widgets4py.polling.w2ui.ui import GridColumn, GridColumnCollection
+from widgets4py.polling.w2ui.ui import GridRecord, GridRecordCollection, Grid
+from widgets4py.polling.html5.app_ui import Button
 from multiprocessing import Process
 
 
