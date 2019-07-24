@@ -50,7 +50,6 @@ class Button(Widget):
     _app = None
     _title = None
     _disabled = None
-    _queue = None
 
     def __init__(self, name, title, desc=None, prop=None, style=None, attr=None,
                  disabled=False, required=False,
@@ -86,11 +85,12 @@ class Button(Widget):
         if disabled:
             self.add_attribute('disabled')
             self._disabled = True
+        else:
+            self._disabled = False
         if required:
             self.add_attribute('required')
         self._onclick_callback = onclick_callback
         self._app = app
-        self._queue = []
         self._attach_onclick()
 
     def _attach_onclick(self):
@@ -130,12 +130,11 @@ class Button(Widget):
             dsbld = request.args['disabled']
             if dsbld is not None:
                 self._disabled = True if dsbld == "true" else False
-                props['disabled'] = dsbld
+                props['disabled'] = self._disabled
         return json.dumps({"result": self._onclick_callback(self._name, props)})
 
     def _set_title(self, title):
         self._title = title
-        self._add_cmd()
 
     def _get_title(self):
         return self._title
@@ -144,7 +143,6 @@ class Button(Widget):
 
     def _set_disabled(self, disabled):
         self._disabled = disabled
-        self._add_cmd()
 
     def _get_disabled(self):
         return self._disabled
@@ -152,16 +150,9 @@ class Button(Widget):
     disabled = property(_get_disabled, _set_disabled, doc="Returns the disabled state of the Button")
 
     def _sync_properties(self):
-        if self._queue.__len__() > 0:
-            cmd = self._queue.pop()
-            return cmd
-        return json.dumps({'result': ''})
-
-    def _add_cmd(self):
-        self._queue.append(json.dumps({'title': self._title,
-                                       'disabled': self._disabled
-                                       })
-                           )
+        return json.dumps({'title': self._title,
+                           'disabled': self._disabled
+                           })
 
     def _attach_polling(self):
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
@@ -172,12 +163,8 @@ class Button(Widget):
                                     url: "/%s",
                                     success: function(props){
                                         selector = $('#%s');
-                                        if(props.title != undefined){
-                                            selector.val(props.title);
-                                        }
-                                        if(props.disabled != undefined){
-                                            selector.prop('disabled', props.disabled);
-                                        }
+                                        selector.val(props.title);
+                                        selector.prop('disabled', props.disabled);
                                         //poll again
                                         %s_poll();
                                     },
@@ -232,7 +219,6 @@ class TextBox(Widget):
     _text = None
     _disabled = None
     _readonly = None
-    _queue = None
 
     def __init__(self, name, text=None, desc=None, prop=None, style=None, attr=None,
                  readonly=False, disabled=False, required=False, css_cls=None,
@@ -278,7 +264,6 @@ class TextBox(Widget):
         if required:
             self.add_attribute('required')
         self._app = app
-        self._queue = []
         self._onchange_callback = onchange_callback
         self._attach_onchange()
 
@@ -319,11 +304,11 @@ class TextBox(Widget):
             rdOnly = request.args['readOnly']
             if rdOnly is not None:
                 self._readonly = True if rdOnly == "true" else False
-                props['readonly'] = rdOnly
+                props['readonly'] = self._readonly
             dsbld = request.args['disabled']
             if dsbld is not None:
                 self._disabled = True if dsbld == "true" else False
-                props['disabled'] = dsbld
+                props['disabled'] = self._disabled
         return json.dumps({"result": self._onchange_callback(self._name, props)})
 
     def on_change(self, onchange_callback, app=None):
@@ -334,7 +319,6 @@ class TextBox(Widget):
 
     def _set_text(self, txt):
         self._text = txt
-        self._add_cmd()
 
     def _get_text(self):
         return self._text
@@ -343,7 +327,6 @@ class TextBox(Widget):
 
     def _set_readonly(self, readonly):
         self._readonly = readonly
-        self._add_cmd()
 
     def _get_readonly(self):
         return self._readonly
@@ -352,7 +335,6 @@ class TextBox(Widget):
 
     def _set_disabled(self, disabled):
         self._disabled = disabled
-        self._add_cmd()
 
     def _get_disabled(self):
         return self._disabled
@@ -360,17 +342,10 @@ class TextBox(Widget):
     disabled = property(_get_disabled, _set_disabled, doc="Set or get whether textbox is enabled or disabled")
 
     def _sync_properties(self):
-        if self._queue.__len__() > 0:
-            cmd = self._queue.pop()
-            return cmd
-        return json.dumps({'result': ''})
-
-    def _add_cmd(self):
-        self._queue.append(json.dumps({'text': self._text,
-                                       'readonly': self._readonly,
-                                       'disabled': self._disabled
-                                       })
-                           )
+        return json.dumps({'text': self._text,
+                           'readonly': self._readonly,
+                           'disabled': self._disabled
+                           })
 
     def _attach_polling(self):
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
@@ -381,15 +356,9 @@ class TextBox(Widget):
                                     url: "/%s",
                                     success: function(props){
                                         selector = $('#%s');
-                                        if(props.text != undefined){
-                                            selector.val(props.text);
-                                        }
-                                        if(props.readonly != undefined){
-                                            selector.prop('readOnly', props.readonly);
-                                        }
-                                        if(props.disabled != undefined){
-                                            selector.prop('disabled', props.disabled);
-                                        }
+                                        selector.val(props.text);
+                                        selector.prop('readOnly', props.readonly);
+                                        selector.prop('disabled', props.disabled);
 
                                         //poll again
                                         %s_poll();
@@ -431,7 +400,6 @@ class CheckBox(Widget):
     _disabled = None
     _app = None
     _onclick_callback = None
-    _queue = None
 
     def __init__(self, name, title, value=None, checked=False, desc=None,
                  prop=None, style=None, attr=None, disabled=False,
@@ -481,7 +449,6 @@ class CheckBox(Widget):
             self._checked = checked
         else:
             self._checked = False
-        self._queue = []
         self._attach_onclick()
 
     def _attach_onclick(self):
@@ -523,24 +490,23 @@ class CheckBox(Widget):
             tit = request.args['title']
             if tit is not None:
                 self._title = tit
-                props['title'] = tit
+                props['title'] = self._title
             chk = request.args['checked']
             if chk is not None:
-                self._checked = chk
-                props['checked'] = chk
+                self._checked = True if chk == "true" else False
+                props['checked'] = self._checked
             dsbl = request.args["disabled"]
             if dsbl is not None:
-                self._disabled = dsbl
-                props['disabled'] = dsbl
+                self._disabled = True if dsbl == "true" else False
+                props['disabled'] = self._disabled
             val = request.args["value"]
             if val is not None:
                 self._value = val
-                props['value'] = val
+                props['value'] = self._value
         return json.dumps({"result": self._onclick_callback(self._name, props)})
 
     def _set_title(self, title):
         self._title = title
-        self._add_cmd()
 
     def _get_title(self):
         return self._title
@@ -549,7 +515,6 @@ class CheckBox(Widget):
 
     def _set_disabled(self, disabled):
         self._disabled = disabled
-        self._add_cmd()
 
     def _get_disabled(self):
         return self._disabled
@@ -558,7 +523,6 @@ class CheckBox(Widget):
 
     def _set_value(self, val):
         self._value = val
-        self._add_cmd()
 
     def _get_value(self):
         return self._value
@@ -567,7 +531,6 @@ class CheckBox(Widget):
 
     def _set_checked(self, chk):
         self._checked = chk
-        self._add_cmd()
 
     def _get_checked(self):
         return self._checked
@@ -575,18 +538,11 @@ class CheckBox(Widget):
     checked = property(_get_checked, _set_checked, doc="Checked or Unchecked state of checkbox")
 
     def _sync_properties(self):
-        if self._queue.__len__() > 0:
-            cmd = self._queue.pop()
-            return cmd
-        return json.dumps({'result': ''})
-
-    def _add_cmd(self):
-        self._queue.append(json.dumps({'title': self._title,
-                                       'checked': self._checked,
-                                       'disabled': self._disabled,
-                                       'value': self._value
-                                       })
-                           )
+        return json.dumps({'title': self._title,
+                           'checked': self._checked,
+                           'disabled': self._disabled,
+                           'value': self._value
+                           })
 
     def _attach_polling(self):
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
@@ -599,18 +555,10 @@ class CheckBox(Widget):
                                     success: function(props){
                                         selector = $('#%s');
                                         selector_lbl = $('#%s_lbl');
-                                        if(props.title != undefined){
-                                            selector_lbl.text(props.title);
-                                        }
-                                        if(props.checked != undefined){
-                                            selector.attr('checked', props.checked);
-                                        }
-                                        if(props.disabled != undefined){
-                                            selector.prop('disabled', props.disabled);
-                                        }
-                                        if(props.value != undefined){
-                                            selector.val(props.value);
-                                        }
+                                        selector_lbl.text(props.title);
+                                        selector.prop('checked', props.checked);
+                                        selector.prop('disabled', props.disabled);
+                                        selector.val(props.value);
                                         //poll again
                                         %s_poll();
                                     },
@@ -672,7 +620,6 @@ class Color(Widget):
     _onclick_callback = None
     _onchange_callback = None
     _app = None
-    _queue = None
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  disabled=False, required=False, css_cls=None, onclick_callback=None,
@@ -715,7 +662,6 @@ class Color(Widget):
             self.add_attribute('required')
         self._onchange_callback = onchange_callback
         self._onclick_callback = onclick_callback
-        self._queue = []
         self._attach_onclick()
         self._attach_onchange()
 
@@ -788,16 +734,15 @@ class Color(Widget):
             val = request.args["value"]
             if val is not None:
                 self._value = val
-                props['value'] = val
+                props['value'] = self._value
             dsbld = request.args["disabled"]
             if dsbld is not None:
-                self._disabled = dsbld
-                props['disabled'] = dsbld
+                self._disabled = True if dsbld == "true" else False
+                props['disabled'] = self._disabled
         return json.dumps({'result': self._onchange_callback(self._name, props)})
 
     def _set_value(self, val):
         self._value = val
-        self._add_cmd()
 
     def _get_value(self):
         return self._value
@@ -806,7 +751,6 @@ class Color(Widget):
 
     def _set_disabled(self, val):
         self._disabled = val
-        self._add_cmd()
 
     def _get_disabled(self):
         return self._disabled
@@ -854,16 +798,9 @@ class Color(Widget):
         self._attach_onchange()
 
     def _sync_properties(self):
-        if self._queue.__len__() > 0:
-            cmd = self._queue.pop()
-            return cmd
-        return json.dumps({'result': ''})
-
-    def _add_cmd(self):
-        self._queue.append(json.dumps({'disabled': self._disabled,
-                                       'value': self._value
-                                       })
-                           )
+        return json.dumps({'disabled': self._disabled,
+                           'value': self._value
+                           })
 
     def _attach_polling(self):
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
@@ -875,13 +812,8 @@ class Color(Widget):
                                     type: "get",
                                     success: function(props){
                                         selector = $('#%s');
-
-                                        if(props.disabled != undefined){
-                                            selector.prop('disabled', props.disabled);
-                                        }
-                                        if(props.value != undefined){
-                                            selector.val(props.value);
-                                        }
+                                        selector.prop('disabled', props.disabled);
+                                        selector.val(props.value);
                                         //poll again
                                         %s_poll();
                                     },
@@ -924,7 +856,6 @@ class Date(Widget):
     _min = None
     _max = None
     _app = None
-    _queue = None
 
     def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
                  min=None, max=None, readonly=False, disabled=False,
@@ -967,9 +898,13 @@ class Date(Widget):
         if min is not None:
             self.add_property('min', min)
             self._min = min
+        else:
+            self._min = ""
         if max is not None:
             self.add_property('max', max)
             self._max = max
+        else:
+            self._max = ""
         if readonly:
             self.add_attribute('readonly')
             self._readonly = readonly
@@ -985,7 +920,6 @@ class Date(Widget):
         self._app = app
         self._onchange_callback = onchange_callback
         self._onclick_callback = onclick_callback
-        self._queue = []
         self._attach_onclick()
         self._attach_onchange()
 
@@ -1061,27 +995,27 @@ class Date(Widget):
             val = request.args["value"]
             if val is not None:
                 self._value = val
-                props['value'] = val
+                props['value'] = self._value
             dsbld = request.args["disabled"]
             if dsbld is not None:
-                self._disabled = dsbld
-                props['disabled'] = dsbld
+                self._disabled = True if dsbld == 'true' else False
+                props['disabled'] = self._disabled
             min = request.args["min"]
             if min is not None:
                 self._min = min
-                props['min'] = min
+                props['min'] = self._min
             max = request.args["max"]
             if max is not None:
                 self._max = max
-                props['max'] = max
+                props['max'] = self._max
             rdOnly = request.args["readOnly"]
             if rdOnly is not None:
-                self._readonly = rdOnly
+                self._readonly = True if rdOnly == 'true' else False
+                props['readOnly'] = self._readonly
         return json.dumps({'result': self._onchange_callback(self._name, props)})
 
     def _set_value(self, val):
         self._value = val
-        self._add_cmd()
 
     def _get_value(self):
         return self._value
@@ -1090,7 +1024,6 @@ class Date(Widget):
 
     def _set_min(self, val):
         self._min = val
-        self._add_cmd()
 
     def _get_min(self):
         return self._min
@@ -1099,7 +1032,6 @@ class Date(Widget):
 
     def _set_max(self, val):
         self._max = val
-        self._add_cmd()
 
     def _get_max(self):
         return self._max
@@ -1108,7 +1040,6 @@ class Date(Widget):
 
     def _set_readonly(self, val):
         self._readonly = val
-        self._add_cmd()
 
     def _get_readonly(self):
         return self._readonly
@@ -1117,7 +1048,6 @@ class Date(Widget):
 
     def _set_disabled(self, val):
         self._disabled = val
-        self._add_cmd()
 
     def _get_disabled(self):
         return self._disabled
@@ -1163,19 +1093,12 @@ class Date(Widget):
         self._attach_onchange()
 
     def _sync_properties(self):
-        if self._queue.__len__() > 0:
-            cmd = self._queue.pop()
-            return cmd
-        return json.dumps({'result': ''})
-
-    def _add_cmd(self):
-        self._queue.append(json.dumps({'disabled': self._disabled,
-                                       'value': self._value,
-                                       'min': self._min,
-                                       'max': self._max,
-                                       'readOnly': self._readonly
-                                       })
-                           )
+        return json.dumps({'disabled': self._disabled,
+                           'value': self._value,
+                           'min': self._min,
+                           'max': self._max,
+                           'readOnly': self._readonly
+                           })
 
     def _attach_polling(self):
         url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
@@ -1187,21 +1110,11 @@ class Date(Widget):
                                     type: "get",
                                     success: function(props){
                                         selector = $('#%s');
-                                        if(props.disabled != undefined){
-                                            selector.prop('disabled', props.disabled);
-                                        }
-                                        if(props.value != undefined){
-                                            selector.val(props.value);
-                                        }
-                                        if(props.readOnly != undefined){
-                                            selector.prop('readOnly', props.readOnly);
-                                        }
-                                        if(props.min != undefined){
-                                            selector.prop('min', props.min);
-                                        }
-                                        if(props.max != undefined){
-                                            selector.prop('max', props.max);
-                                        }
+                                        selector.prop('disabled', props.disabled);
+                                        selector.val(props.value);
+                                        selector.prop('readOnly', props.readOnly);
+                                        selector.prop('min', props.min);
+                                        selector.prop('max', props.max);
                                         //poll again
                                         %s_poll();
                                     },
