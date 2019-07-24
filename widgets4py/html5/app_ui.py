@@ -1194,11 +1194,15 @@ class File(Widget):
         if disabled:
             self.add_attribute('disabled')
             self._disabled = disabled
+        else:
+            self._disabled = False
         if required:
             self.add_attribute('required')
         if multiple:
             self.add_attribute('multiple')
             self._multiple = multiple
+        else:
+            self._multiple = False
         if upload_folder is not None:
             self._upload_folder = upload_folder
         else:
@@ -1280,16 +1284,20 @@ class File(Widget):
                                        self._process_onchange_callback, methods=['GET', 'POST'])
 
     def _process_onclick_callback(self):
-        return json.dumps({'result': self._onclick_callback()})
+        props = {}
+        return json.dumps({'result': self._onclick_callback(self._name, props)})
 
     def _process_onchange_callback(self):
+        props = {}
         if request.args.__len__() > 0:
             dsbld = request.args["disabled"]
             if dsbld is not None:
-                self._disabled = dsbld
+                self._disabled = True if dsbld == "true" else False
+                props['disabled'] = self._disabled
             multi = request.args["multiple"]
             if multi is not None:
-                self._multiple = multi
+                self._multiple = True if multi == "true" else False
+                props['multiple'] = self._multiple
         if request.files.__len__() > 0:
             file = request.files['file']
             if file and self._allowed_file(file.filename):
@@ -1297,37 +1305,42 @@ class File(Widget):
                 if not os.path.exists(self._upload_folder):
                     os.mkdir(self._upload_folder)
                 file.save(os.path.join(self._upload_folder, filename))
-        return json.dumps({'result': self._onchange_callback()})
+                props['filename'] = filename
+                props['upload_path'] = self._upload_folder
+        return json.dumps({'result': self._onchange_callback(self._name, props)})
 
-    def set_upload_folder(self, upload_folder):
+    def _set_upload_folder(self, upload_folder):
         self._upload_folder = upload_folder
 
-    def get_upload_folder(self):
+    def _get_upload_folder(self):
         return self._upload_folder
 
-    def set_allowed_ext(self, extensions):
+    upload_folder = property(_get_upload_folder, _set_upload_folder,
+                             doc="Folder path on serve where files will be stored")
+
+    def _set_allowed_ext(self, extensions):
         self._allowed_extensions = extensions
 
-    def get_allowed_ext(self):
+    def _get_allowed_ext(self):
         return self._allowed_extensions
 
-    def set_value(self, val):
-        self._value = val
+    allowed_extensions = property(_get_allowed_ext, _set_allowed_ext, doc="File extensions allowed for upload")
 
-    def get_value(self):
-        return self._value
-
-    def set_disabled(self, val):
+    def _set_disabled(self, val):
         self._disabled = val
 
-    def get_disabled(self):
+    def _get_disabled(self):
         return self._disabled
 
-    def set_multiple(self, val):
+    disabled = property(_get_disabled, _set_disabled, doc="Enabled or disabled state of the widget")
+
+    def _set_multiple(self, val):
         self._multiple = val
 
-    def get_multiple(self):
+    def _get_multiple(self):
         return self._multiple
+
+    multiple = property(_get_multiple, _set_multiple, doc="Whether to allow multi files upload")
 
     def on_click(self, onclick_callback, app=None):
         if app is not None:
@@ -1342,8 +1355,8 @@ class File(Widget):
         self._attach_onchange()
 
     def _sync_properties(self):
-        return json.dumps({'disabled': self._disabled if self._disabled is not None else 'false',
-                           'multiple': self._multiple if self._multiple is not None else 'false'
+        return json.dumps({'disabled': self._disabled,
+                           'multiple': self._multiple
                            })
 
     def _attach_polling(self):
@@ -1356,12 +1369,9 @@ class File(Widget):
                                     type: "get",
                                     success: function(props){
                                         selector = $('#%s');
-                                        if(props.disabled === true){
-                                            selector.prop('disabled', props.disabled);
-                                        }
-                                        if(props.multiple === true){
-                                            selector.prop('multiple', props.multiple);
-                                        }
+                                        alert('Dsbl: ' + props.disabled + ', Multi: ' + props.multiple);
+                                        selector.prop('disabled', props.disabled);
+                                        selector.prop('multiple', props.multiple);
                                         //alertify.success(props.title+ "<br />" + props.checked);
                                         //poll again
                                         %s_poll();
