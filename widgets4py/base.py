@@ -47,7 +47,7 @@ class Widget:
 
     _parent_widget = None
     _style = None  # {"height": "100%", "width": "100%"}
-    _properties = None
+    _props = None
     _child_widgets = None
     _widget_content = None
     _attributes = None
@@ -95,9 +95,9 @@ class Widget:
             self._widget_type = str(tag).upper()
 
         if prop is not None:
-            self._properties = prop
+            self._props = prop
         else:
-            self._properties = {}
+            self._props = {}
 
         if style is not None:
             self._style = style
@@ -157,7 +157,7 @@ class Widget:
             Args:
                 prop (list): A list of properties to be added to widget
         """
-        self._properties.update(prop)
+        self._props.update(prop)
 
     def get_properties(self):
         """Returns all the properties associated with the current widget
@@ -165,7 +165,7 @@ class Widget:
             Returns:
                 list: A list of properties that exists for an widget
         """
-        return self._properties
+        return self._props
 
     def add_property(self, key, value):
         """Adds an key-value property to the widget's properties. This will be rendered as
@@ -175,7 +175,7 @@ class Widget:
                 key (str): Name or identifier of the record in the `dict` object
                 value (object): A value that needs to be stored along the key
         """
-        self._properties[key] = value
+        self._props[key] = value
 
     def remove_property(self, key):
         """Removes an property from widget's properties matching the key passed as
@@ -184,7 +184,7 @@ class Widget:
             Args:
                 key (str): Name or identifier of the property
         """
-        self._properties.pop(key)
+        self._props.pop(key)
 
     def set_styles(self, style):
         """Applies the dict of styles to the widget. The style names should be same as styles
@@ -293,8 +293,8 @@ class Widget:
             + "name='" + self._name + "' "
 
         # Render properties of the node
-        for prop in self._properties:
-            content += prop + "='" + self._properties.get(prop) + "' "
+        for prop in self._props:
+            content += prop + "='" + self._props.get(prop) + "' "
         # Render style attributes
         content += "style='"
         for style in self._style:
@@ -412,6 +412,7 @@ class Page(Widget):
             self.add_js('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/alertify.min.js')
             self.add_js('http://code.jquery.com/jquery-2.1.1.min.js')
             self.add_js('http://w2ui.com/src/w2ui-1.5.rc1.min.js')
+            self.add_js('https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.slim.js')
 
     def add_js(self, path):
         """Adds an reference to javascript file to the page. The JS file could from the available
