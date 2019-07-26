@@ -21,7 +21,7 @@ class Button(Namespace, Widget):
 
     def __init__(self, name, title, app, socket_io, click_callback=None, disabled=None):
         Namespace.__init__(self, ('/' + str(__name__ + '_' + name + '_click').replace('.', '_')))
-        self._namespace_url = '/' + str(__name__ + "_" + self._name + "_click").replace('.', '_')
+        self._namespace_url = '/' + str(__name__ + "_" + name + "_click").replace('.', '_')
         self._name = name
         self._title = title
         self._app = app
@@ -48,7 +48,7 @@ class Button(Namespace, Widget):
     @disabled.setter
     def disabled(self, val):
         self._disabled = val
-        self._sync_properties()
+        self._sync_properties(self._namespace_url)
 
     @property
     def title(self):
@@ -57,10 +57,13 @@ class Button(Namespace, Widget):
     @title.setter
     def title(self, val):
         self._title = val
-        self._sync_properties()
+        self._sync_properties(self._namespace_url)
 
-    def _sync_properties(self):
-        emit('sync_properties', {'disabled': self._disabled, 'title': self._title})
+    # def set_disabled(self, obj):
+    #     self._sync_properties(obj.namespace)
+
+    def _sync_properties(self, ns):
+        emit('sync_properties_' + self._name, {'disabled': self._disabled, 'title': self._title}, namespace=ns)
 
     def on_click(self, click_callback, app=None):
         if app is not None:
@@ -113,13 +116,13 @@ class Button(Namespace, Widget):
                         socket.on('connect', function(){
                         });
 
-                        socket.on('sync_properties', function(props){
+                        socket.on('sync_properties_%s', function(props){
                             selector.prop('disabled', props['disabled']);
                             selector.val(props['title']);
                         });
                     });
                     </script>
-                """ % (self._namespace_url, self._name, self._name)
+                """ % (self._namespace_url, self._name, self._name, self._name)
         return script
 
     def render(self):
