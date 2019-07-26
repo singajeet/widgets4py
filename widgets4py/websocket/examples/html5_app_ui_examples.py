@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_socketio import SocketIO
 from widgets4py.base import Page
-from widgets4py.websocket.html5.app_ui import Button
+from widgets4py.websocket.html5.app_ui import Button, TextBox
 
 
 app = Flask(__name__)
@@ -13,14 +13,20 @@ class PageTest:
 
     bt = None
     bt1 = None
+    txt = None
 
     def show_layout(self):
         pg = Page('pg', 'Websocket')
         self.bt = Button('bt', 'Button', app, socketio, click_callback=self.btn_clicked)
         self.bt1 = Button('bt1', 'Button 1', app, socketio, click_callback=self.btn1_clicked)
+        self.txg = TextBox('txt', app, socketio, change_callback=self.txt_changed)
         pg.add(self.bt)
         pg.add(self.bt1)
+        pg.add(self.txt)
         return pg.render()
+
+    def txt_changed(self, source, props):
+        print("Txt changed: " + props['text'])
 
     def btn_clicked(self, source, props):
         self.bt1.disabled = not self.bt1.disabled
