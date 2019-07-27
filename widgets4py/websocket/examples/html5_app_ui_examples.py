@@ -18,10 +18,10 @@ class PageTest:
 
     def show_layout(self):
         pg = Page('pg', 'Websocket')
-        self.bt = Button('bt', 'Button', app, socketio, click_callback=self.btn_clicked)
-        self.bt1 = Button('bt1', 'Button 1', app, socketio, click_callback=self.btn1_clicked)
-        self.txt = TextBox('txt', app, socketio, change_callback=self.txt_changed)
-        self.chk = CheckBox('chk', app, socketio, title='My Checkbox', click_callback=self.chk_clicked)
+        self.bt = Button('bt', 'Button', socketio, click_callback=self.btn_clicked)
+        self.bt1 = Button('bt1', 'Button 1', socketio, click_callback=self.btn1_clicked)
+        self.txt = TextBox('txt', socketio, change_callback=self.txt_changed)
+        self.chk = CheckBox('chk', socketio, title='My Checkbox', click_callback=self.chk_clicked)
         pg.add(self.bt)
         pg.add(self.bt1)
         pg.add(self.txt)
