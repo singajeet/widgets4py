@@ -79,8 +79,10 @@ class Button(Namespace, Widget):
                 emit('success', {'status': True, 'message': 'success'})
             else:
                 emit('warning', {'status': False, 'message': 'No callback registered'})
-        except Exception:
-            emit('failed', {'status': False, 'message': 'Method failed during callback execution'})
+        except Exception as e:
+            print(str(e))
+            msg = 'Method failed during callback execution: '  + str(e)
+            emit('failed', {'status': False, 'message': msg})
 
     def on_connect(self):
         pass
@@ -142,7 +144,7 @@ class TextBox(Namespace, Widget):
     _disabled = None
     _readonly = None
 
-    def __init__(self, name, text, app, socket_io, change_callback=None, disabled=None, readonly=None):
+    def __init__(self, name, app, socket_io, change_callback=None, disabled=None, readonly=None, text=None):
         Namespace.__init__(self, ('/' + str(__name__ + '_' + name + '_click').replace('.', '_')))
         self._namespace_url = '/' + str(__name__ + "_" + name + "_click").replace('.', '_')
         self._name = name
@@ -221,8 +223,8 @@ class TextBox(Namespace, Widget):
                 emit('success', {'status': True, 'message': 'success'})
             else:
                 emit('warning', {'status': False, 'message': 'No callback registered'})
-        except Exception:
-            emit('failed', {'status': False, 'message': 'Method failed during callback execution'})
+        except Exception as e:
+            emit('failed', {'status': False, 'message': 'Method failed during callback execution: ' + e})
 
     def on_connect(self):
         pass
@@ -262,7 +264,7 @@ class TextBox(Namespace, Widget):
                         socket.on('sync_properties_%s', function(props){
                             selector.prop('disabled', props['disabled']);
                             selector.val(props['text']);
-                            selector.props('readOnly', props['readonly']);
+                            selector.prop('readOnly', props['readonly']);
                         });
                     });
                     </script>

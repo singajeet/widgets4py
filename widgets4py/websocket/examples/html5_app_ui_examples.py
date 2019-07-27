@@ -19,7 +19,7 @@ class PageTest:
         pg = Page('pg', 'Websocket')
         self.bt = Button('bt', 'Button', app, socketio, click_callback=self.btn_clicked)
         self.bt1 = Button('bt1', 'Button 1', app, socketio, click_callback=self.btn1_clicked)
-        self.txg = TextBox('txt', app, socketio, change_callback=self.txt_changed)
+        self.txt = TextBox('txt', app, socketio, change_callback=self.txt_changed)
         pg.add(self.bt)
         pg.add(self.bt1)
         pg.add(self.txt)
@@ -34,6 +34,7 @@ class PageTest:
             self.bt1.title = 'Disabled Button 1'
         else:
             self.bt1.title = 'Button 1'
+        self.txt.disabled = not self.txt.disabled
 
     def btn1_clicked(self, source, props):
         self.bt.disabled = not self.bt.disabled
@@ -41,6 +42,7 @@ class PageTest:
             self.bt.title = 'Disabled Button'
         else:
             self.bt.title = 'Button'
+        self.txt.readonly = not self.txt.readonly
 
 
 def start_app():

@@ -3,7 +3,6 @@ setup.py
 widgets4py/__init__.py
 widgets4py/base.py
 widgets4py/layouts.py
-widgets4py/test.py
 widgets4py.egg-info/PKG-INFO
 widgets4py.egg-info/SOURCES.txt
 widgets4py.egg-info/dependency_links.txt
