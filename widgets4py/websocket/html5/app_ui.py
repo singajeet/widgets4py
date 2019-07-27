@@ -573,7 +573,7 @@ class CheckBox(Namespace, Widget):
             content += self._render_post_content('input')
             content += "\n<label for='" + self._name + "' id='" +\
                        self._name + "_lbl'>" + self._title + "</label>"
-            content += "\n<div>" + "\n" + self._attach_script()
+            content += "\n</div>" + "\n" + self._attach_script()
             self._widget_content = content
             return self._widget_content
 
@@ -739,6 +739,231 @@ class Color(Namespace, Widget):
 
     def render(self):
         """Renders the content of the widget on the page"""
+        content = self._render_pre_content('input')
+        content += self._render_post_content('input')
+        self._widget_content = content + "\n" + self._attach_script()
+        return self._widget_content
+
+
+class Date(Namespace, Widget):
+    """TextBox widget is used to take string or alphanumeric inputs from the user"""
+
+    _socket_io = None
+    _change_callback = None
+    _namespace_url = None
+    _disabled = None
+    _readonly = None
+    _value = None
+    _max = None
+    _min = None
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None,
+                 readonly=None, text=None, desc=None, prop=None, style=None,
+                 attr=None, css_cls=None, value=None, max=None, min=None):
+        """Default constructor of the TextBox widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                onchange_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+                value (string): The current selected date in YYYY-MM-DD format
+                max (string): The max limit the calendar can be navigated to
+                min (string): The min limit the calendar can be navigated to
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
+        Namespace.__init__(self, ('/' + str(__name__ + '_' + name + '_change').replace('.', '_')))
+        self._namespace_url = '/' + str(__name__ + "_" + name + "_change").replace('.', '_')
+        self.add_property('type', 'date')
+        self._name = name
+        if value is not None:
+            self.add_property('value', value)
+            self._value = value
+        else:
+            self._value = ""
+        self._socket_io = socket_io
+        self._change_callback = change_callback
+        socket_io.on_namespace(self)
+        if disabled is not None:
+            self.disabled = disabled
+        else:
+            self._disabled = False
+        if max is not None:
+            self._max = max
+        if min is not None:
+            self._min = min
+        if readonly is not None:
+            self._readonly = readonly
+        else:
+            self._readonly = False
+
+    @property
+    def namespace(self):
+        """Namespace is the communication port used by the Flask-SocketIO"""
+        return self._namespace_url
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace_url = val
+
+    @property
+    def disabled(self):
+        """Enabled or disabled state of the widget"""
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties(self._namespace_url)
+
+    @property
+    def value(self):
+        """Current text value stored in the widget"""
+        return self._value
+
+    @value.setter
+    def value(self, val):
+        self._value = val
+        self._sync_properties(self._namespace_url)
+
+    @property
+    def max(self):
+        """The max limit the calendar can be navigated to
+        """
+        return self._max
+
+    @max.setter
+    def max(self, val):
+        self._max = val
+        self._sync_properties(self._namespace_url)
+
+    @property
+    def min(self):
+        """The min limit the calendar can be navigated to
+        """
+        return self._min
+
+    @min.setter
+    def min(self, val):
+        self._min = val
+        self._sync_properties(self._namespace_url)
+
+    @property
+    def readonly(self):
+        """The edit mode of the date widget"""
+        return self._readonly
+
+    @readonly.setter
+    def readonly(self, val):
+        self._readonly = val
+        self._sync_properties(self._namespace_url)
+
+    def _sync_properties(self, ns):
+        emit('sync_properties_' + self._name, {'disabled': self._disabled,
+                                               'value': self._value,
+                                               'max': self._max,
+                                               'min': self._min,
+                                               'readonly': self._readonly},
+             namespace=ns)
+
+    def on_change(self, change_callback):
+        """Registers an callable event handler with the textbox and called when text value is changed"""
+        self._change_callback = change_callback
+
+    def on_fire_change_event(self, props):
+        """For internal use only. This method is called by websocket on text changed event of the widget
+        """
+        dsbl = props['disabled']
+        if dsbl is not None:
+            self._disabled = dsbl
+        val = props['value']
+        if val is not None:
+            self._value = val
+        max = props['max']
+        if max is not None:
+            self._max = max
+        min = props['min']
+        if min is not None:
+            self._min = min
+        rdonly = props['readonly']
+        if rdonly is not None:
+            self._readonly = rdonly
+        try:
+            if self._change_callback is not None:
+                self._change_callback(self._name, props)
+                emit('success', {'status': True, 'message': 'success'})
+            else:
+                emit('warning', {'status': False, 'message': 'No callback registered'})
+        except Exception as e:
+            print("Error: " + str(e))
+            emit('failed', {'status': False, 'message': 'Method failed during callback execution: ' + str(e)})
+
+    def on_connect(self):
+        """This method is called when websocket connection is established"""
+        pass
+
+    def on_disconnect(self):
+        """This method is called when websocket connection is terminated"""
+        pass
+
+    def _attach_script(self):
+        script = """
+                    <script>
+                    $(document).ready(function(){
+                        var socket = io('%s');
+                        var selector = $('#%s');
+
+                        $('#%s').change(function(){
+                            var disabled = selector.prop('disabled');
+                            var value = selector.val();
+                            var max = selector.prop('max');
+                            var min = selector.prop('min');
+                            var rdonly = selector.prop('readOnly');
+                            socket.emit('fire_change_event', {'disabled': disabled, 'value': value, 'max': max, 'min': min, 'readonly': rdonly});  //  # noqa
+                        });
+
+                        socket.on('failed', function(data){
+                            alertify.error('Failure: ' + data['message']);
+                        });
+
+                        socket.on('warning', function(data){
+                            alertify.warning('Incomplete execution: ' + data['message']);
+                        });
+
+                        socket.on('success', function(data){
+                            alertify.success('Call success acknowledged!');
+                        });
+
+                        socket.on('connect', function(){
+                        });
+
+                        socket.on('sync_properties_%s', function(props){
+                            selector.prop('disabled', props['disabled']);
+                            selector.val(props['value']);
+                            selector.prop('max', props['max']);
+                            selector.prop('min', props['min']);
+                            selector.prop('readOnly', props['readonly']);
+                        });
+                    });
+                    </script>
+                """ % (self._namespace_url, self._name, self._name, self._name)
+        return script
+
+    def render(self):
+        """Renders the content of widget on page"""
         content = self._render_pre_content('input')
         content += self._render_post_content('input')
         self._widget_content = content + "\n" + self._attach_script()

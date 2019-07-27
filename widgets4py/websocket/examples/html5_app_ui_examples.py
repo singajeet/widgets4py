@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_socketio import SocketIO
 from widgets4py.base import Page
-from widgets4py.websocket.html5.app_ui import Button, TextBox, CheckBox
+from widgets4py.websocket.html5.app_ui import Button, TextBox, CheckBox, Color, Date
 
 
 app = Flask(__name__)
@@ -15,6 +15,8 @@ class PageTest:
     bt1 = None
     txt = None
     chk = None
+    clr = None
+    dt = None
 
     def show_layout(self):
         pg = Page('pg', 'Websocket')
@@ -22,11 +24,21 @@ class PageTest:
         self.bt1 = Button('bt1', 'Button 1', socketio, click_callback=self.btn1_clicked)
         self.txt = TextBox('txt', socketio, change_callback=self.txt_changed)
         self.chk = CheckBox('chk', socketio, title='My Checkbox', click_callback=self.chk_clicked)
+        self.clr = Color('clr', socketio, change_callback=self.color_changed)
+        self.dt = Date('dt', socketio, change_callback=self.dt_changed)
         pg.add(self.bt)
         pg.add(self.bt1)
         pg.add(self.txt)
         pg.add(self.chk)
+        pg.add(self.clr)
+        pg.add(self.dt)
         return pg.render()
+
+    def dt_changed(self, source, props):
+        print("Date changed: " + str(props['value']))
+
+    def color_changed(self, source, props):
+        print("Color changed to: " + str(props['value']))
 
     def chk_clicked(self, source, props):
         print("Checked changed to: " + str(props['checked']))
