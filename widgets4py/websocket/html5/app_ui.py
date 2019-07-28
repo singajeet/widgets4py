@@ -1448,3 +1448,77 @@ class Radio(CheckBox):
         CheckBox.__init__(self, name, socket_io, title=title, click_callback=click_callback, disabled=disabled,
                           value=value, checked=checked, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
         self.add_property('type', 'radio')
+
+
+class Range(Date):
+    """Range shows an slidebar with selector to choose a value within a range provided by slidebar
+    NOTE: Not supported on all browsers
+    """
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None,
+                 readonly=None, desc=None, prop=None, style=None,
+                 attr=None, css_cls=None, value=None, max=None, min=None):
+        """Default constructor of the Range widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                change_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+                value (string): The current selected value
+                max (string): The max limit of the range
+                min (string): The min limit of the range
+        """
+        Date.__init__(self, name, socket_io, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls, min=min,
+                      max=max, value=value, change_callback=change_callback)
+        self.add_property('type', 'range')
+        if self._max is None or self._max == "":
+            self._max = 100
+        if self._min is None or self._min == "":
+            self._min = 0
+
+
+class Reset(Button):
+    """A reset button widget to reset the value of other widgets to default values.
+    """
+
+    def __init__(self, name, title, socket_io, click_callback=None, disabled=None, desc=None, prop=None,
+                 style=None, attr=None, css_cls=None):
+        """Default constructor of the Reset widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the reset widget
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                onclick_callback (callable): A function to be called back on onclick event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onclick_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
+        self.add_property('type', 'button')
+        self.add_property('value', title)

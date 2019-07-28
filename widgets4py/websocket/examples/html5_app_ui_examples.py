@@ -2,7 +2,7 @@ from flask import Flask
 from flask_socketio import SocketIO
 from widgets4py.base import Page
 from widgets4py.websocket.html5.app_ui import Button, TextBox, CheckBox, Color, Date, DateTimeLocal, Email, File
-from widgets4py.websocket.html5.app_ui import Image, Month, Number, Password, Radio
+from widgets4py.websocket.html5.app_ui import Image, Month, Number, Password, Radio, Range
 from widgets4py.layouts import SimpleGridLayout
 
 
@@ -27,6 +27,7 @@ class PageTest:
     num = None
     pswd = None
     rd = None
+    rng = None
 
     def show_layout(self):
         pg = Page('pg', 'Websocket')
@@ -45,6 +46,7 @@ class PageTest:
         self.num = Number('num', socketio, change_callback=self.txt_changed)
         self.pswd = Password('pswd', socketio, change_callback=self.txt_changed)
         self.rd = Radio('rd', socketio, click_callback=self.chk_clicked, title="My Radio")
+        self.rng = Range('rng', socketio, min=0, max=100, change_callback=self.dt_changed)
         sg.add(self.bt)
         sg.add(self.bt1)
         sg.add(self.txt)
@@ -59,6 +61,7 @@ class PageTest:
         sg.add(self.num)
         sg.add(self.pswd)
         sg.add(self.rd)
+        sg.add(self.rng)
         pg.add(sg)
         return pg.render()
 
