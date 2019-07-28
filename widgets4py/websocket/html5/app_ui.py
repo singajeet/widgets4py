@@ -22,8 +22,8 @@ class Button(Namespace, Widget):
     _namespace_url = None
     _disabled = None
 
-    def __init__(self, name, title, socket_io, click_callback=None, disabled=None, desc=None, prop=None,
-                 style=None, attr=None, css_cls=None):
+    def __init__(self, name, title, socket_io, click_callback=None, disabled=None, desc=None,
+                 prop=None, style=None, attr=None, css_cls=None):
         """Default constructor of the Button widget class
 
             Args:
@@ -36,7 +36,8 @@ class Button(Namespace, Widget):
                 attr (list): list of objects to be added as attributes of HTML tag
                 disabled (Boolean): Enabled or Disabled state of widget
                 onclick_callback (callable): A function to be called back on onclick event.
-                                            The callback method should accept two args: `source` and `props`
+                                            The callback method should accept two args:
+                                            `source` and `props`
                                             as shown in below example:
 
                         def onclick_handler(source, props):
@@ -94,13 +95,15 @@ class Button(Namespace, Widget):
     #     self._sync_properties(obj.namespace)
 
     def _sync_properties(self, ns):
-        emit('sync_properties_' + self._name, {'disabled': self._disabled, 'title': self._title}, namespace=ns)
+        emit('sync_properties_' + self._name, {'disabled': self._disabled,
+                                               'title': self._title}, namespace=ns)
 
     def on_click(self, click_callback):
         """Registers an callback passed as argument with the onclick event
 
             Args:
-                click_callback (callable): Function or method that should be executed when event fires
+                click_callback (callable): Function or method that should be executed when
+                event fires
         """
         self._click_callback = click_callback
 
@@ -142,7 +145,8 @@ class Button(Namespace, Widget):
                         $('#%s').click(function(){
                             var disabled = selector.prop('disabled')
                             var title = selector.val();
-                            socket.emit('fire_click_event', {'disabled': disabled, 'title': title});
+                            socket.emit('fire_click_event', {'disabled': disabled,
+                                                             'title': title});
                         });
 
                         socket.on('failed', function(data){
@@ -373,8 +377,8 @@ class CheckBox(Namespace, Widget):
     _disabled = None
     _click_callback = None
 
-    def __init__(self, name, socket_io, title=None, click_callback=None, disabled=None, value=None, checked=None,
-                 desc=None, prop=None, style=None, attr=None, css_cls=None):
+    def __init__(self, name, socket_io, title=None, click_callback=None, disabled=None, value=None,
+                 checked=None, desc=None, prop=None, style=None, attr=None, css_cls=None):
         """Default constructor of the CheckBox widget class
 
             Args:
@@ -664,7 +668,8 @@ class Color(Namespace, Widget):
         self._sync_properties(self._namespace_url)
 
     def _sync_properties(self, ns):
-        emit('sync_properties_' + self._name, {'disabled': self._disabled, 'value': self._value}, namespace=ns)
+        emit('sync_properties_' + self._name, {'disabled': self._disabled,
+                                               'value': self._value}, namespace=ns)
 
     def on_change(self, change_callback):
         """Registers an change passed as argument with the onchange event
@@ -1007,8 +1012,8 @@ class DateTimeLocal(Date):
                 max (string): The max limit the calendar can be navigated to
                 min (string): The min limit the calendar can be navigated to
         """
-        Date.__init__(self, name, socket_io, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls, min=min,
-                      max=max, value=value, change_callback=change_callback)
+        Date.__init__(self, name, socket_io, desc=desc, prop=prop, style=style, attr=attr,
+                      css_cls=css_cls, min=min, max=max, value=value, change_callback=change_callback)
         self.add_property('type', 'datetime-local')
 
 
@@ -1043,7 +1048,8 @@ class Email(TextBox):
                 css_cls (list): An list of CSS class names to be added to current widget
         """
         TextBox.__init__(self, name, socket_io, text=email, desc=desc, prop=prop, style=style, attr=attr,
-                         css_cls=css_cls, change_callback=change_callback, disabled=disabled, readonly=readonly)
+                         css_cls=css_cls, change_callback=change_callback, disabled=disabled,
+                         readonly=readonly)
         self.add_property('type', 'email')
 
 
@@ -1339,8 +1345,8 @@ class Month(Date):
                 max (string): The max limit the calendar can be navigated to
                 min (string): The min limit the calendar can be navigated to
         """
-        Date.__init__(self, name, socket_io, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls, min=min,
-                      max=max, value=value, change_callback=change_callback)
+        Date.__init__(self, name, socket_io, desc=desc, prop=prop, style=style, attr=attr,
+                      css_cls=css_cls, min=min, max=max, value=value, change_callback=change_callback)
         self.add_property('type', 'month')
 
 
@@ -1376,7 +1382,8 @@ class Number(TextBox):
                 css_cls (list): An list of CSS class names to be added to current widget
         """
         TextBox.__init__(self, name, socket_io, text=value, desc=desc, prop=prop, style=style, attr=attr,
-                         css_cls=css_cls, change_callback=change_callback, disabled=disabled, readonly=readonly)
+                         css_cls=css_cls, change_callback=change_callback, disabled=disabled,
+                         readonly=readonly)
         self.add_property('type', 'number')
 
 
@@ -1410,7 +1417,8 @@ class Password(TextBox):
                 css_cls (list): An list of CSS class names to be added to current widget
         """
         TextBox.__init__(self, name, socket_io, text=value, desc=desc, prop=prop, style=style, attr=attr,
-                         css_cls=css_cls, change_callback=change_callback, disabled=disabled, readonly=readonly)
+                         css_cls=css_cls, change_callback=change_callback, disabled=disabled,
+                         readonly=readonly)
         self.add_property('type', 'password')
 
 
@@ -1419,8 +1427,8 @@ class Radio(CheckBox):
     At a time the input can be only in one state i.e., True (checked) or False (unchecked)
     """
 
-    def __init__(self, name, socket_io, title=None, click_callback=None, disabled=None, value=None, checked=None,
-                 desc=None, prop=None, style=None, attr=None, css_cls=None):
+    def __init__(self, name, socket_io, title=None, click_callback=None, disabled=None, value=None,
+                 checked=None, desc=None, prop=None, style=None, attr=None, css_cls=None):
         """Default constructor of the Radio widget class
 
             Args:
@@ -1445,8 +1453,9 @@ class Radio(CheckBox):
                         props: Dict object having two props: Title & Disabled
                 css_cls (list): An list of CSS class names to be added to current widget
         """
-        CheckBox.__init__(self, name, socket_io, title=title, click_callback=click_callback, disabled=disabled,
-                          value=value, checked=checked, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
+        CheckBox.__init__(self, name, socket_io, title=title, click_callback=click_callback,
+                          disabled=disabled, value=value, checked=checked, desc=desc, prop=prop,
+                          style=style, attr=attr, css_cls=css_cls)
         self.add_property('type', 'radio')
 
 
@@ -1482,8 +1491,8 @@ class Range(Date):
                 max (string): The max limit of the range
                 min (string): The min limit of the range
         """
-        Date.__init__(self, name, socket_io, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls, min=min,
-                      max=max, value=value, change_callback=change_callback)
+        Date.__init__(self, name, socket_io, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls,
+                      min=min, max=max, value=value, change_callback=change_callback)
         self.add_property('type', 'range')
         if self._max is None or self._max == "":
             self._max = 100
@@ -1492,10 +1501,10 @@ class Range(Date):
 
 
 class Reset(Button):
-    """A reset button widget to reset the value of other widgets to default values.
+    """A reset button widget to reset the value of other widgets to default values in a Form.
     """
 
-    def __init__(self, name, title, socket_io, click_callback=None, disabled=None, desc=None, prop=None,
+    def __init__(self, name, socket_io, title=None, click_callback=None, disabled=None, desc=None, prop=None,
                  style=None, attr=None, css_cls=None):
         """Default constructor of the Reset widget class
 
@@ -1519,6 +1528,430 @@ class Reset(Button):
                         props: Dict object having two props: Title & Disabled
                 css_cls (list): An list of CSS class names to be added to current widget
         """
+        Button.__init__(self, name, title, socket_io, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls, disabled=disabled, click_callback=click_callback)
+        self.add_property('type', 'reset')
+        if title is not None:
+            self._title = title
+            self.add_property('value', title)
+
+
+class Search(TextBox):
+    """Search widget is used to take search queries as input from the user.
+    """
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None, readonly=None, value=None,
+                 desc=None, prop=None, style=None, attr=None, css_cls=None):
+        """Default constructor of the search widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                value (string): Initial value to be displayed in the widget
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the search widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                readonly (Boolean): Puts the widget in the readonly mode
+                onchange_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
+        TextBox.__init__(self, name, socket_io, text=value, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, change_callback=change_callback, disabled=disabled,
+                         readonly=readonly)
+        self.add_property('type', 'search')
+
+
+class Submit(Button):
+    """A submit button widget to post the values of other form widgets to the server.
+    """
+
+    def __init__(self, name, socket_io, title=None, click_callback=None, disabled=None, desc=None,
+                 prop=None, style=None, attr=None, css_cls=None):
+        """Default constructor of the submit widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                title (string): title of the submit widget
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the submit widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                onclick_callback (callable): A function to be called back on onclick event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onclick_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
+        Button.__init__(self, name, title, socket_io, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls, disabled=disabled, click_callback=click_callback)
+        self.add_property('type', 'submit')
+        if title is not None:
+            self._title = title
+            self.add_property('value', title)
+
+
+class Telephone(TextBox):
+    """Telephone widget is used to take mobile or phone numbers as input from the user.
+    """
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None, readonly=None, tel_number=None,
+                 desc=None, prop=None, style=None, attr=None, css_cls=None):
+        """Default constructor of the telephone widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                tel_number (string): Initial value to be displayed in the widget
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the telephone widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                readonly (Boolean): Puts the widget in the readonly mode
+                onchange_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
+        TextBox.__init__(self, name, socket_io, text=tel_number, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, change_callback=change_callback, disabled=disabled,
+                         readonly=readonly)
+        self.add_property('type', 'tel')
+
+
+class Time(Date):
+    """Time allows user to enter time in 12h or 24h format
+    NOTE: Not supported on all browsers
+    """
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None,
+                 readonly=None, desc=None, prop=None, style=None,
+                 attr=None, css_cls=None, value=None, max=None, min=None):
+        """Default constructor of the time widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the time widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                change_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+                value (string): The current time value
+                max (string): The max limit of the time
+                min (string): The min limit of the time
+        """
+        Date.__init__(self, name, socket_io, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls,
+                      min=min, max=max, value=value, change_callback=change_callback)
+        self.add_property('type', 'time')
+
+
+class URL(TextBox):
+    """URL widget is used to take website address as input from the user.
+    """
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None, readonly=None, url=None,
+                 desc=None, prop=None, style=None, attr=None, css_cls=None):
+        """Default constructor of the url widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                url (string): Initial value to be displayed in the widget
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the url widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                readonly (Boolean): Puts the widget in the readonly mode
+                onchange_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
+        TextBox.__init__(self, name, socket_io, text=url, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, change_callback=change_callback, disabled=disabled,
+                         readonly=readonly)
+        self.add_property('type', 'url')
+
+
+class Week(Date):
+    """Time allows user to enter week number
+    NOTE: Not supported on all browsers
+    """
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None,
+                 readonly=None, desc=None, prop=None, style=None,
+                 attr=None, css_cls=None, value=None, max=None, min=None):
+        """Default constructor of the time widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the week widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                change_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+                value (string): The current week value
+                max (string): The max limit of the weeks
+                min (string): The min limit of the weeks
+        """
+        Date.__init__(self, name, socket_io, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls,
+                      min=min, max=max, value=value, change_callback=change_callback)
+        self.add_property('type', 'week')
+
+
+class Form(Namespace, Widget):
+    """A form widget having the capabilites to post the content of its child widgets
+    to the server for further processing
+    """
+
+    _socket_io = None
+    _submit_callback = None
+    _namespace_url = None
+    _disabled = None
+    _submitted_form_data = None
+    _use_fieldset = None
+    _legend = None
+
+    def __init__(self, name, socket_io, click_callback=None, disabled=None, desc=None,
+                 prop=None, style=None, attr=None, css_cls=None, use_fieldset=None,
+                 legend=None):
+        """Default constructor of the Button widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                onclick_callback (callable): A function to be called back on onclick event.
+                                            The callback method should accept two args:
+                                            `source` and `props`
+                                            as shown in below example:
+
+                        def onclick_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+                use_fieldset (boolean): Whether to group widgets under an fieldset or not
+                legend (string): if `use_fieldset` is True, the title to be displayed for group
+        """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
-        self.add_property('type', 'button')
-        self.add_property('value', title)
+        Namespace.__init__(self, ('/' + str(__name__ + '_' + name + '_click').replace('.', '_')))
+        self._namespace_url = '/' + str(__name__ + "_" + name + "_click").replace('.', '_')
+        self._name = name
+        self._socket_io = socket_io
+        self._click_callback = click_callback
+        socket_io.on_namespace(self)
+        if disabled is not None:
+            self.disabled = disabled
+        else:
+            self._disabled = False
+        if use_fieldset is not None:
+            self._use_fieldset = use_fieldset
+        else:
+            self._use_fieldset = False
+        if legend is not None:
+            self._legend = legend
+        else:
+            self._legend = ""
+
+    @property
+    def namespace(self):
+        """Namespace is the communication port used by the Flask-SocketIO framework"""
+        return self._namespace_url
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace_url = val
+
+    @property
+    def disabled(self):
+        """Enables or disables the widget in client's window"""
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties(self._namespace_url)
+
+    @property
+    def submitted_form_data(self):
+        """The data submitted by the form collected from its child widgets.
+        This is a readonly property"""
+        return self._submitted_form_data
+
+    @property
+    def use_fieldset(self):
+        """Whether to group form child widgets under an fieldset or not"""
+        return self._use_fieldset
+
+    @use_fieldset.setter
+    def use_fieldset(self, val):
+        self._use_fieldset = val
+
+    @property
+    def legend(self):
+        """If `use_fieldset` is True, the title to be shown on fieldset or group"""
+        return self._legend
+
+    @legend.setter
+    def legend(self, val):
+        self._legend = val
+
+    def _sync_properties(self, ns):
+        emit('sync_properties_' + self._name, {'disabled': self._disabled,
+                                               'legend': self._legend},
+             namespace=ns)
+
+    def on_submit(self, submit_callback):
+        """Registers an callback passed as argument with the submit event
+
+            Args:
+                submit_callback (callable): Function or method that should be executed when
+                event fires
+        """
+        self._submit_callback = submit_callback
+
+    def on_fire_submit_event(self, props):
+        """For internal use only: This function is called by the websocket when the event is raised.
+        """
+        dsbl = props['disabled']
+        if dsbl is not None:
+            self._disabled = dsbl
+        lgnd = props['legend']
+        if lgnd is not None:
+            self._legend = lgnd
+        form_data = props['form']
+        if form_data is not None:
+            self._submitted_form_data = form_data
+        try:
+            if self._submit_callback is not None:
+                self._submit_callback(self._name, props)
+                emit('success', {'status': True, 'message': 'success'})
+            else:
+                emit('warning', {'status': False, 'message': 'No callback registered'})
+        except Exception as e:
+            print("Error: " + str(e))
+            msg = 'Method failed during callback execution: ' + str(e)
+            emit('failed', {'status': False, 'message': msg})
+
+    def on_connect(self):
+        """Called by websocket when connection is established"""
+        pass
+
+    def on_disconnect(self):
+        """Called by websocket when connection is terminated"""
+        pass
+
+    def _attach_script(self):
+        script = """
+                    <script>
+                    $(document).ready(function(){
+                        var socket = io('%s');
+                        var selector = $('#%s');
+                        var legend_selector = $('#%s_legend');
+                        var submit_btn_selector = $('#%s_submit_button');
+
+                        submit_btn_selector.click(function(){
+                            var disabled = submit_btn_selector.prop('disabled');
+                            var legend = legend_selector.text();
+                            var form = selector.serialize();
+                            socket.emit('fire_submit_event', {'disabled': disabled,
+                                                              'legend': legend,
+                                                              'form': form});
+                        });
+
+                        socket.on('failed', function(data){
+                            alertify.error('Failure: ' + data['message']);
+                        });
+
+                        socket.on('warning', function(data){
+                            alertify.warning('Incomplete execution: ' + data['message']);
+                        });
+
+                        socket.on('success', function(data){
+                            alertify.success('Call success acknowledged!');
+                        });
+
+                        socket.on('connect', function(){
+                        });
+
+                        socket.on('sync_properties_%s', function(props){
+                            submit_btn_selector.prop('disabled', props['disabled']);
+                            legend_selector.text(props['legend']);
+                        });
+                    });
+                    </script>
+                """ % (self._namespace_url, self._name, self._name, self._name, self._name)
+        return script
+
+    def render(self):
+        """Renders the content of the widget on the page"""
+        content = self._render_pre_content('form')
+        if self._use_fieldset is True:
+            content += "\n<fieldset>"
+        if self._legend is not None:
+            content += "\n<legend id='" + self._name + "_legend'>" + self._legend + "</legend>"
+        for widget in self._child_widgets:
+            content += widget.render()
+        if self._use_fieldset is True:
+            content += "\n</fieldset>"
+        content += "<button type='submit' value='Submit' id='" + self._name + "_submit_button' />"
+        self._widget_content = content + self._render_post_content('form') + "\n" + self._attach_script()
+        return self._widget_content

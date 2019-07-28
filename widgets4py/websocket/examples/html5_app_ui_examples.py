@@ -1,8 +1,10 @@
 from flask import Flask
 from flask_socketio import SocketIO
 from widgets4py.base import Page
-from widgets4py.websocket.html5.app_ui import Button, TextBox, CheckBox, Color, Date, DateTimeLocal, Email, File
-from widgets4py.websocket.html5.app_ui import Image, Month, Number, Password, Radio, Range
+from widgets4py.websocket.html5.app_ui import Button, TextBox, CheckBox, Color, Date, DateTimeLocal
+from widgets4py.websocket.html5.app_ui import Image, Month, Number, Password, Radio, Range, Email
+from widgets4py.websocket.html5.app_ui import File, Reset, Search, Submit, Telephone, Time, URL
+from widgets4py.websocket.html5.app_ui import Week, Form
 from widgets4py.layouts import SimpleGridLayout
 
 
@@ -28,10 +30,19 @@ class PageTest:
     pswd = None
     rd = None
     rng = None
+    rst = None
+    srch = None
+    sbmt = None
+    tel = None
+    time = None
+    url = None
+    week = None
+    frm = None
+    frm_text = None
 
     def show_layout(self):
         pg = Page('pg', 'Websocket')
-        sg = SimpleGridLayout('sg', 20, 1)
+        sg = SimpleGridLayout('sg', 23, 1)
         self.bt = Button('bt', 'Button', socketio, click_callback=self.btn_clicked)
         self.bt1 = Button('bt1', 'Button 1', socketio, click_callback=self.btn1_clicked)
         self.txt = TextBox('txt', socketio, change_callback=self.txt_changed)
@@ -47,6 +58,15 @@ class PageTest:
         self.pswd = Password('pswd', socketio, change_callback=self.txt_changed)
         self.rd = Radio('rd', socketio, click_callback=self.chk_clicked, title="My Radio")
         self.rng = Range('rng', socketio, min=0, max=100, change_callback=self.dt_changed)
+        self.rst = Reset('rst', socketio, title='Cancel', click_callback=self.btn_clicked)
+        self.srch = Search('srch', socketio, change_callback=self.txt_changed)
+        self.sbmt = Submit('sbmt', socketio, title='Save', click_callback=self.btn_clicked)
+        self.tel = Telephone('tel', socketio, change_callback=self.txt_changed)
+        self.time = Time('time', socketio, change_callback=self.dt_changed)
+        self.url = URL('url', socketio, change_callback=self.txt_changed)
+        self.week = Week('week', socketio, change_callback=self.dt_changed)
+        self.frm = Form('frm', socketio, use_fieldset=True, legend="My Form")
+        self.frm_text = TextBox('frm_text', socketio)
         sg.add(self.bt)
         sg.add(self.bt1)
         sg.add(self.txt)
@@ -62,6 +82,15 @@ class PageTest:
         sg.add(self.pswd)
         sg.add(self.rd)
         sg.add(self.rng)
+        sg.add(self.rst)
+        sg.add(self.srch)
+        sg.add(self.sbmt)
+        sg.add(self.tel)
+        sg.add(self.time)
+        sg.add(self.url)
+        sg.add(self.week)
+        self.frm.add(self.frm_text)
+        sg.add(self.frm)
         pg.add(sg)
         return pg.render()
 
