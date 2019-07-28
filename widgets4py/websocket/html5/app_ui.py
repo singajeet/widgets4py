@@ -1230,13 +1230,11 @@ class File(Namespace, Widget):
 
     def on_connect(self):
         """This method is called when websocket connection is established"""
-        # pass
-        print("\nConnected\n")
+        pass
 
     def on_disconnect(self):
         """This method is called when websocket connection is terminated"""
-        # pass
-        print("\nDisconnected\n")
+        pass
 
     def _attach_script(self):
         script = """
@@ -1274,7 +1272,6 @@ class File(Namespace, Widget):
                         });
 
                         socket.on('connect', function(){
-                            alert("Connected");
                         });
 
                         socket.on('sync_properties_%s', function(props){
@@ -1292,3 +1289,162 @@ class File(Namespace, Widget):
         content += self._render_post_content('input')
         self._widget_content = content + "\n" + self._attach_script()
         return self._widget_content
+
+
+class Image(Button):
+    """An image widget is used to display any kind of image supported by the browser.
+    Image can receive an click event and same can be utilized to bind callback handlers
+    """
+
+    def __init__(self, name, src, socket_io, desc=None, prop=None, style=None, attr=None,
+                 alt_text=None, readonly=False, disabled=False, required=False,
+                 css_cls=None, click_callback=None):
+        Button.__init__(self, name, "image", socket_io, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls, click_callback=click_callback)
+        self.add_property('type', 'image')
+        self.add_property('src', src)
+        if alt_text is not None:
+            self.add_property('value', alt_text)
+
+
+class Month(Date):
+    """Month shows an calendar with months to get inputs from the user
+    NOTE: Not supported on all browsers
+    """
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None,
+                 readonly=None, desc=None, prop=None, style=None,
+                 attr=None, css_cls=None, value=None, max=None, min=None):
+        """Default constructor of the Month widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                change_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+                value (string): The current selected date in YYYY-MM-DD format
+                max (string): The max limit the calendar can be navigated to
+                min (string): The min limit the calendar can be navigated to
+        """
+        Date.__init__(self, name, socket_io, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls, min=min,
+                      max=max, value=value, change_callback=change_callback)
+        self.add_property('type', 'month')
+
+
+class Number(TextBox):
+    """Number widget is used to take numbers as input from the user.
+    On mobile devices, it should open the number keyboard instead of standard one.
+    NOTE: Not supported on all browsers
+    """
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None, readonly=None, value=None,
+                 desc=None, prop=None, style=None, attr=None, css_cls=None):
+        """Default constructor of the Number widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                value (string): Initial value to be displayed in the widget
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                readonly (Boolean): Puts the widget in the readonly mode
+                onchange_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
+        TextBox.__init__(self, name, socket_io, text=value, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, change_callback=change_callback, disabled=disabled, readonly=readonly)
+        self.add_property('type', 'number')
+
+
+class Password(TextBox):
+    """Passwordwidget is used to take passwords as input from the user.
+    """
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None, readonly=None, value=None,
+                 desc=None, prop=None, style=None, attr=None, css_cls=None):
+        """Default constructor of the password widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                value (string): Initial value to be displayed in the widget
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                readonly (Boolean): Puts the widget in the readonly mode
+                onchange_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
+        TextBox.__init__(self, name, socket_io, text=value, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, change_callback=change_callback, disabled=disabled, readonly=readonly)
+        self.add_property('type', 'password')
+
+
+class Radio(CheckBox):
+    """The Radio widget allows to enter input in only two states: True and False or Checked and Unchecked.
+    At a time the input can be only in one state i.e., True (checked) or False (unchecked)
+    """
+
+    def __init__(self, name, socket_io, title=None, click_callback=None, disabled=None, value=None, checked=None,
+                 desc=None, prop=None, style=None, attr=None, css_cls=None):
+        """Default constructor of the Radio widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                title (string): The label that will be rendered next to checkbox
+                value (string): An value associated with checkbox
+                checked (boolean): Initial state of the checkbox i.e., checked or unchecked
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                onchange_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
+        CheckBox.__init__(self, name, socket_io, title=title, click_callback=click_callback, disabled=disabled,
+                          value=value, checked=checked, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
+        self.add_property('type', 'radio')
