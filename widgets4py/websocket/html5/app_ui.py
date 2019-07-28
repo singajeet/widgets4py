@@ -6,6 +6,7 @@ and the is rendered using Javascript Socket-IO client API's
 Author: Ajeet Singh
 Date: 07/25/2019
 """
+import os
 from flask_socketio import emit, Namespace
 from widgets4py.base import Widget
 
@@ -194,6 +195,7 @@ class TextBox(Namespace, Widget):
                 name (string): name of the widget for internal use
                 text (string): Initial text to be displayed in the widget
                 socket_io (SocketIO, required): An instance of the `SocketIO` class
+                readonly (boolean): Puts the widget in the readonly mode
                 desc (string): description of the button widget OPTIONAL!
                 prop (dict): dict of objects to be added as properties of widget
                 style (dict): dict of objects to be added as style elements to HTML tag
@@ -373,7 +375,7 @@ class CheckBox(Namespace, Widget):
 
     def __init__(self, name, socket_io, title=None, click_callback=None, disabled=None, value=None, checked=None,
                  desc=None, prop=None, style=None, attr=None, css_cls=None):
-        """Default constructor of the TextBox widget class
+        """Default constructor of the CheckBox widget class
 
             Args:
                 name (string): name of the widget for internal use
@@ -592,7 +594,7 @@ class Color(Namespace, Widget):
 
     def __init__(self, name, socket_io, change_callback=None, disabled=None, desc=None, prop=None,
                  style=None, attr=None, css_cls=None, value=None):
-        """Default constructor of the Button widget class
+        """Default constructor of the Color widget class
 
             Args:
                 name (string): name of the widget for internal use
@@ -746,7 +748,9 @@ class Color(Namespace, Widget):
 
 
 class Date(Namespace, Widget):
-    """TextBox widget is used to take string or alphanumeric inputs from the user"""
+    """Date widget displays an calendar to get the inputs from the user
+        NOTE: Not supported on all browsers
+   """
 
     _socket_io = None
     _change_callback = None
@@ -758,13 +762,14 @@ class Date(Namespace, Widget):
     _min = None
 
     def __init__(self, name, socket_io, change_callback=None, disabled=None,
-                 readonly=None, text=None, desc=None, prop=None, style=None,
+                 readonly=None, desc=None, prop=None, style=None,
                  attr=None, css_cls=None, value=None, max=None, min=None):
-        """Default constructor of the TextBox widget class
+        """Default constructor of the Date widget class
 
             Args:
                 name (string): name of the widget for internal use
                 socket_io (SocketIO, required): An instance of the `SocketIO` class
+                readonly (boolean): Puts the widget in the readonly mode
                 desc (string): description of the button widget OPTIONAL!
                 prop (dict): dict of objects to be added as properties of widget
                 style (dict): dict of objects to be added as style elements to HTML tag
@@ -960,6 +965,325 @@ class Date(Namespace, Widget):
                     });
                     </script>
                 """ % (self._namespace_url, self._name, self._name, self._name)
+        return script
+
+    def render(self):
+        """Renders the content of widget on page"""
+        content = self._render_pre_content('input')
+        content += self._render_post_content('input')
+        self._widget_content = content + "\n" + self._attach_script()
+        return self._widget_content
+
+
+class DateTimeLocal(Date):
+    """DateTimeLocal shows an calendar with date and time to get inputs from the user
+    NOTE: Not supported on all browsers
+    """
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None,
+                 readonly=None, desc=None, prop=None, style=None,
+                 attr=None, css_cls=None, value=None, max=None, min=None):
+        """Default constructor of the DateTimeLocal widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                onchange_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+                value (string): The current selected date in YYYY-MM-DD format
+                max (string): The max limit the calendar can be navigated to
+                min (string): The min limit the calendar can be navigated to
+        """
+        Date.__init__(self, name, socket_io, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls, min=min,
+                      max=max, value=value, change_callback=change_callback)
+        self.add_property('type', 'datetime-local')
+
+
+class Email(TextBox):
+    """Email widget is used to take email address as input from the user
+    NOTE: Not supported on all browsers
+    """
+
+    def __init__(self, name, socket_io, change_callback=None, disabled=None, readonly=None, email=None,
+                 desc=None, prop=None, style=None, attr=None, css_cls=None):
+        """Default constructor of the Email widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                email (string): Initial email address to be displayed in the widget
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                readonly (Boolean): Puts the widget in the readonly mode
+                onchange_callback (callable): A function to be called back on onchange event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onchange_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                css_cls (list): An list of CSS class names to be added to current widget
+        """
+        TextBox.__init__(self, name, socket_io, text=email, desc=desc, prop=prop, style=style, attr=attr,
+                         css_cls=css_cls, change_callback=change_callback, disabled=disabled, readonly=readonly)
+        self.add_property('type', 'email')
+
+
+class File(Namespace, Widget):
+    """A simple file widget having the capabilites to fire click event
+    at server whenever an file from client is loaded to server. The
+    path to store files on server is configurable and it also support
+    multiple file upload
+    """
+
+    _socket_io = None
+    _click_callback = None
+    _change_callback = None
+    _namespace_url = None
+    _disabled = None
+    _multiple = None
+    _upload_folder = None
+    _allowed_extensions = None
+
+    def __init__(self, name, socket_io, click_callback=None, disabled=None, desc=None, prop=None,
+                 style=None, attr=None, css_cls=None, multiple=None, upload_folder=None,
+                 allowed_extensions=None, change_callback=None):
+        """Default constructor of the Button widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the button widget OPTIONAL!
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                click_callback (callable): A function to be called back on onclick event.
+                                            The callback method should accept two args: `source` and `props`
+                                            as shown in below example:
+
+                        def onclick_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                change_callback (callable): Same as onclick but fires on change event of widget
+                css_cls (list): An list of CSS class names to be added to current widget
+                multiple (boolean): Allows multiple files to be uploaded
+                upload_folder (string): The path on the server where files should be stored. This path is
+                                        relative the web server path
+                allowed_extensions (list): A list of strings containing the ext allowed to be uploaded
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
+        Namespace.__init__(self, ('/' + str(__name__ + '_' + name + '_click').replace('.', '_')))
+        self._namespace_url = '/' + str(__name__ + "_" + name + "_click").replace('.', '_')
+        self.add_property('type', 'file')
+        if multiple is not None:
+            self._multiple = multiple
+        else:
+            self._multiple = False
+        if upload_folder is not None:
+            self._upload_folder = upload_folder
+        else:
+            self._upload_folder = "uploads"
+        if allowed_extensions is not None:
+            self._allowed_extensions = allowed_extensions
+        else:
+            self._allowed_extensions = set(['txt', 'pdf', 'png', 'jpg', 'jpeg',
+                                            'gif', 'doc', 'docx', 'xls', 'xlsx'])
+        self._click_callback = click_callback
+        self._change_callback = change_callback
+        socket_io.on_namespace(self)
+
+    def _allowed_file(self, filename):
+        return '.' in filename and filename.rsplit('.', 1)[1] in self._allowed_extensions
+
+    @property
+    def namespace(self):
+        """Namespace is used by websocket as connection port"""
+        return self._namespace_url
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace_url = val
+
+    @property
+    def disabled(self):
+        """To enable or disable the file widget"""
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties(self._namespace_url)
+
+    @property
+    def multiple(self):
+        """Allows to upload multiple files if set to True"""
+        return self._multiple
+
+    @multiple.setter
+    def multiple(self, val):
+        self._multiple = val
+        self._sync_properties(self._namespace_url)
+
+    @property
+    def upload_folder(self):
+        """The path on the server where uploaded files will be stored. The path is relative to
+        root of the application on webserver. The default path is "uploads/"
+        """
+        return self._upload_folder
+
+    @upload_folder.setter
+    def upload_folder(self, val):
+        self._upload_folder = val
+        self._sync_properties(self._namespace_url)
+
+    @property
+    def allowed_extensions(self):
+        """List of allowed file extensions to be uploaded"""
+        return self._allowed_extensions
+
+    @allowed_extensions.setter
+    def allowed_extensions(self, val):
+        self._allowed_extensions = val
+        self._sync_properties(self._namespace_url)
+
+    def _sync_properties(self, ns):
+        emit('sync_properties_' + self._name, {'disabled': self._disabled,
+                                               'multiple': self._multiple},
+             namespace=ns)
+
+    def on_change(self, change_callback):
+        """Registers an callable event handler with the widget and called when text value is changed"""
+        self._change_callback = change_callback
+
+    def on_click(self, click_callback):
+        """Registers an callable event handler with the widget and called when the widget is clicked"""
+        self._click_callback = click_callback
+
+    def on_fire_change_event(self, props):
+        """For internal use only. This method is called by websocket on value changed event of the widget
+        """
+        dsbl = props['disabled']
+        if dsbl is not None:
+            self._disabled = dsbl
+        mul = props['multiple']
+        if mul is not None:
+            self._multiple = mul
+        files = props['files']
+        if files is not None:
+            files_path = []
+            for fl in files:
+                if fl and self._allowed_file(fl.filename):
+                    filename = fl.filename
+                    if not os.path.exists(self._upload_folder):
+                        os.mkdir(self._upload_folder)
+                    fl.save(os.path.join(self._upload_folder, filename))
+                    files_path.append(os.path.join(self._upload_folder, filename))
+        try:
+            if self._change_callback is not None:
+                self._change_callback(self._name, props)
+                emit('success', {'status': True, 'message': 'success'})
+            else:
+                emit('warning', {'status': False, 'message': 'No callback registered'})
+        except Exception as e:
+            print("Error: " + str(e))
+            emit('failed', {'status': False, 'message': 'Method failed during callback execution: ' + str(e)})
+
+    def on_fire_click_event(self, props):
+        """For internal use only. This method is called by websocket on click event of the widget
+        """
+        dsbl = props['disabled']
+        if dsbl is not None:
+            self._disabled = dsbl
+        mul = props['multiple']
+        if mul is not None:
+            self._multiple = mul
+        try:
+            if self._click_callback is not None:
+                self._click_callback(self._name, props)
+                emit('success', {'status': True, 'message': 'success'})
+            else:
+                emit('warning', {'status': False, 'message': 'No callback registered'})
+        except Exception as e:
+            print("Error: " + str(e))
+            emit('failed', {'status': False, 'message': 'Method failed during callback execution: ' + str(e)})
+
+    def on_connect(self):
+        """This method is called when websocket connection is established"""
+        # pass
+        print("\nConnected\n")
+
+    def on_disconnect(self):
+        """This method is called when websocket connection is terminated"""
+        # pass
+        print("\nDisconnected\n")
+
+    def _attach_script(self):
+        script = """
+                    <script>
+                    $(document).ready(function(){
+                        var socket = io('%s');
+                        var selector = $('#%s');
+
+                        $('#%s').change(function(){
+                            var disabled = selector.prop('disabled');
+                            var mul = selector.prop('multiple');
+                            var files = selector.prop('files');
+                            socket.emit('fire_change_event', {'disabled': disabled,
+                                                              'multiple': multiple,
+                                                              'files': files});
+                        });
+
+                        $('#%s').click(function(){
+                            var disabled = selector.prop('disabled');
+                            var mul = selector.prop('multiple');
+                            socket.emit('fire_click_event', {'disabled': disabled, 'multiple': multiple});
+                        });
+
+
+                        socket.on('failed', function(data){
+                            alertify.error('Failure: ' + data['message']);
+                        });
+
+                        socket.on('warning', function(data){
+                            alertify.warning('Incomplete execution: ' + data['message']);
+                        });
+
+                        socket.on('success', function(data){
+                            alertify.success('Call success acknowledged!');
+                        });
+
+                        socket.on('connect', function(){
+                            alert("Connected");
+                        });
+
+                        socket.on('sync_properties_%s', function(props){
+                            selector.prop('disabled', props['disabled']);
+                            selecttor.prop('multiple', props['multiple']);
+                        });
+                    });
+                    </script>
+                """ % (self._namespace_url, self._name, self._name, self._name, self._name)
         return script
 
     def render(self):

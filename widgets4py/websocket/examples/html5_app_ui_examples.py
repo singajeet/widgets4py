@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_socketio import SocketIO
 from widgets4py.base import Page
-from widgets4py.websocket.html5.app_ui import Button, TextBox, CheckBox, Color, Date
+from widgets4py.websocket.html5.app_ui import Button, TextBox, CheckBox, Color, Date, DateTimeLocal, Email, File
 
 
 app = Flask(__name__)
@@ -17,6 +17,9 @@ class PageTest:
     chk = None
     clr = None
     dt = None
+    dtl = None
+    eml = None
+    fl = None
 
     def show_layout(self):
         pg = Page('pg', 'Websocket')
@@ -26,13 +29,26 @@ class PageTest:
         self.chk = CheckBox('chk', socketio, title='My Checkbox', click_callback=self.chk_clicked)
         self.clr = Color('clr', socketio, change_callback=self.color_changed)
         self.dt = Date('dt', socketio, change_callback=self.dt_changed)
+        self.dtl = DateTimeLocal('dtl', socketio, change_callback=self.dt_changed)
+        self.eml = Email('eml', socketio, change_callback=self.txt_changed)
+        self.fl = File('fl', socketio, change_callback=self.fl_changed, click_callback=self.fl_clicked)
         pg.add(self.bt)
         pg.add(self.bt1)
         pg.add(self.txt)
         pg.add(self.chk)
         pg.add(self.clr)
         pg.add(self.dt)
+        pg.add(self.dtl)
+        pg.add(self.eml)
+        pg.add(self.fl)
         return pg.render()
+
+    def fl_changed(self, source, props):
+        for fl in props['files']:
+            print("Filename: " + str(fl.filename))
+
+    def fl_clicked(self, source, props):
+        print("File widget clicked")
 
     def dt_changed(self, source, props):
         print("Date changed: " + str(props['value']))
