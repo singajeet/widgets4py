@@ -1959,3 +1959,102 @@ class Form(Namespace, Widget):
         content += "<input type='submit' value='Submit' id='" + self._name + "_submit_button' />"
         self._widget_content = content + self._render_post_content('form') + "\n" + self._attach_script()
         return self._widget_content
+
+
+class DropDown(Namespace, Widget):
+    """DropDown widgets provides an list of items in the dropdown menu format and allow users to
+    select one or more items from the list
+    """
+
+    _options = None
+    _size = None
+    _disabled = None
+    _click_callback = None
+    _change_callback = None
+    _value = None
+
+    def __init__(self, name, socket_io, click_callback=None, change_callback=None, disabled=None, desc=None,
+                 prop=None, style=None, attr=None, css_cls=None, options=None, value=None, size=None,
+                 legend=None):
+        """Default constructor of the Dropdown widget class
+
+            Args:
+                name (string): name of the widget for internal use
+                socket_io (SocketIO, required): An instance of the `SocketIO` class
+                desc (string): description of the dropdown widget
+                prop (dict): dict of objects to be added as properties of widget
+                style (dict): dict of objects to be added as style elements to HTML tag
+                attr (list): list of objects to be added as attributes of HTML tag
+                disabled (Boolean): Enabled or Disabled state of widget
+                click_callback (callable): A function to be called back on onclick event.
+                                            The callback method should accept two args:
+                                            `source` and `props`
+                                            as shown in below example:
+
+                        def onclick_handler(source, props):
+                            pass
+
+                        source: Name of the button for which this event is fired
+                        props: Dict object having two props: Title & Disabled
+                change_callback (callable): Same as `click_callback` but called when change event fires
+                css_cls (list): An list of CSS class names to be added to current widget
+                options (list): A list of items to be shown in dropdown for selection
+                size (int): The number of items that should be shown in dropdown and rest of items can be scrolled
+                value (string): The selected item from the list
+        """
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
+        Namespace.__init__(self, ('/' + str(__name__ + '_' + name + '_click').replace('.', '_')))
+        self._namespace_url = '/' + str(__name__ + "_" + name + "_click").replace('.', '_')
+        self._name = name
+        self._socket_io = socket_io
+        socket_io.on_nameespace(self)
+        if disabled is not None:
+            self._disabled = disabled
+        else:
+            self._disabled = False
+        if options is not None:
+            self._options = options
+        else:
+            self._options = {}
+        if size is not None:
+            self._size = size
+        else:
+            self._size = 4
+        self._click_callback = click_callback
+        self._change_callback = change_callback
+
+    @property
+    def options(self):
+        """The items to be shown in the dropdown"""
+        return self._options
+
+    @options.setter
+    def options(self, val):
+        self._options = val
+
+    @property
+    def size(self):
+        """The number of items to be shown in dropdown at a time """
+        return self._size
+
+    @size.setter
+    def size(self, val):
+        self._size = val
+
+    @property
+    def disabled(self):
+        """The enable or disable state of the widget"""
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+
+    @property
+    def namespace(self):
+        """The namespace property to be used by websocket"""
+        return self._namespace_url
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace_url = val
