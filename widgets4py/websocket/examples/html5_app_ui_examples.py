@@ -4,7 +4,7 @@ from widgets4py.base import Page
 from widgets4py.websocket.html5.app_ui import Button, TextBox, CheckBox, Color, Date, DateTimeLocal
 from widgets4py.websocket.html5.app_ui import Image, Month, Number, Password, Radio, Range, Email
 from widgets4py.websocket.html5.app_ui import File, Reset, Search, Submit, Telephone, Time, URL
-from widgets4py.websocket.html5.app_ui import Week, Form, DropDown
+from widgets4py.websocket.html5.app_ui import Week, Form, DropDown, Label
 from widgets4py.layouts import SimpleGridLayout
 
 
@@ -40,10 +40,11 @@ class PageTest:
     frm = None
     frm_text = None
     dd = None
+    lbl = None
 
     def show_layout(self):
         pg = Page('pg', 'Websocket')
-        sg = SimpleGridLayout('sg', 24, 1)
+        sg = SimpleGridLayout('sg', 25, 2)
         self.bt = Button('bt', 'Button', socketio, click_callback=self.btn_clicked)
         self.bt1 = Button('bt1', 'Button 1', socketio, click_callback=self.btn1_clicked)
         self.txt = TextBox('txt', socketio, change_callback=self.txt_changed)
@@ -69,37 +70,66 @@ class PageTest:
         self.frm = Form('frm', socketio, use_fieldset=True, legend="My Form",
                         submit_callback=self.frm_submitted)
         self.frm_text = TextBox('frm_text', socketio)
-        self.dd = DropDown('dd', socketio, click_callback=self.dd_clicked)
+        self.dd = DropDown('dd', socketio, change_callback=self.dd_changed)
+        self.dd.add_option('abc', 'abc', 'ABC')
+        self.dd.add_option('def', 'def', 'DEF')
+        self.lbl = Label('lbl', 'My Label', self.dd, socketio)
+        sg.add(Label('lb1', 'Button', self.bt, socketio))
         sg.add(self.bt)
+        sg.add(Label('lb2', 'Button', self.bt1, socketio))
         sg.add(self.bt1)
+        sg.add(Label('lb3', 'TextBox', self.txt, socketio))
         sg.add(self.txt)
+        sg.add(Label('lb4', 'CheckBox', self.chk, socketio))
         sg.add(self.chk)
+        sg.add(Label('lb5', 'Color', self.clr, socketio))
         sg.add(self.clr)
+        sg.add(Label('lb6', 'Date', self.dt, socketio))
         sg.add(self.dt)
+        sg.add(Label('lb7', 'DateTimeLocal', self.dtl, socketio))
         sg.add(self.dtl)
+        sg.add(Label('lb8', 'Email', self.eml, socketio))
         sg.add(self.eml)
+        sg.add(Label('lb9', 'File', self.fl, socketio))
         sg.add(self.fl)
+        sg.add(Label('lb10', 'Image', self.img, socketio))
         sg.add(self.img)
+        sg.add(Label('lb11', 'Month', self.mth, socketio))
         sg.add(self.mth)
+        sg.add(Label('lb12', 'Number', self.num, socketio))
         sg.add(self.num)
+        sg.add(Label('lb13', 'Password', self.pswd, socketio))
         sg.add(self.pswd)
+        sg.add(Label('lb14', 'Radio', self.rd, socketio))
         sg.add(self.rd)
+        sg.add(Label('lb15', 'Range', self.rng, socketio))
         sg.add(self.rng)
+        sg.add(Label('lb16', 'Reset', self.rst, socketio))
         sg.add(self.rst)
+        sg.add(Label('lb17', 'Search', self.srch, socketio))
         sg.add(self.srch)
+        sg.add(Label('lb18', 'Submit', self.sbmt, socketio))
         sg.add(self.sbmt)
+        sg.add(Label('lb19', 'Telephone', self.tel, socketio))
         sg.add(self.tel)
+        sg.add(Label('lb20', 'Time', self.time, socketio))
         sg.add(self.time)
+        sg.add(Label('lb21', 'URL', self.url, socketio))
         sg.add(self.url)
+        sg.add(Label('lb22', 'Week', self.week, socketio))
         sg.add(self.week)
+        sg.add(Label('lb23', 'Form', self.frm, socketio))
         self.frm.add(self.frm_text)
         sg.add(self.frm)
+        sg.add(Label('lb24', 'DropDown', self.dd, socketio))
         sg.add(self.dd)
+        sg.add(Label('lb25', 'Label', self.lbl, socketio))
+        sg.add(self.lbl)
         pg.add(sg)
         return pg.render()
 
-    def dd_clicked(self, source, props):
-        print("Dropdown Clicked: " + props['value'])
+    def dd_changed(self, source, props):
+        print("Dropdown Changed: " + props['value'])
 
     def frm_submitted(self, source, props):
         print("Form data: " + str(props['form']))
