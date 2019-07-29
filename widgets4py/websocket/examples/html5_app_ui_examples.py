@@ -4,7 +4,7 @@ from widgets4py.base import Page
 from widgets4py.websocket.html5.app_ui import Button, TextBox, CheckBox, Color, Date, DateTimeLocal
 from widgets4py.websocket.html5.app_ui import Image, Month, Number, Password, Radio, Range, Email
 from widgets4py.websocket.html5.app_ui import File, Reset, Search, Submit, Telephone, Time, URL
-from widgets4py.websocket.html5.app_ui import Week, Form
+from widgets4py.websocket.html5.app_ui import Week, Form, DropDown
 from widgets4py.layouts import SimpleGridLayout
 
 
@@ -39,10 +39,11 @@ class PageTest:
     week = None
     frm = None
     frm_text = None
+    dd = None
 
     def show_layout(self):
         pg = Page('pg', 'Websocket')
-        sg = SimpleGridLayout('sg', 23, 1)
+        sg = SimpleGridLayout('sg', 24, 1)
         self.bt = Button('bt', 'Button', socketio, click_callback=self.btn_clicked)
         self.bt1 = Button('bt1', 'Button 1', socketio, click_callback=self.btn1_clicked)
         self.txt = TextBox('txt', socketio, change_callback=self.txt_changed)
@@ -65,8 +66,10 @@ class PageTest:
         self.time = Time('time', socketio, change_callback=self.dt_changed)
         self.url = URL('url', socketio, change_callback=self.txt_changed)
         self.week = Week('week', socketio, change_callback=self.dt_changed)
-        self.frm = Form('frm', socketio, use_fieldset=True, legend="My Form", submit_callback=self.frm_submitted)
+        self.frm = Form('frm', socketio, use_fieldset=True, legend="My Form",
+                        submit_callback=self.frm_submitted)
         self.frm_text = TextBox('frm_text', socketio)
+        self.dd = DropDown('dd', socketio, click_callback=self.dd_clicked)
         sg.add(self.bt)
         sg.add(self.bt1)
         sg.add(self.txt)
@@ -91,8 +94,12 @@ class PageTest:
         sg.add(self.week)
         self.frm.add(self.frm_text)
         sg.add(self.frm)
+        sg.add(self.dd)
         pg.add(sg)
         return pg.render()
+
+    def dd_clicked(self, source, props):
+        print("Dropdown Clicked: " + props['value'])
 
     def frm_submitted(self, source, props):
         print("Form data: " + str(props['form']))

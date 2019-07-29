@@ -1973,7 +1973,7 @@ class DropDown(Namespace, Widget):
     _change_callback = None
     _value = None
 
-    def __init__(self, name, socket_io, click_callback=None, change_callback=None, disabled=None, desc=None,
+    def __init__(self, name, socket_io, click_callback=None, disabled=None, desc=None,
                  prop=None, style=None, attr=None, css_cls=None, options=None, value=None, size=None,
                  legend=None):
         """Default constructor of the Dropdown widget class
@@ -1996,10 +1996,10 @@ class DropDown(Namespace, Widget):
 
                         source: Name of the button for which this event is fired
                         props: Dict object having two props: Title & Disabled
-                change_callback (callable): Same as `click_callback` but called when change event fires
                 css_cls (list): An list of CSS class names to be added to current widget
                 options (list): A list of items to be shown in dropdown for selection
-                size (int): The number of items that should be shown in dropdown and rest of items can be scrolled
+                size (int): The number of items that should be shown in dropdown and rest of items can
+                            be scrolled
                 value (string): The selected item from the list
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
@@ -2007,7 +2007,7 @@ class DropDown(Namespace, Widget):
         self._namespace_url = '/' + str(__name__ + "_" + name + "_click").replace('.', '_')
         self._name = name
         self._socket_io = socket_io
-        socket_io.on_nameespace(self)
+        socket_io.on_namespace(self)
         if disabled is not None:
             self._disabled = disabled
         else:
@@ -2021,7 +2021,6 @@ class DropDown(Namespace, Widget):
         else:
             self._size = 4
         self._click_callback = click_callback
-        self._change_callback = change_callback
 
     @property
     def options(self):
@@ -2058,3 +2057,118 @@ class DropDown(Namespace, Widget):
     @namespace.setter
     def namespace(self, val):
         self._namespace_url = val
+
+    def _sync_properties(self, ns):
+        emit('sync_properties_' + self._name, {'disabled': self._disabled,
+                                               'size': self._size,
+                                               'value': self._value},
+             namespace=ns)
+
+    def on_click(self, click_callback):
+        """Registers an callback passed as argument with the click event
+
+            Args:
+                click_callback (callable): Function or method that should be executed when
+                event fires
+        """
+        self._click_callback = click_callback
+
+    def add_option(self, key, value, title):
+        """Adds an item or option to the dropdown list
+
+            Args:
+                key (string): A unique id of the item
+                value (string): Value associated with the item
+                title (string): title of the item to be shown in the dropdown
+        """
+        self._options[key] = [value, title]
+
+    def remove_option(self, key):
+        """Removes an item or option from the list of items/options
+
+            Args:
+                key (string): A unique identifier of the item to be removed
+        """
+        self._options.pop(key)
+
+    def on_fire_click_event(self, props):
+        """For internal use only: This function is called by the websocket when the event is raised.
+        """
+        dsbl = props['disabled']
+        if dsbl is not None:
+            self._disabled = dsbl
+        size = props['size']
+        if size is not None:
+            self._size = size
+        val = props['value']
+        if val is not None:
+            self._value = val
+        try:
+            if self._click_callback is not None:
+                self._click_callback(self._name, props)
+                emit('success', {'status': True, 'message': 'success'})
+            else:
+                emit('warning', {'status': False, 'message': 'No callback registered'})
+        except Exception as e:
+            print("Error: " + str(e))
+            msg = 'Method failed during callback execution: ' + str(e)
+            emit('failed', {'status': False, 'message': msg})
+
+    def on_connect(self):
+        """Called by websocket when connection is established"""
+        pass
+
+    def on_disconnect(self):
+        """Called by websocket when connection is terminated"""
+        pass
+
+    def _attach_script(self):
+        script = """
+                    <script>
+                    $(document).ready(function(){
+                        var socket = io('%s');
+                        var selector = $('#%s');
+
+                        selector.click(function(){
+                            var disabled = selector.prop('disabled');
+                            var value = selector.val()
+                            var size = selector.prop('size')
+                            socket.emit('fire_click_event', {'disabled': disabled,
+                                                              'value': val,
+                                                              'size': size});
+                            return false;
+                        });
+
+                        socket.on('failed', function(data){
+                            alertify.error('Failure: ' + data['message']);
+                        });
+
+                        socket.on('warning', function(data){
+                            alertify.warning('Incomplete execution: ' + data['message']);
+                        });
+
+                        socket.on('success', function(data){
+                            alertify.success('Call success acknowledged!');
+                        });
+
+                        socket.on('connect', function(){
+                        });
+
+                        socket.on('sync_properties_%s', function(props){
+                            selector.prop('disabled', props['disabled']);
+                            selector.val(props['value']);
+                            selector.prop('size', props['size'])
+                        });
+                    });
+                    </script>
+                """ % (self._namespace_url, self._name, self._name)
+        return script
+
+    def render(self):
+        """Renders the content of the widget on the page"""
+        content = self._render_pre_content('select')
+        for opt in self._options:
+            value = self._options.get(opt)
+            content += "\n<option id='" + opt + "' value='" + value[0] + "'>" + value[1] + "</option>"
+        self._widget_content = content + self._render_post_content('select') + "\n" + self._attach_script()
+        return self._widget_content
