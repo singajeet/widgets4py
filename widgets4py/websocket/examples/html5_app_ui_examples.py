@@ -4,7 +4,7 @@ from widgets4py.base import Page
 from widgets4py.websocket.html5.app_ui import Button, TextBox, CheckBox, Color, Date, DateTimeLocal
 from widgets4py.websocket.html5.app_ui import Image, Month, Number, Password, Radio, Range, Email
 from widgets4py.websocket.html5.app_ui import File, Reset, Search, Submit, Telephone, Time, URL
-from widgets4py.websocket.html5.app_ui import Week, Form, DropDown, Label
+from widgets4py.websocket.html5.app_ui import Week, Form, ListBox, Label
 from widgets4py.layouts import SimpleGridLayout
 
 
@@ -39,7 +39,7 @@ class PageTest:
     week = None
     frm = None
     frm_text = None
-    dd = None
+    lbox = None
     lbl = None
 
     def show_layout(self):
@@ -70,10 +70,14 @@ class PageTest:
         self.frm = Form('frm', socketio, use_fieldset=True, legend="My Form",
                         submit_callback=self.frm_submitted)
         self.frm_text = TextBox('frm_text', socketio)
-        self.dd = DropDown('dd', socketio, change_callback=self.dd_changed)
-        self.dd.add_option('abc', 'abc', 'ABC')
-        self.dd.add_option('def', 'def', 'DEF')
-        self.lbl = Label('lbl', 'My Label', self.dd, socketio)
+        self.lbox = ListBox('lbox', socketio, change_callback=self.dd_changed, multiselect=True)
+        self.lbox.add_option('abc', 'ABC', False)
+        self.lbox.add_option('def', 'DEF', True)
+        self.lbox.add_option('ghi', 'GHI', False)
+        self.lbox.add_option('jkl', 'JKL', False)
+        self.lbox.add_option('mno', 'MNO', False)
+        self.lbox.add_option('pqr', 'PQR', False)
+        self.lbl = Label('lbl', 'My Label', self.lbox, socketio)
         sg.add(Label('lb1', 'Button', self.bt, socketio))
         sg.add(self.bt)
         sg.add(Label('lb2', 'Button', self.bt1, socketio))
@@ -121,15 +125,16 @@ class PageTest:
         sg.add(Label('lb23', 'Form', self.frm, socketio))
         self.frm.add(self.frm_text)
         sg.add(self.frm)
-        sg.add(Label('lb24', 'DropDown', self.dd, socketio))
-        sg.add(self.dd)
+        sg.add(Label('lb24', 'ListBox', self.lbox, socketio))
+        sg.add(self.lbox)
         sg.add(Label('lb25', 'Label', self.lbl, socketio))
         sg.add(self.lbl)
         pg.add(sg)
         return pg.render()
 
     def dd_changed(self, source, props):
-        print("Dropdown Changed: " + props['value'])
+        print("Dropdown Changed: " + str(props['value']))
+        self.lbox.multiselect = not self.lbox.multiselect
 
     def frm_submitted(self, source, props):
         print("Form data: " + str(props['form']))

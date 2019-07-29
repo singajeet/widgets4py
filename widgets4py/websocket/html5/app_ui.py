@@ -1961,9 +1961,9 @@ class Form(Namespace, Widget):
         return self._widget_content
 
 
-class DropDown(Namespace, Widget):
-    """DropDown widgets provides an list of items in the dropdown menu format and allow users to
-    select one or more items from the list
+class ListBox(Namespace, Widget):
+    """ListBox widgets provides an list of items in the dropdown menu format or as a listview
+    and allow users to select one or more items from the list
     """
 
     _options = None
@@ -1971,16 +1971,17 @@ class DropDown(Namespace, Widget):
     _disabled = None
     _change_callback = None
     _value = None
+    _multiselect = None
 
     def __init__(self, name, socket_io, change_callback=None, disabled=None, desc=None,
-                 prop=None, style=None, attr=None, css_cls=None, options=None, value=None, size=None,
-                 legend=None):
-        """Default constructor of the Dropdown widget class
+                 prop=None, style=None, attr=None, css_cls=None, options=None, value=None,
+                 size=None, multiselect=None):
+        """Default constructor of the ListBox or Dropdown widget class
 
             Args:
                 name (string): name of the widget for internal use
                 socket_io (SocketIO, required): An instance of the `SocketIO` class
-                desc (string): description of the dropdown widget
+                desc (string): description of the listbox or dropdown widget
                 prop (dict): dict of objects to be added as properties of widget
                 style (dict): dict of objects to be added as style elements to HTML tag
                 attr (list): list of objects to be added as attributes of HTML tag
@@ -1996,10 +1997,16 @@ class DropDown(Namespace, Widget):
                         source: Name of the button for which this event is fired
                         props: Dict object having two props: Title & Disabled
                 css_cls (list): An list of CSS class names to be added to current widget
-                options (list): A list of items to be shown in dropdown for selection
+                options (dict): A dict of items to be shown in dropdown/listbox for selection. Below
+                                is the format that should be followed for the creating options:
+
+                        {'<<key>>': ['<<value>>', <<selected>>]}, for example...
+                        {'key1': ['Value1', True], 'key2': ['Value2', False], ...}
+
                 size (int): The number of items that should be shown in dropdown and rest of items can
                             be scrolled
                 value (string): The selected item from the list
+                multiselect (Boolean): Allows multiple selection of items in listbox
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
         Namespace.__init__(self, ('/' + str(__name__ + '_' + name + '_click').replace('.', '_')))
@@ -2020,6 +2027,10 @@ class DropDown(Namespace, Widget):
         else:
             self._size = 4
         self._change_callback = change_callback
+        if multiselect is not None:
+            self._multiselect = multiselect
+        else:
+            self._multiselect = False
 
     @property
     def options(self):
@@ -2029,6 +2040,7 @@ class DropDown(Namespace, Widget):
     @options.setter
     def options(self, val):
         self._options = val
+        self._sync_properties(self._namespace_url)
 
     @property
     def size(self):
@@ -2038,6 +2050,7 @@ class DropDown(Namespace, Widget):
     @size.setter
     def size(self, val):
         self._size = val
+        self._sync_properties(self._namespace_url)
 
     @property
     def disabled(self):
@@ -2047,6 +2060,7 @@ class DropDown(Namespace, Widget):
     @disabled.setter
     def disabled(self, val):
         self._disabled = val
+        self._sync_properties(self._namespace_url)
 
     @property
     def namespace(self):
@@ -2057,10 +2071,20 @@ class DropDown(Namespace, Widget):
     def namespace(self, val):
         self._namespace_url = val
 
+    @property
+    def multiselect(self):
+        return self._multiselect
+
+    @multiselect.setter
+    def multiselect(self, val):
+        self._multiselect = val
+        self._sync_properties(self._namespace_url)
+
     def _sync_properties(self, ns):
         emit('sync_properties_' + self._name, {'disabled': self._disabled,
                                                'size': self._size,
-                                               'value': self._value},
+                                               'value': self._value,
+                                               'multiselect': self._multiselect},
              namespace=ns)
 
     def on_change(self, change_callback):
@@ -2072,15 +2096,16 @@ class DropDown(Namespace, Widget):
         """
         self._change_callback = change_callback
 
-    def add_option(self, key, value, title):
+    def add_option(self, key, value, selected):
         """Adds an item or option to the dropdown list
 
             Args:
                 key (string): A unique id of the item
-                value (string): Value associated with the item
-                title (string): title of the item to be shown in the dropdown
+                value (string): Value associated with the item. This will be shown in the
+                                dropdown or listbox
+                selected (Boolean): whether the item should appear as selected or not
         """
-        self._options[key] = [value, title]
+        self._options[key] = [value, selected]
 
     def remove_option(self, key):
         """Removes an item or option from the list of items/options
@@ -2092,7 +2117,7 @@ class DropDown(Namespace, Widget):
 
     def on_fire_change_event(self, props):
         """For internal use only: This function is called by the websocket when the event is raised.
-        """
+        """        
         dsbl = props['disabled']
         if dsbl is not None:
             self._disabled = dsbl
@@ -2102,6 +2127,9 @@ class DropDown(Namespace, Widget):
         val = props['value']
         if val is not None:
             self._value = val
+        multi = props['multiselect']
+        if multi is not None:
+            self._multiselect = multi
         try:
             if self._change_callback is not None:
                 self._change_callback(self._name, props)
@@ -2132,9 +2160,12 @@ class DropDown(Namespace, Widget):
                             var disabled = selector.prop('disabled');
                             var value = selector.val();
                             var size = selector.prop('size');
+                            var multi = selector.prop('multiple');
+
                             socket.emit('fire_change_event', {'disabled': disabled,
                                                               'value': value,
-                                                              'size': size});
+                                                              'size': size,
+                                                              'multiselect': multi});
                         });
 
                         socket.on('failed', function(data){
@@ -2156,6 +2187,7 @@ class DropDown(Namespace, Widget):
                             selector.prop('disabled', props['disabled']);
                             selector.val(props['value']);
                             selector.prop('size', props['size']);
+                            selector.prop('multiple', props['multiselect']);
                         });
                     });
                     </script>
@@ -2165,10 +2197,20 @@ class DropDown(Namespace, Widget):
     def render(self):
         """Renders the content of the widget on the page"""
         self.add_property("size", str(self._size))
+        if self._multiselect is not None and self._multiselect:
+            self.add_attribute("multiple")
         content = self._render_pre_content('select')
         for opt in self._options:
             value = self._options.get(opt)
-            content += "\n<option id='" + opt + "' value='" + value[0] + "'>" + value[1] + "</option>"
+            title = value[0]
+            is_selected = value[1]
+            content += "\n<option value='" + opt + "' "
+            if is_selected is not None and is_selected:
+                content += "selected "
+            if title is not None:
+                content += ">" + title + "</option>"
+            else:
+                content += ">" + opt + "</option>"
         self._widget_content = content + self._render_post_content('select') + "\n" + self._attach_script()
         return self._widget_content
 
