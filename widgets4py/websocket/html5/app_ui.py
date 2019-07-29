@@ -1764,7 +1764,7 @@ class Form(Namespace, Widget):
     _use_fieldset = None
     _legend = None
 
-    def __init__(self, name, socket_io, click_callback=None, disabled=None, desc=None,
+    def __init__(self, name, socket_io, submit_callback=None, disabled=None, desc=None,
                  prop=None, style=None, attr=None, css_cls=None, use_fieldset=None,
                  legend=None):
         """Default constructor of the Button widget class
@@ -1777,12 +1777,12 @@ class Form(Namespace, Widget):
                 style (dict): dict of objects to be added as style elements to HTML tag
                 attr (list): list of objects to be added as attributes of HTML tag
                 disabled (Boolean): Enabled or Disabled state of widget
-                onclick_callback (callable): A function to be called back on onclick event.
+                submit_callback (callable): A function to be called back on onclick event.
                                             The callback method should accept two args:
                                             `source` and `props`
                                             as shown in below example:
 
-                        def onclick_handler(source, props):
+                        def onsubmit_handler(source, props):
                             pass
 
                         source: Name of the button for which this event is fired
@@ -1796,7 +1796,7 @@ class Form(Namespace, Widget):
         self._namespace_url = '/' + str(__name__ + "_" + name + "_click").replace('.', '_')
         self._name = name
         self._socket_io = socket_io
-        self._click_callback = click_callback
+        self._submit_callback = submit_callback
         socket_io.on_namespace(self)
         if disabled is not None:
             self.disabled = disabled
@@ -1810,6 +1810,7 @@ class Form(Namespace, Widget):
             self._legend = legend
         else:
             self._legend = ""
+        self.add_property("method", "post")
 
     @property
     def namespace(self):
@@ -1844,6 +1845,7 @@ class Form(Namespace, Widget):
     @use_fieldset.setter
     def use_fieldset(self, val):
         self._use_fieldset = val
+        self._sync_properties(self._namespace_url)
 
     @property
     def legend(self):
@@ -1853,6 +1855,7 @@ class Form(Namespace, Widget):
     @legend.setter
     def legend(self, val):
         self._legend = val
+        self._sync_properties(self._namespace_url)
 
     def _sync_properties(self, ns):
         emit('sync_properties_' + self._name, {'disabled': self._disabled,
@@ -1915,6 +1918,7 @@ class Form(Namespace, Widget):
                             socket.emit('fire_submit_event', {'disabled': disabled,
                                                               'legend': legend,
                                                               'form': form});
+                            return false;
                         });
 
                         socket.on('failed', function(data){
@@ -1952,6 +1956,6 @@ class Form(Namespace, Widget):
             content += widget.render()
         if self._use_fieldset is True:
             content += "\n</fieldset>"
-        content += "<button type='submit' value='Submit' id='" + self._name + "_submit_button' />"
+        content += "<input type='submit' value='Submit' id='" + self._name + "_submit_button' />"
         self._widget_content = content + self._render_post_content('form') + "\n" + self._attach_script()
         return self._widget_content

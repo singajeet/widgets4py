@@ -65,7 +65,7 @@ class PageTest:
         self.time = Time('time', socketio, change_callback=self.dt_changed)
         self.url = URL('url', socketio, change_callback=self.txt_changed)
         self.week = Week('week', socketio, change_callback=self.dt_changed)
-        self.frm = Form('frm', socketio, use_fieldset=True, legend="My Form")
+        self.frm = Form('frm', socketio, use_fieldset=True, legend="My Form", submit_callback=self.frm_submitted)
         self.frm_text = TextBox('frm_text', socketio)
         sg.add(self.bt)
         sg.add(self.bt1)
@@ -93,6 +93,9 @@ class PageTest:
         sg.add(self.frm)
         pg.add(sg)
         return pg.render()
+
+    def frm_submitted(self, source, props):
+        print("Form data: " + str(props['form']))
 
     def fl_changed(self, source, props):
         for fl in props['files']:
