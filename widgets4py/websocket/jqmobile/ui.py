@@ -88,19 +88,19 @@ class MPage(Widget):
 
 class ButtonStyle(str, Enum):
     """Types of button supported by the framework"""
-    ROUND_CORNERS: str = 'ui-corner-all'
-    SHADOW: str = 'ui-shadow'
-    INLINE: str = 'ui-btn-inline'
-    THEME_A: str = 'ui-btn-a'
-    THEME_B: str = 'ui-btn-b'
-    MINI: str = 'ui-mini'
-    ICON_LEFT: str = 'ui-btn-icon-left'
-    ICON_RIGHT: str = 'ui-btn-icon-right'
-    ICON_TOP: str = 'ui-btn-icon-top'
-    ICON_BOTTOM: str = 'ui-btn-icon-bottom'
-    ICON_NOTEXT: str = 'ui-btn-icon-notext'
-    ICON_SHADOW: str = 'ui-shadow-icon'
-    DISABLED: str = 'ui-state-disabled'
+    ROUND_CORNERS = 'ui-corner-all'
+    SHADOW = 'ui-shadow'
+    INLINE = 'ui-btn-inline'
+    THEME_A = 'ui-btn-a'
+    THEME_B = 'ui-btn-b'
+    MINI = 'ui-mini'
+    ICON_LEFT = 'ui-btn-icon-left'
+    ICON_RIGHT = 'ui-btn-icon-right'
+    ICON_TOP = 'ui-btn-icon-top'
+    ICON_BOTTOM = 'ui-btn-icon-bottom'
+    ICON_NOTEXT = 'ui-btn-icon-notext'
+    ICON_SHADOW = 'ui-shadow-icon'
+    DISABLED = 'ui-state-disabled'
 
 
 class Button(Widget, Namespace):
@@ -217,6 +217,24 @@ class Button(Widget, Namespace):
                                                'styles': self._btn_styles},
              namespace=self._namespace)
 
+    def add_style(self, style):
+        """Add a new style from ButtonStyle class to the buttons style
+
+            Args:
+                style (ButtonStyle): An member of `ButtonStyle` class
+        """
+        self._btn_styles.append(style)
+        self._sync_properties()
+
+    def remove_style(self, style):
+        """Removes an style from the button's style list
+
+            Args:
+                style (ButtonStyle): The style that needs to be removed
+        """
+        self._btn_styles.remove(style)
+        self._sync_properties()
+
     def on_fire_click_event(self, props):
         """For internal use only"""
         title = props['title']
@@ -279,6 +297,7 @@ class Button(Widget, Namespace):
                         socket.on('sync_properties_%s', function(props){
                             selector.text(props['title']);
                             var icon = props['icon'];
+                            var styles = props['styles'];
                             //remove existing first
                             if(icon != undefined && icon != ''){
                                 var classes = selector.attr('class').split(' ');
@@ -290,6 +309,16 @@ class Button(Widget, Namespace):
                                 }
                                 if(!selector.hasClass(icon)){
                                     selector.addClass(icon);
+                                }
+                            }
+                            if(styles != undefined){
+                                selector.attr('class', '');
+                                selector.addClass('ui-btn');
+                                selector.addClass(icon);
+                                for(let st of styles){
+                                    if(!selector.hasClass(st)){
+                                        selector.addClass(st);
+                                    }
                                 }
                             }
                         });
@@ -322,4 +351,215 @@ class Button(Widget, Namespace):
             content = ("<div id='%s-border-radius'>" % (self._name)) + content + "</div>"
             content += (self.ROUND_CORNER_NOTEXT_STYLE % (self._name))
         content += "\n" + self._attach_script()
+        return content
+
+
+class FormButton(Button):
+    """An input form button based on the 'input' HTML tag. For button built using 'a' or 'button'
+    HTML tag, please see this class's parent class `Button`.
+    """
+
+    def __init__(self, name, socket_io, title=None, icon=None, full_round=None, btn_styles=None,
+                 click_callback=None):
+        Button.__init__(self, name, socket_io, title=title, icon=icon, full_round=full_round,
+                        btn_styles=btn_styles, click_callback=click_callback)
+
+    def render(self):
+        content = "<div id='" + self._name + "' "
+        content += "class='ui-input-btn " + self.UI_BTN_CLASS + " "
+        if self._icon is not None:
+            content += self._icon + " "
+        if self._btn_styles is not None:
+            for st in self._btn_styles:
+                content += st.value + " "
+        content = content.strip() + "' >"
+        if self._title is not None:
+            content += self._title
+        content += "<input type='button' data-enhanced='true' value='"\
+                   + (self._title if self._title is not None else '') + "'>"
+        content += "</div>"
+        if self._full_round is not None and not self._full_round and self._title is None:
+            content = ("<div id='%s-border-radius'>" % (self._name)) + content + "</div>"
+            content += (self.ROUND_CORNER_NOTEXT_STYLE % (self._name))
+        content += "\n" + self._attach_script()
+        return content
+
+
+class CheckBox(Widget, Namespace):
+    """The checkbox can have only two states checked and not checked (i.e., true or false).
+    This widget can be used to display a single checkbox or can be used to display a group
+    of checkboxes horizontally or vertically
+    """
+
+    _items = None
+    _orientation = None
+    _is_mini = None
+    _is_group = None
+    _icon_position = None
+    _socket_io = None
+    _namespace = None
+    _click_callback = None
+    _legend = None
+
+    def __init__(self, name, socket_io, items=None, is_mini=None, is_group=None,
+                 orientation=None, icon_position=None, click_callback=None, legend=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_check").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + name + "_check").replace('.', '_')
+        self._socketio = socket_io
+        if items is not None:
+            self._items = items
+        else:
+            self._items = []
+        if is_mini is not None:
+            self._is_mini = is_mini
+        else:
+            self._is_mini = False
+        if is_group is not None:
+            self._is_group = is_group
+        else:
+            self._is_group = False
+        if orientation is not None:
+            self._orientation = orientation
+        else:
+            self._orientation = "vertical"
+        if icon_position is not None:
+            self._icon_position = icon_position
+        else:
+            self._icon_position = "left"
+        self._click_callback = click_callback
+        self._legend = legend
+
+    @property
+    def namespace(self):
+        """Namespace to be used by websockets"""
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def items(self):
+        """List of checkbox items as dict objects"""
+        return self._items
+
+    @items.setter
+    def items(self, val):
+        self._items = val
+
+    @property
+    def orientation(self):
+        """The orientation of the checkbox group i.e., Horizontal or Vertical"""
+        return self._orientation
+
+    @orientation.setter
+    def orientation(self, val):
+        self._orientation = val
+
+    @property
+    def is_mini(self):
+        """Set to True for the compact version of the checkboxes"""
+        return self._is_mini
+
+    @is_mini.setter
+    def is_mini(self, val):
+        self._is_mini = val
+
+    @property
+    def is_group(self):
+        """Render the checkboxes as Horizontal or Vertical group"""
+        return self._is_group
+
+    @is_group.setter
+    def is_group(self, val):
+        self._is_group = val
+
+    @property
+    def icon_position(self):
+        """Position of the icon in reference to checkbox. Can be Left or Right"""
+        return self._icon_position
+
+    @icon_position.setter
+    def icon_position(self, val):
+        self._icon_position = val
+
+    @property
+    def legend(self):
+        """The title of the vertical or horizontal group"""
+        return self._legend
+
+    @legend.setter
+    def legend(self, val):
+        self._legend = val
+
+    def _sync_properties(self):
+        emit('sync_properties_' + self._name, {'orientation': self._orientation,
+                                               'is_mini': self._is_mini,
+                                               'is_group': self._is_group,
+                                               'icon_position': self._icon_position,
+                                               'legend': self._legend},
+             namespace=self._namespace)
+
+    def add_item(self, name, title, theme=None, disabled=None):
+        """Adds a new item to the collection of checkboxes
+
+            Args:
+                name (string): A unique identifier of the checkbox
+                title (string): Label to be shown next to the checkbox
+                theme (string): Theme swatch to be used for the checkbox
+                disabled (boolean): checkbox should be disabled or enabled
+        """
+        checkbox = {}
+        checkbox['name'] = name
+        checkbox['title'] = title
+        if theme is not None:
+            checkbox['theme'] = theme
+        else:
+            checkbox['theme'] = None
+        if disabled is not None:
+            checkbox['disabled'] = disabled
+        else:
+            checkbox['disabled'] = False
+        if self._is_mini:
+            checkbox['mini'] = True
+        else:
+            checkbox['mini'] = False
+        self._items.append(checkbox)
+
+    def remove_item(self, name):
+        """Removes an item from the list of items
+
+            Args:
+                name (string): Name of the item that needs to be removed
+        """
+        for itm in self._items:
+            if itm['name'] == name:
+                self._items.remove(itm)
+
+    def render(self):
+        content = ""
+        if self._is_group:
+            content = "<fieldset data-role='controlgroup' "
+            if self._orientation == "horizontal":
+                content += "data-type='horizontal' "
+            if self._icon_position == "right":
+                content += "data-iconpos='right' "
+            content += ">\n"
+            if self._legend is not None:
+                content += "<legend>" + self._legend + "</legend>\n"
+        if self._items is not None:
+            for item in self._items:
+                content += "<input type='checkbox' name='" + item['name'] + "' "
+                content += "id='" + item['name'] + "' "
+                if item['mini']:
+                    content += "data-mini='true' "
+                if item['theme'] is not None:
+                    content += "data-theme='" + item['theme'] + "' "
+                if item['disabled']:
+                    content += "disabled='' "
+                content += ">\n"
+                content += "<label for='" + item['name'] + "'>" + item['title'] + "</label>\n"
+        if self._is_group:
+            content += "</fieldset>"
         return content
