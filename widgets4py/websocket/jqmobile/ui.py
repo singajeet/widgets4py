@@ -29,9 +29,18 @@ class MPage(Widget):
         Widget.__init__(self, name)
         self._title = title
         self._socketio = socketio
-        self._header_widgets = header_widgets
-        self._child_widgets = child_widgets
-        self._footer_widgets = footer_widgets
+        if header_widgets is not None:
+            self._header_widgets = header_widgets
+        else:
+            self._header_widgets = []
+        if child_widgets is not None:
+            self._child_widgets = child_widgets
+        else:
+            self._child_widgets = []
+        if footer_widgets is not None:
+            self._footer_widgets = footer_widgets
+        else:
+            self._footer_widgets = []
         self._footer_title = footer_title
         self._before_render_callback = before_render_callback
         self._after_render_callback = after_render_callback
@@ -77,9 +86,9 @@ class MPage(Widget):
         return content
 
 
-class BUTTON_STYLE(Enum):
+class ButtonStyle(Enum):
     """Types of button supported by the framework"""
-    ROUND_CORNERS = 'ui-btn-corner-all'
+    ROUND_CORNERS = 'ui-corner-all'
     SHADOW = 'ui-shadow'
     INLINE = 'ui-btn-inline'
     THEME_A = 'ui-btn-a'
@@ -138,10 +147,10 @@ class Button(Widget, Namespace):
         if title is None and icon is not None:
             found = False
             for st in self._btn_styles:
-                if st == BUTTON_STYLE.ICON_NOTEXT:
+                if st == ButtonStyle.ICON_NOTEXT:
                     found = True
             if not found:
-                self._btn_styles.append(BUTTON_STYLE.ICON_NOTEXT)
+                self._btn_styles.append(ButtonStyle.ICON_NOTEXT)
         self._socket_io.on_namespace(self)
 
     @property
@@ -197,3 +206,28 @@ class Button(Widget, Namespace):
     @btn_styles.setter
     def btn_styles(self, val):
         self._btn_styles = val
+
+    def render(self):
+        content = ""
+        if self._tag_type == "A":
+            content = "<a href='#' "
+        else:
+            content = "<button "
+        content += "id='" + self._name + "' "
+        content += "class='" + self.UI_BTN_CLASS + " "
+        if self._icon is not None:
+            content += self._icon + " "
+        if self._btn_styles is not None:
+            for st in self._btn_styles:
+                content += st.value + " "
+        content = content.strip() + "' >"
+        if self._title is not None:
+            content += self._title
+        if self._tag_type == "A":
+            content += "</a>"
+        else:
+            content += "</button>"
+        if self._full_round is not None and not self._full_round and self._title is None:
+            content = ("<div id='%s-border-radius'>" % (self._name)) + content + "</div>"
+            content += (self.ROUND_CORNER_NOTEXT_STYLE % (self._name))
+        return content

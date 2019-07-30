@@ -1,5 +1,5 @@
 from widgets4py.base import Page
-from widgets4py.websocket.jqmobile.ui import MPage
+from widgets4py.websocket.jqmobile.ui import MPage, Button, ButtonStyle
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -18,6 +18,9 @@ class MobileExample:
         self._pg = Page('pg', 'Mobile Example')
         self._mpg1 = MPage('mpg1', 'Page1 Example', socketio)
         self._mpg2 = MPage('mpg2', 'Page2 Example', socketio)
+        self._btn = Button('btn', socketio, btn_styles=[ButtonStyle.ROUND_CORNERS, ButtonStyle.ICON_LEFT],
+                           title="My Button", icon='ui-icon-delete')
+        self._mpg1.add(self._btn)
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
