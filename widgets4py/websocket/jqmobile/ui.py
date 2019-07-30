@@ -5,7 +5,7 @@ JQuery Mobile framework
 Author: Ajeet Singh
 Date: 07/30/2019
 """
-from flask_socketio import Namespace
+from flask_socketio import Namespace, emit
 from widgets4py.base import Widget
 from enum import Enum
 
@@ -86,21 +86,21 @@ class MPage(Widget):
         return content
 
 
-class ButtonStyle(Enum):
+class ButtonStyle(str, Enum):
     """Types of button supported by the framework"""
-    ROUND_CORNERS = 'ui-corner-all'
-    SHADOW = 'ui-shadow'
-    INLINE = 'ui-btn-inline'
-    THEME_A = 'ui-btn-a'
-    THEME_B = 'ui-btn-b'
-    MINI = 'ui-mini'
-    ICON_LEFT = 'ui-btn-icon-left'
-    ICON_RIGHT = 'ui-btn-icon-right'
-    ICON_TOP = 'ui-btn-icon-top'
-    ICON_BOTTOM = 'ui-btn-icon-bottom'
-    ICON_NOTEXT = 'ui-btn-icon-notext'
-    ICON_SHADOW = 'ui-shadow-icon'
-    DISABLED = 'ui-state-disabled'
+    ROUND_CORNERS: str = 'ui-corner-all'
+    SHADOW: str = 'ui-shadow'
+    INLINE: str = 'ui-btn-inline'
+    THEME_A: str = 'ui-btn-a'
+    THEME_B: str = 'ui-btn-b'
+    MINI: str = 'ui-mini'
+    ICON_LEFT: str = 'ui-btn-icon-left'
+    ICON_RIGHT: str = 'ui-btn-icon-right'
+    ICON_TOP: str = 'ui-btn-icon-top'
+    ICON_BOTTOM: str = 'ui-btn-icon-bottom'
+    ICON_NOTEXT: str = 'ui-btn-icon-notext'
+    ICON_SHADOW: str = 'ui-shadow-icon'
+    DISABLED: str = 'ui-state-disabled'
 
 
 class Button(Widget, Namespace):
@@ -127,8 +127,8 @@ class Button(Widget, Namespace):
     def __init__(self, name, socket_io, title=None, icon=None, full_round=None, tag_type=None,
                  btn_styles=None, click_callback=None):
         Widget.__init__(self, name)
-        Namespace.__init__(self, str(__name__ + "_" + name + "_mbtn").replace('.', '_'))
-        self._namespace = str(__name__ + "_" + name + "_mbtn").replace('.', '_')
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_mbtn").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + name + "_mbtn").replace('.', '_')
         self._socket_io = socket_io
         self._title = title
         self._icon = icon
@@ -152,6 +152,7 @@ class Button(Widget, Namespace):
             if not found:
                 self._btn_styles.append(ButtonStyle.ICON_NOTEXT)
         self._socket_io.on_namespace(self)
+        self._click_callback = click_callback
 
     @property
     def namespace(self):
@@ -170,6 +171,7 @@ class Button(Widget, Namespace):
     @title.setter
     def title(self, val):
         self._title = val
+        self._sync_properties()
 
     @property
     def icon(self):
@@ -179,6 +181,7 @@ class Button(Widget, Namespace):
     @icon.setter
     def icon(self, val):
         self._icon = val
+        self._sync_properties()
 
     @property
     def is_full_round(self):
@@ -206,6 +209,94 @@ class Button(Widget, Namespace):
     @btn_styles.setter
     def btn_styles(self, val):
         self._btn_styles = val
+        self._sync_properties()
+
+    def _sync_properties(self):
+        emit('sync_properties_' + self._name, {'title': self._title,
+                                               'icon': self._icon,
+                                               'styles': self._btn_styles},
+             namespace=self._namespace)
+
+    def on_fire_click_event(self, props):
+        """For internal use only"""
+        title = props['title']
+        if title is not None:
+            self._title = title
+        if props.__len__() >= 2:
+            icon = props['icon']
+            if icon is not None:
+                self._icon = icon
+        try:
+            if self._click_callback is not None:
+                self._click_callback(self._name, props)
+                emit('success', {'status': True, 'message': 'success'})
+            else:
+                emit('warning', {'status': False, 'message': 'No callback registered'})
+        except Exception as e:
+            print("Error: " + str(e))
+            msg = 'Method failed during callback execution: ' + str(e)
+            emit('error', {'status': False, 'message': msg})
+
+    def _attach_script(self):
+        script = """
+                    <script>
+                    $(document).ready(function(){
+                        var socket = io('%s');
+                        var selector = $('#%s');
+                        var icon = '';
+                        selector.click(function(){
+                            var title = selector.text();
+                            var classes = selector.attr('class').split(' ');
+                            for(let cs of classes){
+                                var index = cs.indexOf('ui-icon');
+                                if(index >= 0){
+                                    icon = cs;
+                                }
+                            }
+                            if(icon != ''){
+                                socket.emit('fire_click_event', {'title': title,
+                                                             'icon': icon});
+                            } else {
+                                socket.emit('fire_click_event', {'title': title});
+                            }
+                        });
+
+                        socket.on('failed', function(data){
+                            alertify.error('Failure: ' + data['message']);
+                        });
+
+                        socket.on('warning', function(data){
+                            alertify.warning('Incomplete execution: ' + data['message']);
+                        });
+
+                        socket.on('success', function(data){
+                            alertify.success('Call success acknowledged!');
+                        });
+
+                        socket.on('connect', function(){
+                        });
+
+                        socket.on('sync_properties_%s', function(props){
+                            selector.text(props['title']);
+                            var icon = props['icon'];
+                            //remove existing first
+                            if(icon != undefined && icon != ''){
+                                var classes = selector.attr('class').split(' ');
+                                for(let cs of classes){
+                                    var index = cs.indexOf('ui-icon');
+                                    if(index >= 0){
+                                        selector.removeClass(cs);
+                                    }
+                                }
+                                if(!selector.hasClass(icon)){
+                                    selector.addClass(icon);
+                                }
+                            }
+                        });
+                    });
+                    </script>
+                    """ % (self._namespace, self._name, self._name)
+        return script
 
     def render(self):
         content = ""
@@ -230,4 +321,5 @@ class Button(Widget, Namespace):
         if self._full_round is not None and not self._full_round and self._title is None:
             content = ("<div id='%s-border-radius'>" % (self._name)) + content + "</div>"
             content += (self.ROUND_CORNER_NOTEXT_STYLE % (self._name))
+        content += "\n" + self._attach_script()
         return content
