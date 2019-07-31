@@ -429,6 +429,7 @@ class CheckBox(Widget, Namespace):
             self._icon_position = "left"
         self._click_callback = click_callback
         self._legend = legend
+        self._socketio.on_namespace(self)
 
     @property
     def namespace(self):
@@ -456,6 +457,7 @@ class CheckBox(Widget, Namespace):
     @orientation.setter
     def orientation(self, val):
         self._orientation = val
+        self._sync_properties()
 
     @property
     def is_mini(self):
@@ -465,6 +467,7 @@ class CheckBox(Widget, Namespace):
     @is_mini.setter
     def is_mini(self, val):
         self._is_mini = val
+        self._sync_properties()
 
     @property
     def is_group(self):
@@ -474,6 +477,7 @@ class CheckBox(Widget, Namespace):
     @is_group.setter
     def is_group(self, val):
         self._is_group = val
+        self._sync_properties()
 
     @property
     def icon_position(self):
@@ -483,6 +487,7 @@ class CheckBox(Widget, Namespace):
     @icon_position.setter
     def icon_position(self, val):
         self._icon_position = val
+        self._sync_properties()
 
     @property
     def legend(self):
@@ -492,6 +497,7 @@ class CheckBox(Widget, Namespace):
     @legend.setter
     def legend(self, val):
         self._legend = val
+        self._sync_properties()
 
     def _sync_properties(self):
         emit('sync_properties_' + self._name, {'orientation': self._orientation,
@@ -513,6 +519,7 @@ class CheckBox(Widget, Namespace):
         checkbox = {}
         checkbox['name'] = name
         checkbox['title'] = title
+        checkbox['state'] = False
         if theme is not None:
             checkbox['theme'] = theme
         else:
@@ -537,6 +544,77 @@ class CheckBox(Widget, Namespace):
             if itm['name'] == name:
                 self._items.remove(itm)
 
+    def on_fire_click_event(self, data):
+        try:
+            if self._items is not None:
+                for item in self._items:
+                    if item['name'] == data['source']:
+                        item['state'] = data['state']
+            print("Check: " + data['source'] + str(data['state']))
+            if self._click_callback is not None:
+                self._click_callback(data['source'], data['state'], self._items)
+                emit('success', {'status': True, 'message': 'success'})
+            else:
+                emit('warning', {'status': False, 'message': 'No callback registered'})
+        except Exception as e:
+            print("Error: " + str(e))
+            msg = 'Method failed during callback execution: ' + str(e)
+            emit('error', {'status': False, 'message': msg})
+
+    def _attach_script(self):
+        script = """
+                    <script>
+                    $(document).ready(function(){
+                        var socket = io('%s');
+
+                        socket.on('failed', function(data){
+                            alertify.error('Failure: ' + data['message']);
+                        });
+
+                        socket.on('warning', function(data){
+                            alertify.warning('Incomplete execution: ' + data['message']);
+                        });
+
+                        socket.on('success', function(data){
+                            alertify.success('Call success acknowledged!');
+                        });
+
+                        socket.on('connect', function(){
+                        });
+
+                        socket.on('sync_properties_%s', function(props){
+                            //selector.text(props['title']);
+                            //var icon = props['icon'];
+                            //var styles = props['styles'];
+                            ////remove existing first
+                            //if(icon != undefined && icon != ''){
+                            //    var classes = selector.attr('class').split(' ');
+                            //    for(let cs of classes){
+                            //        var index = cs.indexOf('ui-icon');
+                            //        if(index >= 0){
+                            //            selector.removeClass(cs);
+                            //        }
+                            //    }
+                            //    if(!selector.hasClass(icon)){
+                            //        selector.addClass(icon);
+                            //    }
+                            //}
+                            //if(styles != undefined){
+                            //    selector.attr('class', '');
+                            //    selector.addClass('ui-btn');
+                            //    selector.addClass(icon);
+                            //    for(let st of styles){
+                            //        if(!selector.hasClass(st)){
+                            //            selector.addClass(st);
+                            //        }
+                            //    }
+                            //}
+                        });
+                    });
+                    </script>
+                    """ % (self._namespace, self._name)
+        return script
+
     def render(self):
         content = ""
         if self._is_group:
@@ -551,7 +629,11 @@ class CheckBox(Widget, Namespace):
         if self._items is not None:
             for item in self._items:
                 content += "<input type='checkbox' name='" + item['name'] + "' "
-                content += "id='" + item['name'] + "' "
+                content += "id='" + item['name'] + "' onclick='"
+                content += """  var socket = io("%s");
+                                socket.emit("fire_click_event", {"source": this.name, "state": this.checked});
+                            """ % (self._namespace)
+                content += "' "
                 if item['mini']:
                     content += "data-mini='true' "
                 if item['theme'] is not None:
@@ -559,7 +641,8 @@ class CheckBox(Widget, Namespace):
                 if item['disabled']:
                     content += "disabled='' "
                 content += ">\n"
-                content += "<label for='" + item['name'] + "'>" + item['title'] + "</label>\n"
+                content += "<label for='" + item['name'] + "' id='" + item['name'] + "_lbl' >"\
+                    + item['title'] + "</label>\n"
         if self._is_group:
-            content += "</fieldset>"
+            content += "</fieldset>\n" + self._attach_script()
         return content

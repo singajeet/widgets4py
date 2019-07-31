@@ -449,7 +449,10 @@ class Page(Widget):
         section and all of its children inside the `Body` tag of the page. This is the method that
         will send the compiled HTML page to the HTTP server for final rendering on the user's browser.
         """
-        content = "<html style='height:100%;width:100%'>\n<head>\n"
+        content = "<!DOCTYPE html>\n"
+        content += "<html style='height:100%;width:100%'>\n<head>\n"
+        # content += "<title>Page Title</title>\n"
+        content += "<meta name='viewport' content='width=device-width, initial-scale=1'>\n"
         content += "<title>" + self._title + "</title>\n"
         css_content = "\n"
         for cssp in self._style_sections:
