@@ -24,7 +24,8 @@ class MobileExample:
                                 btn_styles=[ButtonStyle.ROUND_CORNERS, ButtonStyle.ICON_LEFT],
                                 click_callback=self.btn_clicked)
         self._chkbox = CheckBox('chkbox', socketio, is_group=True, orientation="vertical",
-                                icon_position="right", legend="My Checkboxes")
+                                icon_position="right", legend="My Checkboxes",
+                                click_callback=self.chk_clicked)
         self._chkbox.add_item('item1', 'Item1')
         self._chkbox.add_item('item2', 'Item2')
         self._chkbox.add_item('item3', 'Item3')
@@ -35,6 +36,9 @@ class MobileExample:
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
+
+    def chk_clicked(self, source, status, items):
+        print("Check Clicked: " + source + ", " + str(status))
 
     def btn_clicked(self, source, props):
         if self._btn.icon == 'ui-icon-delete':

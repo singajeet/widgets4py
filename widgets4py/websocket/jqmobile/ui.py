@@ -407,6 +407,7 @@ class CheckBox(Widget, Namespace):
         Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_check").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + name + "_check").replace('.', '_')
         self._socketio = socket_io
+        self._socketio.on_namespace(self)
         if items is not None:
             self._items = items
         else:
@@ -429,7 +430,6 @@ class CheckBox(Widget, Namespace):
             self._icon_position = "left"
         self._click_callback = click_callback
         self._legend = legend
-        self._socketio.on_namespace(self)
 
     @property
     def namespace(self):
@@ -501,9 +501,6 @@ class CheckBox(Widget, Namespace):
 
     def _sync_properties(self):
         emit('sync_properties_' + self._name, {'orientation': self._orientation,
-                                               'is_mini': self._is_mini,
-                                               'is_group': self._is_group,
-                                               'icon_position': self._icon_position,
                                                'legend': self._legend},
              namespace=self._namespace)
 
@@ -550,7 +547,6 @@ class CheckBox(Widget, Namespace):
                 for item in self._items:
                     if item['name'] == data['source']:
                         item['state'] = data['state']
-            print("Check: " + data['source'] + str(data['state']))
             if self._click_callback is not None:
                 self._click_callback(data['source'], data['state'], self._items)
                 emit('success', {'status': True, 'message': 'success'})
@@ -583,36 +579,33 @@ class CheckBox(Widget, Namespace):
                         });
 
                         socket.on('sync_properties_%s', function(props){
-                            //selector.text(props['title']);
-                            //var icon = props['icon'];
-                            //var styles = props['styles'];
-                            ////remove existing first
-                            //if(icon != undefined && icon != ''){
-                            //    var classes = selector.attr('class').split(' ');
-                            //    for(let cs of classes){
-                            //        var index = cs.indexOf('ui-icon');
-                            //        if(index >= 0){
-                            //            selector.removeClass(cs);
-                            //        }
-                            //    }
-                            //    if(!selector.hasClass(icon)){
-                            //        selector.addClass(icon);
-                            //    }
-                            //}
-                            //if(styles != undefined){
-                            //    selector.attr('class', '');
-                            //    selector.addClass('ui-btn');
-                            //    selector.addClass(icon);
-                            //    for(let st of styles){
-                            //        if(!selector.hasClass(st)){
-                            //            selector.addClass(st);
-                            //        }
-                            //    }
-                            //}
+                            var fldst_selector = $('#%s_fldset');
+                            var lgnd_selector = $('#%s_lgnd');
+                            var orientation = props['orientation'];
+                            var legend = props['legend'];
+
+                            //Change legend
+                            if(lgnd_selector != undefined){
+                                if(legend != undefined){
+                                    lgnd_selector.text(legend);
+                                }
+                            }
+                            //Change orientation
+                            if(orientation == "horizontal"){
+                                if(fldst_selector.hasClass('ui-controlgroup-vertical')){
+                                    fldst_selector.removeClass('ui-controlgroup-vertical');
+                                }
+                                fldst_selector.addClass('ui-controlgroup-horizontal');
+                            } else {
+                                if(fldst_selector.hasClass('ui-controlgroup-horizontal')){
+                                    fldst_selector.removeClass('ui-controlgroup-horizontal');
+                                }
+                                fldst_selector.addClass('ui-controlgroup-vertical');
+                            }
                         });
                     });
                     </script>
-                    """ % (self._namespace, self._name)
+                    """ % (self._namespace, self._name, self._name, self._name)
         return script
 
     def render(self):
@@ -623,9 +616,9 @@ class CheckBox(Widget, Namespace):
                 content += "data-type='horizontal' "
             if self._icon_position == "right":
                 content += "data-iconpos='right' "
-            content += ">\n"
+            content += "id='" + self._name + "_fldset' >\n"
             if self._legend is not None:
-                content += "<legend>" + self._legend + "</legend>\n"
+                content += "<legend id='" + self._name + "_lgnd'>" + self._legend + "</legend>\n"
         if self._items is not None:
             for item in self._items:
                 content += "<input type='checkbox' name='" + item['name'] + "' "
