@@ -386,9 +386,9 @@ class FormButton(Button):
 
 
 class CheckBox(Widget, Namespace):
-    """The checkbox can have only two states checked and not checked (i.e., true or false).
-    This widget can be used to display a single checkbox or can be used to display a group
-    of checkboxes horizontally or vertically
+    """Checkbox inputs are used to provide a list of
+    options where more than one can be selected.
+    Checkbox buttons are enhanced by the checkboxradio widget.
     """
 
     _items = None
@@ -541,6 +541,18 @@ class CheckBox(Widget, Namespace):
             if itm['name'] == name:
                 self._items.remove(itm)
 
+    def set_item_title(self, item_name, value):
+        emit('sync_item_props_' + self._name, {'item_name': item_name,
+                                               'prop_name': 'title',
+                                               'value': value},
+             namespace=self._namespace)
+
+    def set_item_disabled(self, item_name, value):
+        emit('sync_item_props_' + self._name, {'item_name': item_name,
+                                               'prop_name': 'disabled',
+                                               'value': value},
+             namespace=self._namespace)
+
     def on_fire_click_event(self, data):
         try:
             if self._items is not None:
@@ -578,6 +590,17 @@ class CheckBox(Widget, Namespace):
                         socket.on('connect', function(){
                         });
 
+                        socket.on('sync_item_props_%s', function(props){
+                            var selector = $('#' + props['item_name']);
+                            var selector_lbl = $('#' + props['item_name'] + '_lbl');
+                            if(props['prop_name'] == 'disabled'){
+                                selector.prop('disabled', props['value']);
+                            }
+                            if(props['prop_name'] == 'title'){
+                                selector_lbl.text(props['value']);
+                            }
+                        });
+
                         socket.on('sync_properties_%s', function(props){
                             var fldst_selector = $('#%s_fldset');
                             var lgnd_selector = $('#%s_lgnd');
@@ -605,7 +628,7 @@ class CheckBox(Widget, Namespace):
                         });
                     });
                     </script>
-                    """ % (self._namespace, self._name, self._name, self._name)
+                    """ % (self._namespace, self._name, self._name, self._name, self._name)
         return script
 
     def render(self):
@@ -638,4 +661,241 @@ class CheckBox(Widget, Namespace):
                     + item['title'] + "</label>\n"
         if self._is_group:
             content += "</fieldset>\n" + self._attach_script()
+        return content
+
+
+class Radio(CheckBox):
+    """Radio inputs are used to provide a list of options
+    where only a single option can be selected.
+    Radio buttons are enhanced by the checkboxradio widget.
+    """
+
+    def __init__(self, name, socket_io, items=None, is_mini=None, is_group=None,
+                 orientation=None, icon_position=None, click_callback=None, legend=None):
+        CheckBox.__init__(self, name, socket_io, items=items, is_mini=is_mini, is_group=is_group,
+                          orientation=orientation, icon_position=icon_position, click_callback=click_callback,
+                          legend=legend)
+
+    def render(self):
+        content = ""
+        if self._is_group:
+            content = "<fieldset data-role='controlgroup' "
+            if self._orientation == "horizontal":
+                content += "data-type='horizontal' "
+            if self._icon_position == "right":
+                content += "data-iconpos='right' "
+            content += "id='" + self._name + "_fldset' >\n"
+            if self._legend is not None:
+                content += "<legend id='" + self._name + "_lgnd'>" + self._legend + "</legend>\n"
+        if self._items is not None:
+            for item in self._items:
+                content += "<input type='radio' name='" + self._name + "_grp' "
+                content += "id='" + item['name'] + "' onclick='"
+                content += """  var socket = io("%s");
+                                socket.emit("fire_click_event", {"source": this.id, "state": this.checked});
+                            """ % (self._namespace)
+                content += "' "
+                if item['mini']:
+                    content += "data-mini='true' "
+                if item['theme'] is not None:
+                    content += "data-theme='" + item['theme'] + "' "
+                if item['disabled']:
+                    content += "disabled='' "
+                content += ">\n"
+                content += "<label for='" + item['name'] + "' id='" + item['name'] + "_lbl' >"\
+                    + item['title'] + "</label>\n"
+        if self._is_group:
+            content += "</fieldset>\n" + self._attach_script()
+        return content
+
+
+class Collapsible(Namespace, Widget):
+    """Collapsibles are simple widgets that allow you
+    to expand or collapse content when tapped and are
+    useful in mobile to provide a compact presentation
+    of content.
+    """
+
+    _title = None
+    _theme = None
+    _content_theme = None
+    _is_collapsed = None
+    _is_mini = None
+    _collapsed_icon = None
+    _expanded_icon = None
+    _iconpos = None
+    _is_fieldset = None
+    _legend = None
+    _is_inset = None
+    _socket_io = None
+    _namespace = None
+
+    def __init__(self, name, title, socket_io, theme=None, content_theme=None, is_collapsed=None,
+                 is_mini=None, collapsed_icon=None, expanded_icon=None, iconpos=None,
+                 is_fieldset=None, legend=None, is_inset=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_colpse").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + self._name + "_colpse").replace('.', '_')
+        self._title = title
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        self._theme = theme
+        self._content_theme = content_theme
+        self._is_collapsed = is_collapsed
+        self._is_mini = is_mini
+        self._collapsed_icon = collapsed_icon
+        self._expanded_icon = expanded_icon
+        self._iconpos = iconpos
+        self._is_fieldset = is_fieldset
+        self._legend = legend
+        self._is_inset = is_inset
+
+    @property
+    def namespace(self):
+        """Namespace to be used by the websocket framework"""
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def title(self):
+        """Header or title of collapsible widget"""
+        return self._title
+
+    @title.setter
+    def title(self, val):
+        self._title = val
+
+    @property
+    def theme(self):
+        """Theme to be used by the header of collapsible widget"""
+        return self._theme
+
+    @theme.setter
+    def theme(self, val):
+        self._theme = val
+
+    @property
+    def content_theme(self):
+        """Theme to be used by content of the widget. Set the
+        value of this property to False to have no theme applied
+        at all
+        """
+        return self._content_theme
+
+    @content_theme.setter
+    def content_theme(self, val):
+        self._content_theme = val
+
+    @property
+    def is_collapsed(self):
+        """If set to True, widget will be rendered as collapsed"""
+        return self._is_collapsed
+
+    @is_collapsed.setter
+    def is_collapsed(self, val):
+        self._is_collapsed = val
+
+    @property
+    def is_mini(self):
+        """If set to True, widget will be rendered in compact mode"""
+        return self._is_mini
+
+    @is_mini.setter
+    def is_mini(self, val):
+        self._is_mini = val
+
+    @property
+    def collapsed_icon(self):
+        """The icon to be shown when widget is collapsed. Default is the + sign"""
+        return self._collapsed_icon
+
+    @collapsed_icon.setter
+    def collapsed_icon(self, val):
+        self._collapsed_icon = val
+
+    @property
+    def expanded_icon(self):
+        """The icon to be shown when widget is expanded, default is - sign"""
+        return self._expanded_icon
+
+    @expanded_icon.setter
+    def expanded_icon(self, val):
+        self._expanded_icon = val
+
+    @property
+    def icon_position(self):
+        """The position of the icon; It can bse either right or left"""
+        return self._iconpos
+
+    @icon_position.setter
+    def icon_position(self, val):
+        self._iconpos = val
+
+    @property
+    def is_fieldset(self):
+        """Whether to use fieldset to group child items or not """
+        return self._is_fieldset
+
+    @is_fieldset.setter
+    def is_fieldset(self, val):
+        self._is_fieldset = val
+
+    @property
+    def legend(self):
+        """The legend to be shown if `is_fieldset` is set to True"""
+        return self._legend
+
+    @legend.setter
+    def legend(self, val):
+        self._legend = val
+
+    @property
+    def is_inset(self):
+        """Whether to show the widget inset or not"""
+        return self._is_inset
+
+    @is_inset.setter
+    def is_inset(self, val):
+        self._is_inset = val
+
+    def render(self):       # noqa
+        """Renders the widget contents"""
+        content = ""
+        if self._is_fieldset is not None and self._is_fieldset:
+            content = "<fieldset data-role='collapsible' "
+        else:
+            content = "<div data-role='collapsible' "
+        if self._theme is not None:
+            content += "data-theme='" + self._theme + "' "
+        if self._content_theme is not None:
+            content += "data-content-theme='" + self._content_theme + "' "
+        if self._is_collapsed is not None and not self._is_collapsed:
+            content += "data-collapsed='false' "
+        if self._is_mini is not None and self._is_mini:
+            content += "data-mini='true' "
+        if self._collapsed_icon is not None:
+            content += "data-collapsed-icon='" + self._collapsed_icon + "' "
+        if self._expanded_icon is not None:
+            content += "data-expanded-icon='" + self._expanded_icon + "' "
+        if self._iconpos is not None:
+            content += "data-iconpos='" + self._iconpos + "' "
+        if self._is_inset is not None and not self._is_inset:
+            content += "data-inset='false' "
+        content += ">\n"
+        if self._is_fieldset is not None and self._is_fieldset:
+            if self._legend is not None:
+                content += "<legend>" + self._legend + "</legend>\n"
+        else:
+            if self._title is not None:
+                content += "<h4>" + self._title + "</h4>\n"
+        if self._child_widgets is not None:
+            for widget in self._child_widgets:
+                content += widget.render() + "\n"
+        if self._is_fieldset is not None and self._is_fieldset:
+            content += "</fieldset>"
+        else:
+            content += "</div>"
         return content

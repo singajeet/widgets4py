@@ -1,5 +1,5 @@
 from widgets4py.base import Page
-from widgets4py.websocket.jqmobile.ui import MPage, Button, ButtonStyle, FormButton, CheckBox
+from widgets4py.websocket.jqmobile.ui import MPage, Button, ButtonStyle, FormButton, CheckBox, Radio, Collapsible
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -30,9 +30,19 @@ class MobileExample:
         self._chkbox.add_item('item2', 'Item2')
         self._chkbox.add_item('item3', 'Item3')
         self._chkbox.add_item('item4', 'Item4')
+        self._rd = Radio('rd', socketio, is_group=True, orientation="vertical",
+                         legend="My RadioButtons",
+                         click_callback=self.chk_clicked)
+        self._rd.add_item('rd_item1', 'RadioItem1')
+        self._rd.add_item('rd_item2', 'RadioItem2')
+        self._rd.add_item('rd_item3', 'RadioItem3')
+        self._rd.add_item('rd_item4', 'RadioItem4')
+        self._clsp = Collapsible('clsp', 'My Collapsible', socketio)
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)
+        self._mpg1.add(self._rd)
+        self._mpg1.add(self._clsp)
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
