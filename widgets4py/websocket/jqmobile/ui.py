@@ -729,10 +729,11 @@ class Collapsible(Namespace, Widget):
     _is_inset = None
     _socket_io = None
     _namespace = None
+    _click_callback = None
 
     def __init__(self, name, title, socket_io, theme=None, content_theme=None, is_collapsed=None,
                  is_mini=None, collapsed_icon=None, expanded_icon=None, iconpos=None,
-                 is_fieldset=None, legend=None, is_inset=None):
+                 is_fieldset=None, legend=None, is_inset=None, click_callback=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_colpse").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_colpse").replace('.', '_')
@@ -749,6 +750,7 @@ class Collapsible(Namespace, Widget):
         self._is_fieldset = is_fieldset
         self._legend = legend
         self._is_inset = is_inset
+        self._click_callback = click_callback
 
     @property
     def namespace(self):
@@ -797,6 +799,7 @@ class Collapsible(Namespace, Widget):
     @is_collapsed.setter
     def is_collapsed(self, val):
         self._is_collapsed = val
+        self._sync_properties('collapsed', val)
 
     @property
     def is_mini(self):
@@ -861,13 +864,41 @@ class Collapsible(Namespace, Widget):
     def is_inset(self, val):
         self._is_inset = val
 
+    def on_fire_click_event(self, props):
+        if self._click_callback is not None:
+            self._click_callback(self._name, props)
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
+
+    def _attach_script(self):
+        script = """
+                <script>
+                    (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s');
+                            var head_selector = $('#%s_head');
+
+                            socket.on('sync_properties_%s', function(props){
+                                if(props['cmd'] == 'collapsed'){
+                                    selector.collapsible("option", "collapsed", props['value']);
+                                }
+                            });
+                        });
+                    })(jQuery);
+                </script>
+                """
+        return script
+
     def render(self):       # noqa
         """Renders the widget contents"""
         content = ""
         if self._is_fieldset is not None and self._is_fieldset:
-            content = "<fieldset data-role='collapsible' "
+            content = "<fieldset data-role='collapsible' id='" + self._name + "' "
         else:
-            content = "<div data-role='collapsible' "
+            content = "<div data-role='collapsible' id='" + self._name + "' "
         if self._theme is not None:
             content += "data-theme='" + self._theme + "' "
         if self._content_theme is not None:
@@ -887,10 +918,13 @@ class Collapsible(Namespace, Widget):
         content += ">\n"
         if self._is_fieldset is not None and self._is_fieldset:
             if self._legend is not None:
-                content += "<legend>" + self._legend + "</legend>\n"
+                content += "<legend id='" + self._name + "_head'>" + self._legend + "</legend>\n"
         else:
             if self._title is not None:
-                content += "<h4>" + self._title + "</h4>\n"
+                content += "<h4 id='" + self._name + "_head' onclick='"
+                content += "var socket = io(\"" + self._namespace + "\"); \n"
+                content += "socket.emit(\"fire_click_event\",{});\n"
+                content += "'>" + self._title + "</h4>\n"
         if self._child_widgets is not None:
             for widget in self._child_widgets:
                 content += widget.render() + "\n"
@@ -898,4 +932,53 @@ class Collapsible(Namespace, Widget):
             content += "</fieldset>"
         else:
             content += "</div>"
+        content += "\n" + self._attach_script()
+        return content
+
+
+class CollapsibleSet(Collapsible):
+    """Collapsible set work as the collection for collapsible
+    widgets"""
+
+    _no_corners = None
+
+    def __init__(self, name, title, socket_io, theme=None, content_theme=None, is_collapsed=None,
+                 is_mini=None, collapsed_icon=None, expanded_icon=None, iconpos=None,
+                 is_fieldset=None, legend=None, is_inset=None, click_callback=None, items=None, no_corners=None):
+        Collapsible.__init__(self, name, None, socket_io, theme=theme, content_theme=content_theme,
+                             is_collapsed=is_collapsed, is_mini=is_mini, collapsed_icon=collapsed_icon,
+                             expanded_icon=expanded_icon, iconpos=iconpos, is_fieldset=None, legend=None,
+                             is_inset=is_inset, click_callback=click_callback)
+        if items is not None:
+            self._child_widgets = items
+        else:
+            self._child_widgets = []
+        self._no_corners = no_corners
+
+    def render(self):       # noqa
+        """Renders the widget contents"""
+        content = "<div data-role='collapsibleset' "
+        if self._theme is not None:
+            content += "data-theme='" + self._theme + "' "
+        if self._content_theme is not None:
+            content += "data-content-theme='" + self._content_theme + "' "
+        if self._is_collapsed is not None and not self._is_collapsed:
+            content += "data-collapsed='false' "
+        if self._is_mini is not None and self._is_mini:
+            content += "data-mini='true' "
+        if self._collapsed_icon is not None:
+            content += "data-collapsed-icon='" + self._collapsed_icon + "' "
+        if self._expanded_icon is not None:
+            content += "data-expanded-icon='" + self._expanded_icon + "' "
+        if self._iconpos is not None:
+            content += "data-iconpos='" + self._iconpos + "' "
+        if self._is_inset is not None and not self._is_inset:
+            content += "data-inset='false' "
+        if self._no_corners is not None and self._no_corners:
+            content += "data-corners='false' "
+        content += ">\n"
+        if self._child_widgets is not None:
+            for widget in self._child_widgets:
+                content += widget.render() + "\n"
+        content += "</div>"
         return content

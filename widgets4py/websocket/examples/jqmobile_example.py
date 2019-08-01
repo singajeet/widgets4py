@@ -1,5 +1,6 @@
 from widgets4py.base import Page
 from widgets4py.websocket.jqmobile.ui import MPage, Button, ButtonStyle, FormButton, CheckBox, Radio, Collapsible
+from widgets4py.websocket.jqmobile.ui import CollapsibleSet
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -37,7 +38,13 @@ class MobileExample:
         self._rd.add_item('rd_item2', 'RadioItem2')
         self._rd.add_item('rd_item3', 'RadioItem3')
         self._rd.add_item('rd_item4', 'RadioItem4')
-        self._clsp = Collapsible('clsp', 'My Collapsible', socketio)
+        self._clsp1 = Collapsible('clsp1', 'My Collapsible1', socketio, click_callback=self.clsp_clicked)
+        self._clsp2 = Collapsible('clsp2', 'My Collapsible2', socketio, click_callback=self.clsp_clicked)
+        self._clsp3 = Collapsible('clsp3', 'My Collapsible3', socketio, click_callback=self.clsp_clicked)
+        self._clsp = CollapsibleSet('clsp', '', socketio)
+        self._clsp.add(self._clsp1)
+        self._clsp.add(self._clsp2)
+        self._clsp.add(self._clsp3)
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)
@@ -47,10 +54,14 @@ class MobileExample:
         self._pg.add(self._mpg2)
         return self._pg.render()
 
+    def clsp_clicked(self, source, props):
+        print("Collapsible clicked...!")
+
     def chk_clicked(self, source, status, items):
         print("Check Clicked: " + source + ", " + str(status))
 
     def btn_clicked(self, source, props):
+        self._clsp1.is_collapsed = not self._clsp1.is_collapsed
         if self._btn.icon == 'ui-icon-delete':
             self._btn.icon = 'ui-icon-alert'
             self._btn.remove_style(ButtonStyle.ICON_LEFT)
