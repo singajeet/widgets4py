@@ -727,13 +727,16 @@ class Collapsible(Namespace, Widget):
     _is_fieldset = None
     _legend = None
     _is_inset = None
+    _corners = None
+    _disabled = None
     _socket_io = None
     _namespace = None
     _click_callback = None
 
     def __init__(self, name, title, socket_io, theme=None, content_theme=None, is_collapsed=None,
                  is_mini=None, collapsed_icon=None, expanded_icon=None, iconpos=None,
-                 is_fieldset=None, legend=None, is_inset=None, click_callback=None):
+                 is_fieldset=None, legend=None, is_inset=None, corners=None, click_callback=None,
+                 disabled=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_colpse").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_colpse").replace('.', '_')
@@ -750,6 +753,8 @@ class Collapsible(Namespace, Widget):
         self._is_fieldset = is_fieldset
         self._legend = legend
         self._is_inset = is_inset
+        self._corners = corners
+        self._disabled = disabled
         self._click_callback = click_callback
 
     @property
@@ -769,6 +774,7 @@ class Collapsible(Namespace, Widget):
     @title.setter
     def title(self, val):
         self._title = val
+        self._sync_properties('heading', val)
 
     @property
     def theme(self):
@@ -778,6 +784,7 @@ class Collapsible(Namespace, Widget):
     @theme.setter
     def theme(self, val):
         self._theme = val
+        self._sync_properties('theme', val)
 
     @property
     def content_theme(self):
@@ -790,6 +797,7 @@ class Collapsible(Namespace, Widget):
     @content_theme.setter
     def content_theme(self, val):
         self._content_theme = val
+        self._sync_properties('contentTheme', val)
 
     @property
     def is_collapsed(self):
@@ -809,6 +817,7 @@ class Collapsible(Namespace, Widget):
     @is_mini.setter
     def is_mini(self, val):
         self._is_mini = val
+        self._sync_properties('mini', val)
 
     @property
     def collapsed_icon(self):
@@ -818,6 +827,7 @@ class Collapsible(Namespace, Widget):
     @collapsed_icon.setter
     def collapsed_icon(self, val):
         self._collapsed_icon = val
+        self._sync_properties('collapsedIcon', val)
 
     @property
     def expanded_icon(self):
@@ -827,6 +837,7 @@ class Collapsible(Namespace, Widget):
     @expanded_icon.setter
     def expanded_icon(self, val):
         self._expanded_icon = val
+        self._sync_properties('expandedIcon', val)
 
     @property
     def icon_position(self):
@@ -836,6 +847,7 @@ class Collapsible(Namespace, Widget):
     @icon_position.setter
     def icon_position(self, val):
         self._iconpos = val
+        self._sync_properties('iconpos', val)
 
     @property
     def is_fieldset(self):
@@ -854,6 +866,7 @@ class Collapsible(Namespace, Widget):
     @legend.setter
     def legend(self, val):
         self._legend = val
+        self._sync_properties('heading', val)
 
     @property
     def is_inset(self):
@@ -863,8 +876,61 @@ class Collapsible(Namespace, Widget):
     @is_inset.setter
     def is_inset(self, val):
         self._is_inset = val
+        self._sync_properties('inset', val)
+
+    @property
+    def corners(self):
+        """Whether to have round corners or not"""
+        return self._corners
+    
+    @corners.setter
+    def corners(self, val):
+        self._corners = val
+        self._sync_properties('corners', val)
+
+    @property
+    def disabled(self):
+        return self._disabled
+    
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
 
     def on_fire_click_event(self, props):
+        clspd = props['collapsed']
+        if clspd is not None:
+            self._is_collapsed = clspd
+        clspdIcn = props['collapsedIcon']
+        if clspdIcn is not None:
+            self._collapsed_icon = clspdIcn
+        conthme = props['contentTheme']
+        if conthme is not None:
+            self._content_theme = conthme
+        crnrs = props['corners']
+        if crnrs is not None:
+            self._corners = crnrs
+        dsbl = props['disabled']
+        if dsbl is not None:
+            self._disabled = dsbl
+        expndIcon = props['expandedIcon']
+        if expndIcon is not None:
+            self._expanded_icon = expndIcon
+        head = props['heading']
+        if head is not None and head != "h1,h2,h3,h4,h5,h6,legend":
+            self._title = head
+        icnpos = props['iconpos']
+        if icnpos is not None:
+            self._iconpos = icnpos
+        inst = props['inset']
+        if inst is not None:
+            self._is_inset = inst
+        mini = props['mini']
+        if mini is not None:
+            self._is_mini = mini
+        thm = props['theme']
+        if thm is not None:
+            self._theme = thm
         if self._click_callback is not None:
             self._click_callback(self._name, props)
 
@@ -882,14 +948,29 @@ class Collapsible(Namespace, Widget):
                             var head_selector = $('#%s_head');
 
                             socket.on('sync_properties_%s', function(props){
-                                if(props['cmd'] == 'collapsed'){
-                                    selector.collapsible("option", "collapsed", props['value']);
-                                }
+                                selector.collapsible("option", props['cmd'], props['value']);
                             });
-                        });
+
+                            selector.bind('vclick', function(){
+                                props = {
+                                            'collapsed': selector.collapsible("option", "collapsed"),
+                                            'collapsedIcon': selector.collapsible("option", "collapsedIcon"),
+                                            'contentTheme': selector.collapsible("option", "contentTheme"),
+                                            'corners': selector.collapsible("option", "corners"),
+                                            'disabled': selector.collapsible("option", "disabled"),
+                                            'expandedIcon': selector.collapsible("option", "expandedIcon"),
+                                            'heading': selector.collapsible("option", "heading"),
+                                            'iconpos': selector.collapsible("option", "iconpos"),
+                                            'inset': selector.collapsible("option", "inset"),
+                                            'mini': selector.collapsible("option", "mini"),
+                                            'theme': selector.collapsible("option", "theme")
+                                        };                                        
+                                socket.emit("fire_click_event", props);
+                            });
+                        });                        
                     })(jQuery);
                 </script>
-                """
+                """ % (self._namespace, self._name, self._name, self._name)
         return script
 
     def render(self):       # noqa
@@ -921,10 +1002,8 @@ class Collapsible(Namespace, Widget):
                 content += "<legend id='" + self._name + "_head'>" + self._legend + "</legend>\n"
         else:
             if self._title is not None:
-                content += "<h4 id='" + self._name + "_head' onclick='"
-                content += "var socket = io(\"" + self._namespace + "\"); \n"
-                content += "socket.emit(\"fire_click_event\",{});\n"
-                content += "'>" + self._title + "</h4>\n"
+                content += "<h4 id='" + self._name
+                content += "_head'>" + self._title + "</h4>\n"
         if self._child_widgets is not None:
             for widget in self._child_widgets:
                 content += widget.render() + "\n"
@@ -982,3 +1061,99 @@ class CollapsibleSet(Collapsible):
                 content += widget.render() + "\n"
         content += "</div>"
         return content
+
+
+class ControlGroup(Widget, Namespace):
+    """Controlgroups are used to visually group a set of buttons to 
+    form a single block that looks contained like a navigation component.
+    """
+
+    _socket_io = None
+    _namespace = None
+    _corners = None
+    _disabled = None
+    _exclude_invisible = None
+    _mini = None
+    _shadow = None
+    _theme = None
+    _type = None
+
+    def __init__(self, name, socket_io, corners=None, disabled=None, exclude_invisible=None,
+                 mini=None, shadow=None, theme=None, type=None, items=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_cg").replace('.', '_'))
+        self._namespace= '/' + str(__name__ + "_" + name + "_cg").replace('.', '_')
+        self._socket_io = socket_io
+        self._corners = corners
+        self._disabled = disabled
+        self._exclude_invisible = exclude_invisible
+        self._mini = mini
+        self._shadow = shadow
+        self._theme = theme
+        self._type = type
+        self._child_widgets = items
+
+    @property
+    def namespace(self):
+        return self._namespace
+    
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def corners(self):
+        return self._corners
+    
+    @corners.setter
+    def corners(self, val):
+        self._corners = val
+
+    @property
+    def disabled(self):
+        return self._disabled
+    
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+
+    @property
+    def exclude_invisible(self):
+        return self._exclude_invisible
+    
+    @exclude_invisible.setter
+    def exclude_invisible(self, val):
+        self._exclude_invisible = val
+    
+    @property
+    def mini(self):
+        return self._mini
+    
+    @mini.setter
+    def mini(self, val):
+        self._mini = val
+    
+    @property
+    def shadow(self):
+        return self._shadow
+    
+    @shadow.setter
+    def shadow(self, val):
+        self._shadow = val
+    
+    @property
+    def theme(self):
+        return self._theme
+    
+    @theme.setter
+    def theme(self, val):
+        self._theme = val
+    
+    @property
+    def type(self):
+        return self._type
+    
+    @type.setter
+    def type(self, val):
+        self._type = val
+    

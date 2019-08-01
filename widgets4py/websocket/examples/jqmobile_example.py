@@ -55,7 +55,7 @@ class MobileExample:
         return self._pg.render()
 
     def clsp_clicked(self, source, props):
-        print("Collapsible clicked...!")
+        print("Collapsible clicked! Source: " + source + "Props: " + str(props))
 
     def chk_clicked(self, source, status, items):
         print("Check Clicked: " + source + ", " + str(status))
