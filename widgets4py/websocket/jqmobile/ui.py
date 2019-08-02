@@ -882,7 +882,7 @@ class Collapsible(Namespace, Widget):
     def corners(self):
         """Whether to have round corners or not"""
         return self._corners
-    
+
     @corners.setter
     def corners(self, val):
         self._corners = val
@@ -891,13 +891,13 @@ class Collapsible(Namespace, Widget):
     @property
     def disabled(self):
         return self._disabled
-    
+
     @disabled.setter
     def disabled(self, val):
         self._disabled = val
         self._sync_properties('disabled', val)
 
-    def on_fire_click_event(self, props):
+    def on_fire_click_event(self, props):  # noqa
         clspd = props['collapsed']
         if clspd is not None:
             self._is_collapsed = clspd
@@ -964,10 +964,10 @@ class Collapsible(Namespace, Widget):
                                             'inset': selector.collapsible("option", "inset"),
                                             'mini': selector.collapsible("option", "mini"),
                                             'theme': selector.collapsible("option", "theme")
-                                        };                                        
+                                        };
                                 socket.emit("fire_click_event", props);
                             });
-                        });                        
+                        });
                     })(jQuery);
                 </script>
                 """ % (self._namespace, self._name, self._name, self._name)
@@ -1020,10 +1020,12 @@ class CollapsibleSet(Collapsible):
     widgets"""
 
     _no_corners = None
+    _use_filter = None
 
     def __init__(self, name, title, socket_io, theme=None, content_theme=None, is_collapsed=None,
                  is_mini=None, collapsed_icon=None, expanded_icon=None, iconpos=None,
-                 is_fieldset=None, legend=None, is_inset=None, click_callback=None, items=None, no_corners=None):
+                 is_fieldset=None, legend=None, is_inset=None, click_callback=None, items=None, no_corners=None,
+                 use_filter=None):
         Collapsible.__init__(self, name, None, socket_io, theme=theme, content_theme=content_theme,
                              is_collapsed=is_collapsed, is_mini=is_mini, collapsed_icon=collapsed_icon,
                              expanded_icon=expanded_icon, iconpos=iconpos, is_fieldset=None, legend=None,
@@ -1033,10 +1035,16 @@ class CollapsibleSet(Collapsible):
         else:
             self._child_widgets = []
         self._no_corners = no_corners
+        self._use_filter = use_filter
 
     def render(self):       # noqa
         """Renders the widget contents"""
-        content = "<div data-role='collapsibleset' "
+        content = ""
+        if self._use_filter is not None and self._use_filter:
+            content = "<input data-type='search' id='" + self._name + "_query_value' />\n"
+            content += "<div data-role='collapsibleset' data-filter='true' data-input='#" + self._name + "_query_value' "  # noqa
+        else:
+            content = "<div data-role='collapsibleset' "
         if self._theme is not None:
             content += "data-theme='" + self._theme + "' "
         if self._content_theme is not None:
@@ -1064,7 +1072,7 @@ class CollapsibleSet(Collapsible):
 
 
 class ControlGroup(Widget, Namespace):
-    """Controlgroups are used to visually group a set of buttons to 
+    """Controlgroups are used to visually group a set of buttons to
     form a single block that looks contained like a navigation component.
     """
 
@@ -1077,12 +1085,16 @@ class ControlGroup(Widget, Namespace):
     _shadow = None
     _theme = None
     _type = None
+    _is_fieldset = None
+    _legend = None
+    _use_filter = None
 
     def __init__(self, name, socket_io, corners=None, disabled=None, exclude_invisible=None,
-                 mini=None, shadow=None, theme=None, type=None, items=None):
+                 mini=None, shadow=None, theme=None, type=None, items=None, is_fieldset=None,
+                 legend=None, use_filter=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_cg").replace('.', '_'))
-        self._namespace= '/' + str(__name__ + "_" + name + "_cg").replace('.', '_')
+        self._namespace = '/' + str(__name__ + "_" + name + "_cg").replace('.', '_')
         self._socket_io = socket_io
         self._corners = corners
         self._disabled = disabled
@@ -1092,11 +1104,18 @@ class ControlGroup(Widget, Namespace):
         self._theme = theme
         self._type = type
         self._child_widgets = items
+        self._is_fieldset = is_fieldset
+        self._legend = legend
+        if items is not None:
+            self._child_widgets = items
+        else:
+            self._child_widgets = []
+        self._use_filter = use_filter
 
     @property
     def namespace(self):
         return self._namespace
-    
+
     @namespace.setter
     def namespace(self, val):
         self._namespace = val
@@ -1104,56 +1123,387 @@ class ControlGroup(Widget, Namespace):
     @property
     def corners(self):
         return self._corners
-    
+
     @corners.setter
     def corners(self, val):
         self._corners = val
+        self._sync_properties('corners', val)
 
     @property
     def disabled(self):
         return self._disabled
-    
+
     @disabled.setter
     def disabled(self, val):
         self._disabled = val
+        self._sync_properties('disabled', val)
 
     @property
     def exclude_invisible(self):
         return self._exclude_invisible
-    
+
     @exclude_invisible.setter
     def exclude_invisible(self, val):
         self._exclude_invisible = val
-    
+        self._sync_properties('excludeInvisible', val)
+
     @property
     def mini(self):
         return self._mini
-    
+
     @mini.setter
     def mini(self, val):
         self._mini = val
-    
+        self._sync_properties('mini', val)
+
     @property
     def shadow(self):
         return self._shadow
-    
+
     @shadow.setter
     def shadow(self, val):
         self._shadow = val
-    
+        self._sync_properties('shadow', val)
+
     @property
     def theme(self):
         return self._theme
-    
+
     @theme.setter
     def theme(self, val):
         self._theme = val
-    
+        self._sync_properties('theme', val)
+
     @property
     def type(self):
         return self._type
-    
+
     @type.setter
     def type(self, val):
         self._type = val
-    
+        self._sync_properties('type', val)
+
+    @property
+    def is_fieldset(self):
+        return self._is_fieldset
+
+    @is_fieldset.setter
+    def is_fieldset(self, val):
+        self._is_fieldset = val
+
+    @property
+    def legend(self):
+        return self._legend
+
+    @legend.setter
+    def legend(self, val):
+        self._legend = val
+
+    def on_fire_click_event(self, props):  # noqa
+        crnrs = props['corners']
+        if crnrs is not None:
+            self._corners = crnrs
+        dsbl = props['disabled']
+        if dsbl is not None:
+            self._disabled = dsbl
+        mini = props['mini']
+        if mini is not None:
+            self._is_mini = mini
+        thm = props['theme']
+        if thm is not None:
+            self._theme = thm
+        xludeInvisi = props['excludeInvisible']
+        if xludeInvisi is not None:
+            self._exclude_invisible = xludeInvisi
+        shdw = props['shadow']
+        if shdw is not None:
+            self._shadow = shdw
+        typ = props['type']
+        if typ is not None:
+            self._type = typ
+        if self._click_callback is not None:
+            self._click_callback(self._name, props)
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
+
+    def _attach_script(self):
+        script = """
+                <script>
+                    (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s');
+                            var head_selector = $('#%s_lgnd');
+
+                            socket.on('sync_properties_%s', function(props){
+                                selector.controlgroup("option", props['cmd'], props['value']);
+                            });
+
+                            selector.bind('vclick', function(){
+                                props = {
+                                            'corners': selector.controlgroup("option", "corners"),
+                                            'disabled': selector.controlgroup("option", "disabled"),
+                                            'mini': selector.controlgroup("option", "mini"),
+                                            'theme': selector.controlgroup("option", "theme")
+                                            'excludeInvisible': selector.controlgroup("option", "excludeInvisible"),
+                                            'shadow': selector.controlgroup("option", "shadow"),
+                                            'type': selector.controlgroup("option", "type")
+                                        };
+                                socket.emit("fire_click_event", props);
+                            });
+                        });
+                    })(jQuery);
+                </script>
+                """ % (self._namespace, self._name, self._name, self._name)
+        return script
+
+    def render(self):  # noqa
+        content = ""
+        if self._use_filter is not None and self._use_filter:
+            content = "<input data-type='search' id='" + self._name + "_filter_query' />\n"
+        if self._is_fieldset is not None and self._is_fieldset:
+            content += "<fieldset data-role='controlgroup' id='" + self._name + "' "
+        else:
+            content += "<div data-role='controlgroup' id='" + self._name + "' "
+        if self._use_filter is not None and self._use_filter:
+            content += "data-filter='true' data-input='#" + self._name + "_filter_query' "
+        if self._mini is not None and self._mini:
+            content += "data-mini='true' "
+        if self._type is not None and self._type == "horizontal":
+            content += "data-type='horizontal' "
+        if self._corners is not None and not self._corners:
+            content += "data-corners='false' "
+        if self._disabled is not None and self._disabled:
+            content += "data-disabled='true' "
+        if self._exclude_invisible is not None and not self._exclude_invisible:
+            content += "data-exclude-invisible='false' "
+        if self._shadow is not None and not self._shadow:
+            content += "data-shadow='false' "
+        if self._theme is not None:
+            content += "theme='" + self._theme + "' "
+        content += ">\n"
+        if self._is_fieldset is not None and self._is_fieldset:
+            if self._legend is not None:
+                content += "<legend id='" + self._name + "_lgnd' >" + self._legend + "</legend>\n"
+        if self._child_widgets is not None:
+            for widget in self._child_widgets:
+                content += widget.render()
+        if self._is_fieldset is not None and self._is_fieldset:
+            content += "</fieldset>\n"
+        else:
+            content += "</div>\n"
+        content += self._attach_script()
+        return content
+
+
+class FlipSwitch(Widget, Namespace):
+    """Flip switches are used for boolean style inputs like
+    true/false or on/off in a compact UI element
+    """
+
+    _namespace = None
+    _socket_io = None
+    _on_text = None
+    _off_text = None
+    _is_checked = None
+    _switch_kind = None
+    _select_options = None
+    _theme = None
+    _is_mini = None
+    _no_corners = None
+    _is_disabled = None
+    _custom_size = None
+
+    _data_wrapper_class_size = "custom-size-flipswitch"
+    _data_wrapper_class_label = "custom-label-flipswitch"
+
+    CUSTOM_LABEL_CSS = """
+                        <style>
+                        .custom-label-flipswitch.ui-flipswitch .ui-btn.ui-flipswitch-on {
+                            text-indent: -3.4em;
+                        }
+                        .custom-label-flipswitch.ui-flipswitch .ui-flipswitch-off {
+                            text-indent: 0.5em;
+                        }
+                        </style>
+                        """
+    CUSTOM_SIZE_CSS = """
+                    <style>
+                    /* Custom indentations are needed because the length of custom labels differs from
+                    the length of the standard labels */
+                    .custom-size-flipswitch.ui-flipswitch .ui-btn.ui-flipswitch-on {
+                        text-indent: -5.9em;
+                    }
+                    .custom-size-flipswitch.ui-flipswitch .ui-flipswitch-off {
+                        text-indent: 0.5em;
+                    }
+                    /* Custom widths are needed because the length of custom labels differs from
+                    the length of the standard labels */
+                    .custom-size-flipswitch.ui-flipswitch {
+                        width: 8.875em;
+                    }
+                    .custom-size-flipswitch.ui-flipswitch.ui-flipswitch-active {
+                        padding-left: 7em;
+                        width: 1.875em;
+                    }
+                    @media (min-width: 28em) {
+                        /*Repeated from rule .ui-flipswitch above*/
+                        .ui-field-contain > label + .custom-size-flipswitch.ui-flipswitch {
+                            width: 1.875em;
+                        }
+                    }
+                    </style>
+                    """
+
+    def __init__(self, name, socket_io, on_text=None, off_text=None, is_checked=None, switch_kind=None,
+                 select_options=None, theme=None, is_mini=None, no_corners=None, is_disabled=None,
+                 custom_size=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_fs").replace(".", "_"))
+        self._namespace = '/' + str(__name__ + "_" + self._name + "_fs").replace(".", "_")
+        self._socket_io = socket_io
+        self._on_text = on_text
+        self._off_text = off_text
+        if is_checked is not None:
+            self._is_checked = is_checked
+        else:
+            self._is_checked = False
+        if switch_kind is not None:
+            self._switch_kind = switch_kind
+        else:
+            self._switch_kind = "checked"
+        self._select_options = select_options
+        self._theme = theme
+        if is_mini is not None:
+            self._is_mini = is_mini
+        else:
+            self._is_mini = False
+        if is_disabled is not None:
+            self._is_disabled = is_disabled
+        else:
+            self._is_disabled = False
+        if no_corners is not None:
+            self._no_corners = no_corners
+        else:
+            self._no_corners = False
+        if custom_size is not None:
+            self._custom_size = custom_size
+        else:
+            self._custom_size = False
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def on_text(self):
+        return self._on_text
+
+    @on_text.setter
+    def on_text(self, val):
+        self._on_text = val
+
+    @property
+    def off_text(self):
+        return self._off_text
+
+    @off_text.setter
+    def off_text(self, val):
+        self._off_text = val
+
+    @property
+    def is_checked(self):
+        return self._is_checked
+
+    @is_checked.setter
+    def is_checked(self, val):
+        self._is_checked = val
+
+    @property
+    def switch_kind(self):
+        return self._switch_kind
+
+    @switch_kind
+    def switch_kind(self, val):
+        self._switch_kind = val
+
+    @property
+    def select_options(self):
+        return self._select_options
+
+    @select_options.setter
+    def select_options(self, val):
+        self._select_options = val
+
+    @property
+    def theme(self):
+        return self._theme
+
+    @theme.setter
+    def theme(self, val):
+        self._theme = val
+
+    @property
+    def is_mini(self):
+        return self._is_mini
+
+    @is_mini.setter
+    def is_mini(self, val):
+        self._is_mini = val
+
+    @property
+    def is_disabled(self):
+        return self._is_disabled
+
+    @is_disabled.setter
+    def is_disabled(self, val):
+        self._is_disabled = val
+
+    @property
+    def no_corners(self):
+        return self._no_corners
+
+    @no_corners.setter
+    def no_corners(self, val):
+        self._no_corners = val
+
+    def render(self):  # noqa
+        content = ""
+        if self._switch_kind == "checkbox":
+            content += "<input type='checkbox' role='flipswitch' "
+        else:
+            content += "<select role='flipswitch' "
+        content += "id='" + self._name + "' "
+        if self._on_text is not None:
+            content += "data-on-text='" + self._on_text + "' "
+        if self._off_text is not None:
+            content += "data-off-text='" + self._off_text + "' "
+        if self._on_text is not None or self._off_text is not None and not self._custom_size:
+            content += "data-wrapper-class='" + self._data_wrapper_class_label + "' "
+        if self._on_text is not None or self._off_text is not None and self._custom_size:
+            content += "data-wrapper-class='" + self._data_wrapper_class_size + "' "
+        if self._switch_kind == "checkbox" and self._is_checked:
+            content += "checked='' "
+        if self._theme is not None:
+            content += "data-theme='" + self._theme + "' "
+        if self._is_mini:
+            content += "data-mini='true' "
+        if self._no_corners:
+            content += "data-corners='false' "
+        if self._is_disabled:
+            content += "disabled='disabled' "
+        content += ">\n"
+        if self._switch_kind != "checkbox":
+            for option in self._select_options:
+                content += "<option>" + option + "</option>\n"
+            content += "</select>\n"
+        else:
+            content += "</input>\n"
+        content += self.CUSTOM_LABEL_CSS + "\n" + self.CUSTOM_SIZE_CSS + "\n"
+        return content
