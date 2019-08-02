@@ -1,6 +1,6 @@
 from widgets4py.base import Page
 from widgets4py.websocket.jqmobile.ui import MPage, Button, ButtonStyle, FormButton, CheckBox, Radio, Collapsible
-from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup
+from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -44,6 +44,8 @@ class MobileExample:
         self._clsp2 = Collapsible('clsp2', 'My Collapsible2', socketio, click_callback=self.clsp_clicked)
         self._clsp3 = Collapsible('clsp3', 'My Collapsible3', socketio, click_callback=self.clsp_clicked)
         self._clsp = CollapsibleSet('clsp', '', socketio, use_filter=True)
+        self._fs = FlipSwitch('fs', socketio, on_text="Light", off_text="Dark",
+                              click_callback=self.fs_clicked)
         self._clsp.add(self._clsp1)
         self._clsp.add(self._clsp2)
         self._clsp.add(self._clsp3)
@@ -52,12 +54,17 @@ class MobileExample:
         self._mpg1.add(self._chkbox)
         self._mpg1.add(self._ctrl_gp)
         self._mpg1.add(self._clsp)
+        self._mpg1.add(self._fs)
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
 
+    def fs_clicked(self, source, props):
+        print("FlipSwitch Clicked: " + source + ", Props:" + str(props))
+
     def clsp_clicked(self, source, props):
-        print("Collapsible clicked! Source: " + source + "Props: " + str(props))
+        print("Collapsible clicked! Source: " + source + ", Props: " + str(props))
+        self._fs._is_checked = not self._fs._is_checked
 
     def chk_clicked(self, source, status, items):
         print("Check Clicked: " + source + ", " + str(status))

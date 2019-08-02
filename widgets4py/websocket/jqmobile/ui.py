@@ -1246,7 +1246,7 @@ class ControlGroup(Widget, Namespace):
                                             'corners': selector.controlgroup("option", "corners"),
                                             'disabled': selector.controlgroup("option", "disabled"),
                                             'mini': selector.controlgroup("option", "mini"),
-                                            'theme': selector.controlgroup("option", "theme")
+                                            'theme': selector.controlgroup("option", "theme"),
                                             'excludeInvisible': selector.controlgroup("option", "excludeInvisible"),
                                             'shadow': selector.controlgroup("option", "shadow"),
                                             'type': selector.controlgroup("option", "type")
@@ -1315,6 +1315,9 @@ class FlipSwitch(Widget, Namespace):
     _no_corners = None
     _is_disabled = None
     _custom_size = None
+    _click_callback = None
+    _custom_label_css = None
+    _custom_label_size_css = None
 
     _data_wrapper_class_size = "custom-size-flipswitch"
     _data_wrapper_class_label = "custom-label-flipswitch"
@@ -1359,11 +1362,12 @@ class FlipSwitch(Widget, Namespace):
 
     def __init__(self, name, socket_io, on_text=None, off_text=None, is_checked=None, switch_kind=None,
                  select_options=None, theme=None, is_mini=None, no_corners=None, is_disabled=None,
-                 custom_size=None):
+                 custom_size=None, click_callback=None, custom_label_css=None, custom_label_size_css=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_fs").replace(".", "_"))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_fs").replace(".", "_")
         self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
         self._on_text = on_text
         self._off_text = off_text
         if is_checked is not None:
@@ -1373,8 +1377,11 @@ class FlipSwitch(Widget, Namespace):
         if switch_kind is not None:
             self._switch_kind = switch_kind
         else:
-            self._switch_kind = "checked"
-        self._select_options = select_options
+            self._switch_kind = "checkbox"
+        if select_options is not None:
+            self._select_options = select_options
+        else:
+            self._select_options = []
         self._theme = theme
         if is_mini is not None:
             self._is_mini = is_mini
@@ -1392,6 +1399,9 @@ class FlipSwitch(Widget, Namespace):
             self._custom_size = custom_size
         else:
             self._custom_size = False
+        self._click_callback = click_callback
+        self._custom_label_css = custom_label_css
+        self._custom_label_size_css = custom_label_size_css
 
     @property
     def namespace(self):
@@ -1408,6 +1418,7 @@ class FlipSwitch(Widget, Namespace):
     @on_text.setter
     def on_text(self, val):
         self._on_text = val
+        self._sync_properties('onText', val)
 
     @property
     def off_text(self):
@@ -1416,6 +1427,7 @@ class FlipSwitch(Widget, Namespace):
     @off_text.setter
     def off_text(self, val):
         self._off_text = val
+        self._sync_properties('offText', val)
 
     @property
     def is_checked(self):
@@ -1424,12 +1436,13 @@ class FlipSwitch(Widget, Namespace):
     @is_checked.setter
     def is_checked(self, val):
         self._is_checked = val
+        self._sync_properties('checked', val)
 
     @property
     def switch_kind(self):
         return self._switch_kind
 
-    @switch_kind
+    @switch_kind.setter
     def switch_kind(self, val):
         self._switch_kind = val
 
@@ -1448,6 +1461,7 @@ class FlipSwitch(Widget, Namespace):
     @theme.setter
     def theme(self, val):
         self._theme = val
+        self._sync_properties('theme', val)
 
     @property
     def is_mini(self):
@@ -1456,6 +1470,7 @@ class FlipSwitch(Widget, Namespace):
     @is_mini.setter
     def is_mini(self, val):
         self._is_mini = val
+        self._sync_properties('mini', val)
 
     @property
     def is_disabled(self):
@@ -1464,6 +1479,7 @@ class FlipSwitch(Widget, Namespace):
     @is_disabled.setter
     def is_disabled(self, val):
         self._is_disabled = val
+        self._sync_properties('disabled', val)
 
     @property
     def no_corners(self):
@@ -1472,21 +1488,99 @@ class FlipSwitch(Widget, Namespace):
     @no_corners.setter
     def no_corners(self, val):
         self._no_corners = val
+        self._sync_properties('corners', val)
+
+    def add_option(self, value):
+        if self._select_options is None:
+            self._select_options = []
+        self._select_options.append(value)
+
+    def remove_option(self, value):
+        if self._select_options is not None:
+            self._select_options.pop(value)
+
+    def on_fire_click_event(self, props):  # noqa
+        crnrs = props['corners']
+        if crnrs is not None:
+            self._corners = crnrs
+        dsbl = props['disabled']
+        if dsbl is not None:
+            self._disabled = dsbl
+        mini = props['mini']
+        if mini is not None:
+            self._is_mini = mini
+        thm = props['theme']
+        if thm is not None:
+            self._theme = thm
+        offtxt = props['offText']
+        if offtxt is not None:
+            self._off_text = offtxt
+        ontxt = props['onText']
+        if ontxt is not None:
+            self._on_text = ontxt
+        chk = props['checked']
+        if chk is not None:
+            self._is_checked = chk
+        if self._click_callback is not None:
+            self._click_callback(self._name, props)
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
+
+    def _attach_script(self):
+        script = """
+                <script>
+                    (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s');
+
+                            socket.on('sync_properties_%s', function(props){
+                                selector.flipswitch("option", props['cmd'], props['value']);
+                                selector.flipswitch('refresh');
+                            });
+
+                            selector.bind('change', function(){
+                                props = {
+                                            'corners': selector.flipswitch("option", "corners"),
+                                            'disabled': selector.flipswitch("option", "disabled"),
+                                            'mini': selector.flipswitch("option", "mini"),
+                                            'theme': selector.flipswitch("option", "theme"),
+                                            'offText': selector.flipswitch("option", "offText"),
+                                            'onText': selector.flipswitch("option", "onText"),
+                                            'checked': selector.is(':checked')
+                                        };
+                                socket.emit("fire_click_event", props);
+                            });
+                        });
+                    })(jQuery);
+                </script>
+                """ % (self._namespace, self._name, self._name)
+        return script
 
     def render(self):  # noqa
         content = ""
-        if self._switch_kind == "checkbox":
-            content += "<input type='checkbox' role='flipswitch' "
+        if self._custom_label_css is not None:
+            content += self._custom_label_css + "\n"
         else:
-            content += "<select role='flipswitch' "
+            content += self.CUSTOM_LABEL_CSS + "\n" 
+        if self._custom_label_size_css is not None:
+            content += self._custom_label_size_css + "\n"
+        else:
+            content += self.CUSTOM_SIZE_CSS + "\n"
+        if self._switch_kind == "checkbox":
+            content += "<input type='checkbox' data-role='flipswitch' "
+        else:
+            content += "<select data-role='flipswitch' "
         content += "id='" + self._name + "' "
         if self._on_text is not None:
             content += "data-on-text='" + self._on_text + "' "
         if self._off_text is not None:
             content += "data-off-text='" + self._off_text + "' "
-        if self._on_text is not None or self._off_text is not None and not self._custom_size:
+        if (self._on_text is not None or self._off_text is not None) and not self._custom_size:
             content += "data-wrapper-class='" + self._data_wrapper_class_label + "' "
-        if self._on_text is not None or self._off_text is not None and self._custom_size:
+        if (self._on_text is not None or self._off_text is not None) and self._custom_size:
             content += "data-wrapper-class='" + self._data_wrapper_class_size + "' "
         if self._switch_kind == "checkbox" and self._is_checked:
             content += "checked='' "
@@ -1504,6 +1598,5 @@ class FlipSwitch(Widget, Namespace):
                 content += "<option>" + option + "</option>\n"
             content += "</select>\n"
         else:
-            content += "</input>\n"
-        content += self.CUSTOM_LABEL_CSS + "\n" + self.CUSTOM_SIZE_CSS + "\n"
+            content += "</input>\n" + self._attach_script()
         return content
