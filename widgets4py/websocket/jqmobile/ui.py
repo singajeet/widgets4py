@@ -1709,3 +1709,25 @@ class SectionLayout(Widget):
             content += widget.render() + "\n"
         content += "</div>"
         return content
+
+
+class ListView(Widget, Namespace):
+    """A listview is coded as a simple unordered list (ul)
+    or ordered list (ol) with a data-role="listview"
+    attribute and has a wide range of features.
+    """
+
+    _is_read_only = None
+    _is_ordered = None
+    _is_linked = None
+    _is_inset = None
+    _is_filterable = None
+    _is_filter_reveal = None
+    _is_auto_divider_enabled = None
+    _is_count_bubble_enabled = None
+    _is_thumbnail_enabled = None
+    _is_split_button_enabled = None
+    _theme = None
+    _is_collapsible = None
+    _is_collapsible_set = None
+    _is_fullwidth_collapsible = None
