@@ -1731,3 +1731,57 @@ class ListView(Widget, Namespace):
     _is_collapsible = None
     _is_collapsible_set = None
     _is_fullwidth_collapsible = None
+    _namespace = None
+    _socket_io = None
+    _items = None
+
+    def __init__(self, name, socket_io, is_read_only=None, is_ordered=None, is_linked=None, is_inset=None,
+                 is_filterable=None, is_filter_reveal=None, is_auto_divider_enabled=None,
+                 is_count_bubble_enabled=None, is_thumbnail_enabled=None, is_split_button_enabled=None,
+                 theme=None, is_collapsible=None, is_collapssible_set=None, is_fullwidth_collapsible=None,
+                 items=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_lv").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + self._name + "_lv").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        self._is_read_only = is_read_only
+        self._is_ordered = is_ordered
+        self._is_linked = is_linked
+        self._is_inset = is_inset
+        self._is_filterable = is_filterable
+        self._is_filter_reveal = is_filter_reveal
+        self._is_auto_divider_enabled = is_auto_divider_enabled
+        self._is_count_bubble_enabled = is_count_bubble_enabled
+        self._is_thumbnail_enabled = is_thumbnail_enabled
+        self._is_split_button_enabled = is_split_button_enabled
+        if items is not None:
+            self._child_widgets = items
+        else:
+            self._child_widgets = []
+
+    def render(self):
+        content = ""
+        if not self._is_ordered:
+            content += "<ul data-role='listview' "
+        else:
+            content += "<ol data-role='listview' "
+        content += "id='" + self._name + "' "
+        if self._is_inset:
+            content += "data-inset='true' "
+        if self._is_filterable:
+            content += "data-filter='true' data-filter-placeholder='Search Items...' "
+        if self._is_filter_reveal:
+            content += "data-filter='true' data-filter-reveal='true' data-input='#" + self._name + "_auto' "
+        if self._is_auto_divider_enabled:
+            content += "data-autodividers='true' "
+        if self._is_split_button_enabled:
+            content += "data-split-icon='gear' data-split-theme='a' "
+        content += ">"
+        for widget in self._child_widgets:
+            content += widget.render()
+        if not self._is_ordered:
+            content += "</ul>"
+        else:
+            content += "</ol>"
+        return content
