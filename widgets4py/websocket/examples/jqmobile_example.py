@@ -46,7 +46,7 @@ class MobileExample:
         self._clsp3 = Collapsible('clsp3', 'My Collapsible3', socketio, click_callback=self.clsp_clicked)
         self._clsp = CollapsibleSet('clsp', '', socketio, use_filter=True)
         self._fs = FlipSwitch('fs', socketio, on_text="Light", off_text="Dark",
-                              click_callback=self.fs_clicked)
+                              change_callback=self.fs_changed)
         self._clsp.add(self._clsp1)
         self._clsp.add(self._clsp2)
         self._clsp.add(self._clsp3)
@@ -57,11 +57,11 @@ class MobileExample:
         self._grid.add(Button('gb4', socketio, title="Btn4"))
         self._sl = SectionLayout('sl', 'My Section', header_corners=True, body_corners=True, body_theme='a')
         self._sl.add(Button('slb', socketio, title='Button'))
-        self._lv = ListView('lv', is_filterable=True)
-        self._li1 = ListItem('li1', 'ListItem1', socketio)
-        self._li2 = ListItem('li2', 'ListItem2', socketio)
-        self._li3 = ListItem('li3', 'ListItem3', socketio)
-        self._li4 = ListItem('li4', 'ListItem4', socketio)
+        self._lv = ListView('lv', socketio, is_filterable=True, click_callback=self.lv_clicked)
+        self._li1 = ListItem('li1', 'ListItem1', socketio, click_callback=self.li_clicked)
+        self._li2 = ListItem('li2', 'ListItem2', socketio, click_callback=self.li_clicked)
+        self._li3 = ListItem('li3', 'ListItem3', socketio, click_callback=self.li_clicked)
+        self._li4 = ListItem('li4', 'ListItem4', socketio, click_callback=self.li_clicked)
         self._lv.add(self._li1)
         self._lv.add(self._li2)
         self._lv.add(self._li3)
@@ -79,8 +79,14 @@ class MobileExample:
         self._pg.add(self._mpg2)
         return self._pg.render()
 
-    def fs_clicked(self, source, props):
-        print("FlipSwitch Clicked: " + source + ", Props:" + str(props))
+    def lv_clicked(self, source, props):
+        print("List view clicked: " + source + ", Props: " + str(props))
+
+    def li_clicked(self, source, props):
+        print("List Item clicked: " + source + ", Props: " + str(props))
+
+    def fs_changed(self, source, props):
+        print("FlipSwitch Changed: " + source + ", Props:" + str(props))
 
     def clsp_clicked(self, source, props):
         print("Collapsible clicked! Source: " + source + ", Props: " + str(props))

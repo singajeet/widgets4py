@@ -1315,7 +1315,7 @@ class FlipSwitch(Widget, Namespace):
     _no_corners = None
     _is_disabled = None
     _custom_size = None
-    _click_callback = None
+    _change_callback = None
     _custom_label_css = None
     _custom_label_size_css = None
 
@@ -1362,7 +1362,7 @@ class FlipSwitch(Widget, Namespace):
 
     def __init__(self, name, socket_io, on_text=None, off_text=None, is_checked=None, switch_kind=None,
                  select_options=None, theme=None, is_mini=None, no_corners=None, is_disabled=None,
-                 custom_size=None, click_callback=None, custom_label_css=None, custom_label_size_css=None):
+                 custom_size=None, change_callback=None, custom_label_css=None, custom_label_size_css=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_fs").replace(".", "_"))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_fs").replace(".", "_")
@@ -1399,7 +1399,7 @@ class FlipSwitch(Widget, Namespace):
             self._custom_size = custom_size
         else:
             self._custom_size = False
-        self._click_callback = click_callback
+        self._change_callback = change_callback
         self._custom_label_css = custom_label_css
         self._custom_label_size_css = custom_label_size_css
 
@@ -1499,7 +1499,7 @@ class FlipSwitch(Widget, Namespace):
         if self._select_options is not None:
             self._select_options.pop(value)
 
-    def on_fire_click_event(self, props):  # noqa
+    def on_fire_change_event(self, props):  # noqa
         crnrs = props['corners']
         if crnrs is not None:
             self._corners = crnrs
@@ -1521,8 +1521,8 @@ class FlipSwitch(Widget, Namespace):
         chk = props['checked']
         if chk is not None:
             self._is_checked = chk
-        if self._click_callback is not None:
-            self._click_callback(self._name, props)
+        if self._change_callback is not None:
+            self._change_callback(self._name, props)
 
     def _sync_properties(self, cmd, value):
         emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
@@ -1551,7 +1551,7 @@ class FlipSwitch(Widget, Namespace):
                                             'onText': selector.flipswitch("option", "onText"),
                                             'checked': selector.is(':checked')
                                         };
-                                socket.emit("fire_click_event", props);
+                                socket.emit("fire_change_event", props);
                             });
                         });
                     })(jQuery);
@@ -1711,7 +1711,7 @@ class SectionLayout(Widget):
         return content
 
 
-class ListView(Widget):
+class ListView(Widget, Namespace):
     """A listview is coded as a simple unordered list (ul)
     or ordered list (ol) with a data-role="listview"
     attribute and has a wide range of features.
@@ -1725,29 +1725,88 @@ class ListView(Widget):
     _is_split_button_enabled = None
     _theme = None
     _items = None
+    _disabled = None
+    _hide_dividers = None
+    _icon = None
+    _split_icon = None
+    _split_theme = None
+    _namespace = None
+    _socket_io = None
+    _click_callback = None
 
-    def __init__(self, name, is_ordered=None, is_inset=None, is_filterable=None,
+    def __init__(self, name, socket_io, is_ordered=None, is_inset=None, is_filterable=None,
                  is_filter_reveal=None, is_auto_divider_enabled=None, is_split_button_enabled=None,
-                 theme=None, items=None):
+                 theme=None, items=None, disabled=None, click_callback=None):
         Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_lv").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + self._name + "_lv").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
         self._is_ordered = is_ordered
         self._is_inset = is_inset
         self._is_filterable = is_filterable
         self._is_filter_reveal = is_filter_reveal
         self._is_auto_divider_enabled = is_auto_divider_enabled
         self._is_split_button_enabled = is_split_button_enabled
+        self._disabled = disabled
+        self._click_callback = click_callback
         if items is not None:
             self._child_widgets = items
         else:
             self._child_widgets = []
 
     @property
-    def is_ordered(self):
-        return self._is_ordered
+    def namespace(self):
+        return self._namespace
 
-    @is_ordered.setter
-    def is_ordered(self, val):
-        self._is_ordered = val
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def split_theme(self):
+        return self._split_theme
+
+    @split_theme.setter
+    def split_theme(self, val):
+        self._split_theme = val
+        self._sync_properties('splitTheme', val)
+
+    @property
+    def split_icon(self):
+        return self._split_icon
+
+    @split_icon.setter
+    def split_icon(self, val):
+        self._split_icon = val
+        self._sync_properties('splitIcon', val)
+
+    @property
+    def icon(self):
+        return self._icon
+
+    @icon.setter
+    def icon(self, val):
+        self._icon = val
+        self._sync_properties('icon', val)
+
+    @property
+    def hide_dividers(self):
+        return self._hide_dividers
+
+    @hide_dividers.setter
+    def hide_dividers(self, val):
+        self._hide_dividers = val
+        self._sync_properties('hideDividers', val)
+
+    @property
+    def disabled(self):
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
 
     @property
     def is_inset(self):
@@ -1756,6 +1815,33 @@ class ListView(Widget):
     @is_inset.setter
     def is_inset(self, val):
         self._is_inset = val
+        self._sync_properties('inset', val)
+
+    @property
+    def is_auto_divider_enabled(self):
+        return self._is_auto_divider_enabled
+
+    @is_auto_divider_enabled.setter
+    def is_auto_divider_enabled(self, val):
+        self._is_auto_divider_enabled = val
+        self._sync_properties('autodividers', val)
+
+    @property
+    def theme(self):
+        return self._theme
+
+    @theme.setter
+    def theme(self, val):
+        self._theme = val
+        self._sync_properties('theme', val)
+
+    @property
+    def is_ordered(self):
+        return self._is_ordered
+
+    @is_ordered.setter
+    def is_ordered(self, val):
+        self._is_ordered = val
 
     @property
     def is_filterable(self):
@@ -1774,20 +1860,34 @@ class ListView(Widget):
         self._is_filter_reveal = val
 
     @property
-    def is_auto_divider_enabled(self):
-        return self._is_auto_divider_enabled
-
-    @is_auto_divider_enabled.setter
-    def is_auto_divider_enabled(self, val):
-        self._is_auto_divider_enabled = val
-
-    @property
     def is_split_button_enabled(self):
         return self._is_split_button_enabled
 
     @is_split_button_enabled.setter
     def is_split_button_enabled(self, val):
         self._is_split_button_enabled = val
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
+
+    def _attach_script(self):
+        script = """
+                <script>
+                    (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s');
+
+                            socket.on('sync_properties_%s', function(props){
+                                selector.listview("option", props['cmd'], props['value']);
+                                selector.listview('refresh');
+                            });
+                        });
+                    })(jQuery);
+                </script>
+                """ % (self._namespace, self._name, self._name)
+        return script
 
     def render(self):
         content = ""
@@ -1812,12 +1912,14 @@ class ListView(Widget):
         if not self._is_ordered:
             content += "</ul>\n"
         else:
-            content += "</ol>\n"
+            content += "</ol>\n" + self._attach_script()
         return content
 
 
 class ListItem(Widget, Namespace):
-    """An to be used in the ListView"""
+    """An listview item which can be rendered as readonly, link or complex UI using the options
+    provided by this class
+    """
 
     _namespace = None
     _socket_io = None
@@ -1854,6 +1956,118 @@ class ListItem(Widget, Namespace):
         self._is_list_divider = is_list_divider
         self._count = count
         self._img_src = img_src
+        self._click_callback = click_callback
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def title(self):
+        return self._title
+
+    @title.setter
+    def title(self, val):
+        self._title = val
+
+    @property
+    def content(self):
+        return self._content
+
+    @content.setter
+    def content(self, val):
+        self._content = val
+
+    @property
+    def is_linked(self):
+        return self._is_linked
+
+    @is_linked.setter
+    def is_linked(self, val):
+        self._is_linked = val
+
+    @property
+    def is_count_bubble_enabled(self):
+        return self._is_count_bubble_enabled
+
+    @is_count_bubble_enabled.setter
+    def is_count_bubble_enabled(self, val):
+        self._is_count_bubble_enabled = val
+
+    @property
+    def is_thumbnail_enabled(self):
+        return self._is_thumbnail_enabled
+
+    @is_thumbnail_enabled.setter
+    def is_thumbnail_enabled(self, val):
+        self._is_thumbnail_enabled = val
+
+    @property
+    def is_read_only(self):
+        return self._is_read_only
+
+    @is_read_only.setter
+    def is_read_only(self, val):
+        self._is_read_only = val
+
+    @property
+    def icon(self):
+        return self._icon
+
+    @icon.setter
+    def icon(self, val):
+        self._icon = val
+
+    @property
+    def is_list_divider(self):
+        return self._is_list_divider
+
+    @is_list_divider.setter
+    def is_list_divider(self, val):
+        self._is_list_divider = val
+
+    @property
+    def count(self):
+        return self._count
+
+    @count.setter
+    def count(self, val):
+        self._count = val
+
+    @property
+    def img_src(self):
+        return self._img_src
+
+    @img_src.setter
+    def img_src(self, val):
+        self._img_src = val
+
+    def on_fire_click_event(self, props):  # noqa
+        if self._click_callback is not None:
+            self._click_callback(self._name, props)
+
+    def _attach_script(self):
+        script = """
+                <script>
+                    (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s');
+
+                            selector.bind('click', function(){
+                                props = {
+                                        };
+                                socket.emit("fire_click_event", props);
+                            });
+                        });
+                    })(jQuery);
+                </script>
+                """ % (self._namespace, self._name)
+        return script
 
     def render(self):
         content = ""
@@ -1876,6 +2090,6 @@ class ListItem(Widget, Namespace):
                     content += self._title
                 if self._is_count_bubble_enabled is not None and self._is_count_bubble_enabled:
                     content += "<span class='ui-li-count>" + self._count + "</span>"
-                content += "</a></li>"
+                content += "</a></li>\n" + self._attach_script()
                 return content
         return self._content
