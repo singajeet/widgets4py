@@ -1711,54 +1711,83 @@ class SectionLayout(Widget):
         return content
 
 
-class ListView(Widget, Namespace):
+class ListView(Widget):
     """A listview is coded as a simple unordered list (ul)
     or ordered list (ol) with a data-role="listview"
     attribute and has a wide range of features.
     """
 
-    _is_read_only = None
     _is_ordered = None
-    _is_linked = None
     _is_inset = None
     _is_filterable = None
     _is_filter_reveal = None
     _is_auto_divider_enabled = None
-    _is_count_bubble_enabled = None
-    _is_thumbnail_enabled = None
     _is_split_button_enabled = None
     _theme = None
-    _is_collapsible = None
-    _is_collapsible_set = None
-    _is_fullwidth_collapsible = None
-    _namespace = None
-    _socket_io = None
     _items = None
 
-    def __init__(self, name, socket_io, is_read_only=None, is_ordered=None, is_linked=None, is_inset=None,
-                 is_filterable=None, is_filter_reveal=None, is_auto_divider_enabled=None,
-                 is_count_bubble_enabled=None, is_thumbnail_enabled=None, is_split_button_enabled=None,
-                 theme=None, is_collapsible=None, is_collapssible_set=None, is_fullwidth_collapsible=None,
-                 items=None):
+    def __init__(self, name, is_ordered=None, is_inset=None, is_filterable=None,
+                 is_filter_reveal=None, is_auto_divider_enabled=None, is_split_button_enabled=None,
+                 theme=None, items=None):
         Widget.__init__(self, name)
-        Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_lv").replace('.', '_'))
-        self._namespace = '/' + str(__name__ + "_" + self._name + "_lv").replace('.', '_')
-        self._socket_io = socket_io
-        self._socket_io.on_namespace(self)
-        self._is_read_only = is_read_only
         self._is_ordered = is_ordered
-        self._is_linked = is_linked
         self._is_inset = is_inset
         self._is_filterable = is_filterable
         self._is_filter_reveal = is_filter_reveal
         self._is_auto_divider_enabled = is_auto_divider_enabled
-        self._is_count_bubble_enabled = is_count_bubble_enabled
-        self._is_thumbnail_enabled = is_thumbnail_enabled
         self._is_split_button_enabled = is_split_button_enabled
         if items is not None:
             self._child_widgets = items
         else:
             self._child_widgets = []
+
+    @property
+    def is_ordered(self):
+        return self._is_ordered
+
+    @is_ordered.setter
+    def is_ordered(self, val):
+        self._is_ordered = val
+
+    @property
+    def is_inset(self):
+        return self._is_inset
+
+    @is_inset.setter
+    def is_inset(self, val):
+        self._is_inset = val
+
+    @property
+    def is_filterable(self):
+        return self._is_filterable
+
+    @is_filterable.setter
+    def is_filterable(self, val):
+        self._is_filterable = val
+
+    @property
+    def is_filter_reveal(self):
+        return self._is_filter_reveal
+
+    @is_filter_reveal.setter
+    def is_filter_reveal(self, val):
+        self._is_filter_reveal = val
+
+    @property
+    def is_auto_divider_enabled(self):
+        return self._is_auto_divider_enabled
+
+    @is_auto_divider_enabled.setter
+    def is_auto_divider_enabled(self, val):
+        self._is_auto_divider_enabled = val
+
+    @property
+    def is_split_button_enabled(self):
+        return self._is_split_button_enabled
+
+    @is_split_button_enabled.setter
+    def is_split_button_enabled(self, val):
+        self._is_split_button_enabled = val
 
     def render(self):
         content = ""
@@ -1777,11 +1806,76 @@ class ListView(Widget, Namespace):
             content += "data-autodividers='true' "
         if self._is_split_button_enabled:
             content += "data-split-icon='gear' data-split-theme='a' "
-        content += ">"
+        content += ">\n"
         for widget in self._child_widgets:
-            content += widget.render()
+            content += widget.render() + "\n"
         if not self._is_ordered:
-            content += "</ul>"
+            content += "</ul>\n"
         else:
-            content += "</ol>"
+            content += "</ol>\n"
         return content
+
+
+class ListItem(Widget, Namespace):
+    """An to be used in the ListView"""
+
+    _namespace = None
+    _socket_io = None
+    _title = None
+    _content = None
+    _is_read_only = None
+    _is_linked = None
+    _is_count_bubble_enabled = None
+    _is_thumbnail_enabled = None
+    _icon = None
+    _is_list_divider = None
+    _count = None
+    _img_src = None
+    _click_callback = None
+
+    def __init__(self, name, title, socket_io, content=None, is_read_only=None, is_linked=None,
+                 is_count_bubble_enabled=None, is_thumbnail_enabled=None, icon=None,
+                 is_list_divider=None, count=None, img_src=None, click_callback=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_li").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + self._name + "_li").replace('.', '_')
+        self._title = title
+        self._content = content
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        if is_linked is not None:
+            self._is_linked = is_linked
+        else:
+            self._is_linked = True
+        self._is_count_bubble_enabled = is_count_bubble_enabled
+        self._is_thumbnail_enabled = is_thumbnail_enabled
+        self._is_read_only = is_read_only
+        self._icon = icon
+        self._is_list_divider = is_list_divider
+        self._count = count
+        self._img_src = img_src
+
+    def render(self):
+        content = ""
+        if self._is_list_divider is not None and self._is_list_divider:
+            return "<li data-role='list-divider' id='" + self._name + "'>" + self._title + "</li>"
+        if self._is_read_only is not None and self._is_read_only:
+                return "<li id='" + self._name + "'>" + self._title + "</li>"
+        else:
+            if self._is_linked is not None and self._is_linked:
+                if self._icon is not None:
+                    content += "<li data-icon='" + self._icon + "' "
+                else:
+                    content += "<li "
+                content += "id='" + self._name + "'>"
+                content += "<a href='#'>"
+                if self._is_thumbnail_enabled is not None and self._is_thumbnail_enabled:
+                    content += "<img src='" + self._img_src + "' />"
+                    content += "<h2>" + self._title + "</h2>"
+                else:
+                    content += self._title
+                if self._is_count_bubble_enabled is not None and self._is_count_bubble_enabled:
+                    content += "<span class='ui-li-count>" + self._count + "</span>"
+                content += "</a></li>"
+                return content
+        return self._content

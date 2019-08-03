@@ -1,6 +1,7 @@
 from widgets4py.base import Page
 from widgets4py.websocket.jqmobile.ui import MPage, Button, ButtonStyle, FormButton, CheckBox, Radio, Collapsible
 from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch, GridLayout, SectionLayout
+from widgets4py.websocket.jqmobile.ui import ListItem, ListView
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -56,6 +57,15 @@ class MobileExample:
         self._grid.add(Button('gb4', socketio, title="Btn4"))
         self._sl = SectionLayout('sl', 'My Section', header_corners=True, body_corners=True, body_theme='a')
         self._sl.add(Button('slb', socketio, title='Button'))
+        self._lv = ListView('lv', is_filterable=True)
+        self._li1 = ListItem('li1', 'ListItem1', socketio)
+        self._li2 = ListItem('li2', 'ListItem2', socketio)
+        self._li3 = ListItem('li3', 'ListItem3', socketio)
+        self._li4 = ListItem('li4', 'ListItem4', socketio)
+        self._lv.add(self._li1)
+        self._lv.add(self._li2)
+        self._lv.add(self._li3)
+        self._lv.add(self._li4)
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)
@@ -64,6 +74,7 @@ class MobileExample:
         self._mpg1.add(self._fs)
         self._mpg1.add(self._grid)
         self._mpg1.add(self._sl)
+        self._mpg1.add(self._lv)
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
