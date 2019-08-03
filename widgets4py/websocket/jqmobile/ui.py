@@ -1564,7 +1564,7 @@ class FlipSwitch(Widget, Namespace):
         if self._custom_label_css is not None:
             content += self._custom_label_css + "\n"
         else:
-            content += self.CUSTOM_LABEL_CSS + "\n" 
+            content += self.CUSTOM_LABEL_CSS + "\n"
         if self._custom_label_size_css is not None:
             content += self._custom_label_size_css + "\n"
         else:
@@ -1599,4 +1599,113 @@ class FlipSwitch(Widget, Namespace):
             content += "</select>\n"
         else:
             content += "</input>\n" + self._attach_script()
+        return content
+
+
+class GridLayout(Widget):
+    """A simple CSS based columns"""
+
+    _column_count = None
+    _ui_grid_solo = ['ui-block-a']
+    _ui_grid_a = ['ui-block-a', 'ui-block-b']
+    _ui_grid_b = ['ui-block-a', 'ui-block-b', 'ui-block-c']
+    _ui_grid_c = ['ui-block-a', 'ui-block-b', 'ui-block-c', 'ui-block-d']
+    _ui_grid_d = ['ui-block-a', 'ui-block-b', 'ui-block-c', 'ui-block-d', 'ui-block-e']
+    _ui_grids = [_ui_grid_solo, _ui_grid_a, _ui_grid_b, _ui_grid_c, _ui_grid_d]
+    _ui_grid_types = ['ui-grid-solo', 'ui-grid-a', 'ui-grid-b', 'ui-grid-c', 'ui-grid-d']
+
+    def __init__(self, name, col_count, items=None):
+        Widget.__init__(self, name)
+        if col_count <= 5:
+            self._column_count = col_count
+        else:
+            self._column_count = 5
+        if col_count <= 0:
+            self._column_count = 1
+        if items is not None:
+            self._child_widgets = items
+        else:
+            self._child_widgets = []
+
+    def render(self):
+        grid_type = self._ui_grid_types[self._column_count - 1]
+        content = "<div class='" + grid_type + "' >\n"
+        grid = self._ui_grids[self._column_count - 1]
+        counter = 0
+        for widget in self._child_widgets:
+            if counter < self._column_count:
+                block = grid[counter]
+                counter += 1
+            else:
+                counter = 0
+                block = grid[counter]
+                counter += 1
+            content += "<div class='" + block + "' >\n"
+            content += widget.render()
+            content += "</div>\n"
+        content += "</div>\n"
+        return content
+
+
+class SectionLayout(Widget):
+    """Sections build using `ui-bar` css class which help in separating the
+    content like, creating an header and `ui-body` css class is used to
+    render rest of the content
+    """
+
+    _header = None
+    _separate_header = None
+    _header_theme = None
+    _body_theme = None
+    _header_corners = None
+    _body_corners = None
+
+    def __init__(self, name, header, separate_header=None, header_theme=None, body_theme=None,
+                 header_corners=None, body_corners=None, items=None):
+        Widget.__init__(self, name)
+        self._header = header
+        if separate_header is not None:
+            self._separate_header = separate_header
+        else:
+            self._separate_header = True
+        self._header_theme = header_theme
+        self._body_theme = body_theme
+        if header_corners is not None:
+            self._header_corners = header_corners
+        else:
+            self._header_corners = False
+        if body_corners is not None:
+            self._body_corners = body_corners
+        else:
+            self._body_corners = False
+        if items is not None:
+            self._child_widgets = items
+        else:
+            self._child_widgets = []
+
+    def render(self):
+        content = ""
+        if self._separate_header:
+            content = "<h3 class='ui-bar "
+            if self._header_theme is not None:
+                content += "ui-bar-" + self._header_theme + " "
+            else:
+                content += "ui-bar-a "
+            if self._header_corners:
+                content += "ui-corner-all'>"
+            else:
+                content += "'>"
+            content += self._header + "</h3>\n"
+        content += "<div class='ui-body "
+        if self._body_theme is not None:
+            content += "ui-body-" + self._body_theme + " "
+        if self._body_corners:
+            content += "ui-corner-all' >\n"
+        else:
+            content += "' >\n"
+        if not self._separate_header:
+            content += "<h3>" + self._header + "</h3>\n"
+        for widget in self._child_widgets:
+            content += widget.render() + "\n"
+        content += "</div>"
         return content
