@@ -1,7 +1,7 @@
 from widgets4py.base import Page
 from widgets4py.websocket.jqmobile.ui import MPage, Button, ButtonStyle, FormButton, CheckBox, Radio, Collapsible
 from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch, GridLayout, SectionLayout
-from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar, NavBarItem
+from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -67,17 +67,11 @@ class MobileExample:
         self._lv.add(self._li3)
         self._lv.add(self._li4)
         self._nb = NavBar('nb', socketio)
-        self._ni1 = NavBarItem('ni1', 'NB1', socketio, click_callback=self.li_clicked, is_active=True)
-        self._ni2 = NavBarItem('ni2', 'NB2', socketio, click_callback=self.li_clicked)
-        self._ni3 = NavBarItem('ni3', 'NB3', socketio, click_callback=self.li_clicked)
-        self._ni4 = NavBarItem('ni4', 'NB4', socketio, click_callback=self.li_clicked)
-        self._ni5 = NavBarItem('ni5', 'NB5', socketio, click_callback=self.li_clicked)
-        self._nb.add(self._ni1)
-        self._nb.add(self._ni2)
-        self._nb.add(self._ni3)
-        self._nb.add(self._ni4)
-        self._nb.add(self._ni5)
-        self._mpg1.add(self._nb)
+        self._nb.add_item('nb1', 'NB1', True)
+        self._nb.add_item('nb2', 'NB2', False)
+        self._nb.add_item('nb3', 'NB3', False)
+        self._nb.add_item('nb4', 'NB4', False)
+        self._nb.add_item('nb5', 'NB5', False)
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)
@@ -87,6 +81,7 @@ class MobileExample:
         self._mpg1.add(self._grid)
         self._mpg1.add(self._sl)
         self._mpg1.add(self._lv)
+        self._mpg1.add(self._nb)
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()

@@ -1732,7 +1732,6 @@ class ListView(Widget, Namespace):
     _split_theme = None
     _namespace = None
     _socket_io = None
-    _data_role = None
 
     def __init__(self, name, socket_io, is_ordered=None, is_inset=None, is_filterable=None,
                  is_filter_reveal=None, is_auto_divider_enabled=None, is_split_button_enabled=None,
@@ -1753,7 +1752,6 @@ class ListView(Widget, Namespace):
             self._child_widgets = items
         else:
             self._child_widgets = []
-        self._data_role = "listview"
 
     @property
     def namespace(self):
@@ -1880,22 +1878,23 @@ class ListView(Widget, Namespace):
                             var selector = $('#%s');
 
                             socket.on('sync_properties_%s', function(props){
-                                selector.%s("option", props['cmd'], props['value']);
-                                selector.%s('refresh');
+                                selector.listview("option", props['cmd'], props['value']);
+                                selector.listview('refresh');
                             });
                         });
                     })(jQuery);
                 </script>
-                """ % (self._namespace, self._name, self._name, self._data_role, self._data_role)
+                """ % (self._namespace, self._name, self._name)
         return script
 
     def render(self):
         content = ""
         if not self._is_ordered:
-            content += "<ul data-role='" + self._data_role + "' "
+            content += "<ul data-role='listview' "
         else:
-            content += "<ol data-role='" + self._data_role + "' "
+            content += "<ol data-role='listview' "
         content += "id='" + self._name + "' "
+        content += "style='margin-bottom: 10px;' "
         if self._is_inset:
             content += "data-inset='true' "
         if self._is_filterable:
@@ -2100,33 +2099,92 @@ class ListItem(Widget, Namespace):
         return self._content
 
 
-class NavBar(ListView):
+class NavBar(Widget, Namespace):
     """A navbar consist of upto 5 items/buttons in a row, if the
     items are more than 5, the items will be wrapped across multiple
     rows with 2 items in each row
     """
 
+    _socket_io = None
+    _is_inset = None
+    _theme = None
+    _disabled = None
+    _items = None
+    _namespace = None
+
     def __init__(self, name, socket_io, is_inset=None, theme=None,
                  items=None, disabled=None):
-        ListView.__init__(self, name, socket_io, is_inset=is_inset, theme=theme,
-                          items=items, disabled=disabled)
-        self._namespace = '/' + str(__name__ + "_" + name + "_nvb").replace('.', '_')
-        self._data_role = 'navbar'
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_nb").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + self._name + "_nb").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        self._is_inset = is_inset
+        self._theme = theme
+        self._items = items
+        self._disabled = disabled
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def is_inset(self):
+        return self._is_inset
+
+    @is_inset.setter
+    def is_inset(self, val):
+        self._is_inset = val
+
+    @property
+    def theme(self):
+        return self._theme
+
+    @theme.setter
+    def theme(self, val):
+        self._theme = val
+
+    @property
+    def items(self):
+        return self._items
+
+    @items.setter
+    def items(self, val):
+        self._items = val
+
+    @property
+    def disabled(self):
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+
+    def add_item(self, key, value, is_selected):
+        if self._items is not None:
+            self._items[key] = [value, is_selected]
+        else:
+            self._items = {}
+            self._items[key] = [value, is_selected]
+
+    def remove_item(self, key):
+        self._items.pop(key)
 
     def render(self):
-        content = "<div data-role='" + self._data_role + "' data-grid='d' >\n"
+        content = "<div data-role='navbar' data-grid='d' >\n"
         content += "<ul>\n"
-        for widget in self._child_widgets:
-            content += widget.render()
+        for key in self._items:
+            item = self._items.get(key)
+            value = item[0]
+            selected = item[1]
+            if not selected:
+                content += "<li id='" + key + "'><a href='#'>" + value + "</a></li>"
+            else:
+                content += "<li id='" + key + "'><a class='ui-btn-active' href='#'>" + value + "</a></li>"
         content += "</ul>\n"
         content += "</div>\n"
         return content
-
-
-class NavBarItem(ListItem):
-    """A item that can be selected in the NavBar"""
-
-    def __init__(self, name, title, socket_io, content=None, icon=None,
-                 click_callback=None, is_active=None):
-        ListItem.__init__(self, name, title, socket_io, content=content, icon=icon,
-                          click_callback=click_callback, is_active=is_active)
