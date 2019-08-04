@@ -1,7 +1,7 @@
 from widgets4py.base import Page
 from widgets4py.websocket.jqmobile.ui import MPage, Button, ButtonStyle, FormButton, CheckBox, Radio, Collapsible
 from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch, GridLayout, SectionLayout
-from widgets4py.websocket.jqmobile.ui import ListItem, ListView
+from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar, NavBarItem
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -57,7 +57,7 @@ class MobileExample:
         self._grid.add(Button('gb4', socketio, title="Btn4"))
         self._sl = SectionLayout('sl', 'My Section', header_corners=True, body_corners=True, body_theme='a')
         self._sl.add(Button('slb', socketio, title='Button'))
-        self._lv = ListView('lv', socketio, is_filterable=True, click_callback=self.lv_clicked)
+        self._lv = ListView('lv', socketio, is_filterable=True)
         self._li1 = ListItem('li1', 'ListItem1', socketio, click_callback=self.li_clicked)
         self._li2 = ListItem('li2', 'ListItem2', socketio, click_callback=self.li_clicked)
         self._li3 = ListItem('li3', 'ListItem3', socketio, click_callback=self.li_clicked)
@@ -66,6 +66,18 @@ class MobileExample:
         self._lv.add(self._li2)
         self._lv.add(self._li3)
         self._lv.add(self._li4)
+        self._nb = NavBar('nb', socketio)
+        self._ni1 = NavBarItem('ni1', 'NB1', socketio, click_callback=self.li_clicked, is_active=True)
+        self._ni2 = NavBarItem('ni2', 'NB2', socketio, click_callback=self.li_clicked)
+        self._ni3 = NavBarItem('ni3', 'NB3', socketio, click_callback=self.li_clicked)
+        self._ni4 = NavBarItem('ni4', 'NB4', socketio, click_callback=self.li_clicked)
+        self._ni5 = NavBarItem('ni5', 'NB5', socketio, click_callback=self.li_clicked)
+        self._nb.add(self._ni1)
+        self._nb.add(self._ni2)
+        self._nb.add(self._ni3)
+        self._nb.add(self._ni4)
+        self._nb.add(self._ni5)
+        self._mpg1.add(self._nb)
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)

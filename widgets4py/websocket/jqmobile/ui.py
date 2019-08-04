@@ -1732,11 +1732,11 @@ class ListView(Widget, Namespace):
     _split_theme = None
     _namespace = None
     _socket_io = None
-    _click_callback = None
+    _data_role = None
 
     def __init__(self, name, socket_io, is_ordered=None, is_inset=None, is_filterable=None,
                  is_filter_reveal=None, is_auto_divider_enabled=None, is_split_button_enabled=None,
-                 theme=None, items=None, disabled=None, click_callback=None):
+                 theme=None, items=None, disabled=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_lv").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_lv").replace('.', '_')
@@ -1749,11 +1749,11 @@ class ListView(Widget, Namespace):
         self._is_auto_divider_enabled = is_auto_divider_enabled
         self._is_split_button_enabled = is_split_button_enabled
         self._disabled = disabled
-        self._click_callback = click_callback
         if items is not None:
             self._child_widgets = items
         else:
             self._child_widgets = []
+        self._data_role = "listview"
 
     @property
     def namespace(self):
@@ -1880,21 +1880,21 @@ class ListView(Widget, Namespace):
                             var selector = $('#%s');
 
                             socket.on('sync_properties_%s', function(props){
-                                selector.listview("option", props['cmd'], props['value']);
-                                selector.listview('refresh');
+                                selector.%s("option", props['cmd'], props['value']);
+                                selector.%s('refresh');
                             });
                         });
                     })(jQuery);
                 </script>
-                """ % (self._namespace, self._name, self._name)
+                """ % (self._namespace, self._name, self._name, self._data_role, self._data_role)
         return script
 
     def render(self):
         content = ""
         if not self._is_ordered:
-            content += "<ul data-role='listview' "
+            content += "<ul data-role='" + self._data_role + "' "
         else:
-            content += "<ol data-role='listview' "
+            content += "<ol data-role='" + self._data_role + "' "
         content += "id='" + self._name + "' "
         if self._is_inset:
             content += "data-inset='true' "
@@ -1934,10 +1934,11 @@ class ListItem(Widget, Namespace):
     _count = None
     _img_src = None
     _click_callback = None
+    _is_active = None
 
     def __init__(self, name, title, socket_io, content=None, is_read_only=None, is_linked=None,
                  is_count_bubble_enabled=None, is_thumbnail_enabled=None, icon=None,
-                 is_list_divider=None, count=None, img_src=None, click_callback=None):
+                 is_list_divider=None, count=None, img_src=None, click_callback=None, is_active=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_li").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_li").replace('.', '_')
@@ -1957,6 +1958,7 @@ class ListItem(Widget, Namespace):
         self._count = count
         self._img_src = img_src
         self._click_callback = click_callback
+        self._is_active = is_active
 
     @property
     def namespace(self):
@@ -2082,7 +2084,10 @@ class ListItem(Widget, Namespace):
                 else:
                     content += "<li "
                 content += "id='" + self._name + "'>"
-                content += "<a href='#'>"
+                content += "<a href='#' "
+                if self._is_active is not None and self._is_active:
+                    content += "class='ui-btn-active' "
+                content += ">"
                 if self._is_thumbnail_enabled is not None and self._is_thumbnail_enabled:
                     content += "<img src='" + self._img_src + "' />"
                     content += "<h2>" + self._title + "</h2>"
@@ -2093,3 +2098,35 @@ class ListItem(Widget, Namespace):
                 content += "</a></li>\n" + self._attach_script()
                 return content
         return self._content
+
+
+class NavBar(ListView):
+    """A navbar consist of upto 5 items/buttons in a row, if the
+    items are more than 5, the items will be wrapped across multiple
+    rows with 2 items in each row
+    """
+
+    def __init__(self, name, socket_io, is_inset=None, theme=None,
+                 items=None, disabled=None):
+        ListView.__init__(self, name, socket_io, is_inset=is_inset, theme=theme,
+                          items=items, disabled=disabled)
+        self._namespace = '/' + str(__name__ + "_" + name + "_nvb").replace('.', '_')
+        self._data_role = 'navbar'
+
+    def render(self):
+        content = "<div data-role='" + self._data_role + "' data-grid='d' >\n"
+        content += "<ul>\n"
+        for widget in self._child_widgets:
+            content += widget.render()
+        content += "</ul>\n"
+        content += "</div>\n"
+        return content
+
+
+class NavBarItem(ListItem):
+    """A item that can be selected in the NavBar"""
+
+    def __init__(self, name, title, socket_io, content=None, icon=None,
+                 click_callback=None, is_active=None):
+        ListItem.__init__(self, name, title, socket_io, content=content, icon=icon,
+                          click_callback=click_callback, is_active=is_active)
