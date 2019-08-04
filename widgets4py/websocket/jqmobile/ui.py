@@ -10,7 +10,7 @@ from widgets4py.base import Widget
 from enum import Enum
 
 
-class MPage(Widget):
+class MobilePage(Widget, Namespace):
     """The mobile will will act as parent widget to hold all
     other widgets for mobile
     """
@@ -22,13 +22,29 @@ class MPage(Widget):
     _footer_title = None
     _before_render_callback = None
     _after_render_callback = None
+    _close_button = None
+    _close_button_text = None
+    _contentTheme = None
+    _corners = None
+    _is_dialog = None
+    _is_disabled = None
+    _dom_cache = None
+    _overlay_theme = None
+    _theme = None
+    _namespace = None
+    _click_callback = None
 
     def __init__(self, name, title, socketio, header_widgets=None, footer_widgets=None,
                  child_widgets=None, footer_title=None, before_render_callback=None,
-                 after_render_callback=None):
+                 after_render_callback=None, close_button=None, close_button_text=None,
+                 content_theme=None, corners=None, is_dialog=None, is_disabled=None,
+                 dom_cache=None, overlay_theme=None, theme=None, click_callback=None):
         Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_page").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + name + "_page").replace('.', '_')
         self._title = title
         self._socketio = socketio
+        self._socketio.on_namespace(self)
         if header_widgets is not None:
             self._header_widgets = header_widgets
         else:
@@ -44,6 +60,183 @@ class MPage(Widget):
         self._footer_title = footer_title
         self._before_render_callback = before_render_callback
         self._after_render_callback = after_render_callback
+        self._close_button = close_button
+        self._close_button_text = close_button_text
+        self._content_theme = content_theme
+        self._corners = corners
+        self._is_dialog = is_dialog
+        self._is_disabled = is_disabled
+        self._dom_cache = dom_cache
+        self._overlay_theme = overlay_theme
+        self._theme = theme
+        self._click_callback = click_callback
+
+    @property
+    def theme(self):
+        return self._theme
+
+    @theme.setter
+    def theme(self, val):
+        self._theme = val
+        self._sync_properties('theme', val)
+
+    @property
+    def overlay_theme(self):
+        return self._overlay_theme
+
+    @overlay_theme.setter
+    def overlay_theme(self, val):
+        self._overlay_theme = val
+        self._sync_properties('overlayTheme', val)
+
+    @property
+    def dom_cache(self):
+        return self._dom_cache
+
+    @dom_cache.setter
+    def dom_cache(self, val):
+        self._dom_cache = val
+        self._sync_properties('domCache', val)
+
+    @property
+    def is_disabled(self):
+        return self._is_disabled
+
+    @is_disabled.setter
+    def is_disabled(self, val):
+        self._is_disabled = val
+        self._sync_properties('disabled', val)
+
+    @property
+    def is_dialog(self):
+        return self._is_dialog
+
+    @is_dialog.setter
+    def is_dialog(self, val):
+        self._is_dialog = val
+        self._sync_properties('dialog', val)
+
+    @property
+    def corners(self):
+        return self._corners
+
+    @corners.setter
+    def corners(self, val):
+        self._corners = val
+        self._sync_properties('corners', val)
+
+    @property
+    def content_theme(self):
+        return self._content_theme
+
+    @content_theme.setter
+    def content_theme(self, val):
+        self._content_theme = val
+        self._sync_properties('contentTheme', val)
+
+    @property
+    def close_button_text(self):
+        return self._close_button_text
+
+    @close_button_text.setter
+    def close_button_text(self, val):
+        self._close_button_text = val
+        self._sync_properties('closeBtnText', val)
+
+    @property
+    def close_button(self):
+        return self._close_button
+
+    @close_button.setter
+    def close_button(self, val):
+        self._close_button = val
+        self._sync_properties('closeBtn', val)
+
+    @property
+    def title(self):
+        return self._title
+
+    @title.setter
+    def title(self, val):
+        self._title = val
+
+    @property
+    def header_widgets(self):
+        return self._header_widgets
+
+    @header_widgets.setter
+    def header_widgets(self, val):
+        self._header_widgets = val
+
+    @property
+    def child_widgets(self):
+        return self._child_widgets
+
+    @child_widgets.setter
+    def child_widgets(self, val):
+        self._child_widgets = val
+
+    @property
+    def footer_widgets(self):
+        return self._footer_widgets
+
+    @footer_widgets.setter
+    def footer_widgets(self, val):
+        self._footer_widgets = val
+
+    @property
+    def footer_title(self):
+        return self._footer_title
+
+    @footer_title.setter
+    def footer_title(self, val):
+        self._footer_title = val
+
+    def on_before_render_event(self, callback):
+        self._before_render_callback = callback
+
+    def on_after_render_event(self, callback):
+        self._after_render_callback = callback
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
+
+    def on_fire_click_event(self, props):
+        if self._click_callback is not None:
+            self._click_callback(self._name, props)
+
+    def _attach_script(self):
+        script = """
+                <script>
+                (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s');
+
+                            socket.on('sync_properties_%s', function(props){
+                                selector.page("option", props['cmd'], props['value']);
+                            });
+
+                            selector.bind('click', function(){
+                                props = {
+                                            'closeBtn': selector.page("option", "closeBtn"),
+                                            'closeBtnText': selector.page("option", "closeBtnText"),
+                                            'contentTheme': selector.page("option", "contentTheme"),
+                                            'corners': selector.page("option", "corners"),
+                                            'dialog': selector.page("option", "dialog"),
+                                            'disabled': selector.page("option", "disabled"),
+                                            'domCache': selector.page("option", "domCache"),
+                                            'overlayTheme': selector.page("option", "overlayTheme"),
+                                            'theme': selector.page("option", "theme")
+                                        };
+                                socket.emit("fire_click_event", props);
+                            });
+                        });
+                    })(jQuery);
+                </script>
+                """ % (self._namespace, self._name, self._name)
+        return script
 
     def render(self):
         """Render the contents of mobile page in browser"""
@@ -62,9 +255,28 @@ class MPage(Widget):
         if self._child_widgets is not None:
             for cwidget in self._child_widgets:
                 child_content += cwidget.render()
-        content = """
-                    <div data-role="page" id='%s'>
-                        <div data-role="header">
+        content = "<div data-role='page' id='" + self._name + "' "
+        if self._close_button is not None:
+            content += "data-close-btn='" + self._close_button + "' "
+        if self._close_button_text is not None:
+            content += "data-close-btn-text='" + self._close_button_text + "' "
+        if self._content_theme is not None:
+            content += "data-content-theme='" + self._content_theme + "' "
+        if self._corners is not None:
+            content += "data-corners='" + self._corners + "' "
+        if self._is_dialog is not None:
+            content += "data-dialog='" + self._is_dialog + "' "
+        if self._is_disabled is not None:
+            content += "data-disabled='" + self._is_disabled + "' "
+        if self._dom_cache is not None:
+            content += "data-dom_cache='" + self._dom_cache + "' "
+        if self._overlay_theme is not None:
+            content += "data-overlay-theme='" + self._overlay_theme + "' "
+        if self._theme is not None:
+            content += "data-theme='" + self._theme + "' "
+        content += ">"
+        content += """
+                         <div data-role="header">
                             <h1>%s</h1>
                             %s
                          </div><!-- /header -->
@@ -78,11 +290,48 @@ class MPage(Widget):
                             %s
                          </div><!-- /footer -->
                     </div><!-- /page -->
-                """ % (self._name, self._title, header_content, child_content,
+                """ % (self._title, header_content, child_content,
                        self._footer_title, footer_content)
         if self._after_render_callback is not None:
             self._after_render_callback(self._name, {'title': self._title,
                                                      'footer_title': self._footer_title})
+        return content
+
+
+class MultiPage(Widget):
+    """This class is the collection of multiple virtual pages that will be rendered on
+    a single page in reality. Please check 'Multi-Page' section in the JQuery Mobile
+    for more information
+    """
+
+    def __init__(self, name, pages):
+        Widget.__init__(self, name)
+        if pages is not None:
+            self._child_widgets = pages
+        else:
+            self._child_widgets = []
+
+    def add_page(self, page):
+        """Adds a new page of type `MobilePage` to this MultiPage widget
+
+            Args:
+                page (MobilePage): Instance of the `MobilePage` widget
+        """
+        self._child_widgets.append(page)
+
+    def remove_page(self, page):
+        """Removes a page of type `MobilePage` from this widget
+
+            Args:
+                page (MobilePage): Instance of the `MobilePage` widget
+        """
+        self._child_widgets.remove(page)
+
+    def render(self):
+        """Renders all the child pages"""
+        content = ""
+        for page in self._child_widgets:
+            content += page.render() + "\n"
         return content
 
 
@@ -2216,10 +2465,10 @@ class NavBar(Widget, Namespace):
                             });
 
                             $('#%s a').bind('click', function(e){
-                            alert(e.source);
                             props = {
                                         'iconpos': selector.navbar('option', 'iconpos'),
-                                        'disabled': selector.navbar('option', 'disabled')
+                                        'disabled': selector.navbar('option', 'disabled'),
+                                        'clicked_item': e.target.id
                                      };
                                 socket.emit('fire_click_event', props);
                             });
@@ -2240,7 +2489,7 @@ class NavBar(Widget, Namespace):
             value = item[0]
             selected = item[1]
             icon = item[2]
-            content += "<li id='" + key + "'><a href='#' class='"
+            content += "<li><a id='" + key + "' href='#' class='"
             if selected:
                 content += "ui-btn-active "
             if self._is_persist:

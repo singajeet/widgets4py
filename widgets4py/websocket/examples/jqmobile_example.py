@@ -1,6 +1,8 @@
 from widgets4py.base import Page
-from widgets4py.websocket.jqmobile.ui import MPage, Button, ButtonStyle, FormButton, CheckBox, Radio, Collapsible
-from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch, GridLayout, SectionLayout
+from widgets4py.websocket.jqmobile.ui import MobilePage, Button, ButtonStyle, FormButton
+from widgets4py.websocket.jqmobile.ui import CheckBox, Radio, Collapsible
+from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch
+from widgets4py.websocket.jqmobile.ui import GridLayout, SectionLayout
 from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar
 from flask import Flask
 from flask_socketio import SocketIO
@@ -18,8 +20,8 @@ class MobileExample:
 
     def show_layout(self):
         self._pg = Page('pg', 'Mobile Example')
-        self._mpg1 = MPage('mpg1', 'Page1 Example', socketio, footer_title="Footer")
-        self._mpg2 = MPage('mpg2', 'Page2 Example', socketio, footer_title="Footer")
+        self._mpg1 = MobilePage('mpg1', 'Page1 Example', socketio, footer_title="Footer", click_callback=self.pg_clicked)  # noqa
+        self._mpg2 = MobilePage('mpg2', 'Page2 Example', socketio, footer_title="Footer")
         self._btn = Button('btn', socketio, btn_styles=[ButtonStyle.ROUND_CORNERS, ButtonStyle.ICON_LEFT],
                            title="My Button", icon='ui-icon-delete', click_callback=self.btn_clicked)
         self._btn1 = FormButton('btn1', socketio, title="Form Button", icon='ui-icon-delete',
@@ -66,7 +68,7 @@ class MobileExample:
         self._lv.add(self._li2)
         self._lv.add(self._li3)
         self._lv.add(self._li4)
-        self._nb = NavBar('nb', socketio)
+        self._nb = NavBar('nb', socketio, click_callback=self.nb_clicked)
         self._nb.add_item('nb1', 'NB1', True)
         self._nb.add_item('nb2', 'NB2', False)
         self._nb.add_item('nb3', 'NB3', False)
@@ -85,6 +87,12 @@ class MobileExample:
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
+
+    def pg_clicked(self, source, props):
+        print("Mobile Page Clicked: " + source + ", Props:" + str(props))
+
+    def nb_clicked(self, source, props):
+        print("NavBar clicked: " + source + ", Props: " + str(props))
 
     def lv_clicked(self, source, props):
         print("List view clicked: " + source + ", Props: " + str(props))
