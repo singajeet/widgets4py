@@ -2106,23 +2106,26 @@ class NavBar(Widget, Namespace):
     """
 
     _socket_io = None
-    _is_inset = None
     _theme = None
-    _disabled = None
     _items = None
     _namespace = None
+    _is_persist = None
+    _icon_pos = None
+    _disabled = None
+    _click_callback = None
 
-    def __init__(self, name, socket_io, is_inset=None, theme=None,
-                 items=None, disabled=None):
+    def __init__(self, name, socket_io, theme=None, items=None,
+                 is_persist=None, icon_pos=None, click_callback=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_nb").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_nb").replace('.', '_')
         self._socket_io = socket_io
         self._socket_io.on_namespace(self)
-        self._is_inset = is_inset
         self._theme = theme
         self._items = items
-        self._disabled = disabled
+        self._is_persist = is_persist
+        self._icon_pos = icon_pos
+        self._click_callback = click_callback
 
     @property
     def namespace(self):
@@ -2133,12 +2136,13 @@ class NavBar(Widget, Namespace):
         self._namespace = val
 
     @property
-    def is_inset(self):
-        return self._is_inset
+    def disabled(self):
+        return self._disabled
 
-    @is_inset.setter
-    def is_inset(self, val):
-        self._is_inset = val
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
 
     @property
     def theme(self):
@@ -2157,34 +2161,96 @@ class NavBar(Widget, Namespace):
         self._items = val
 
     @property
-    def disabled(self):
-        return self._disabled
+    def is_persist(self):
+        return self._is_persist
 
-    @disabled.setter
-    def disabled(self, val):
-        self._disabled = val
+    @is_persist.setter
+    def is_persist(self, val):
+        self._is_persist = val
 
-    def add_item(self, key, value, is_selected):
+    @property
+    def icon_pos(self):
+        return self._icon_pos
+
+    @icon_pos.setter
+    def icon_pos(self, val):
+        self._icon_pos = val
+        self._sync_properties('iconpos', val)
+
+    def add_item(self, key, value, is_selected, icon=None):
         if self._items is not None:
-            self._items[key] = [value, is_selected]
+            self._items[key] = [value, is_selected, icon]
         else:
             self._items = {}
-            self._items[key] = [value, is_selected]
+            self._items[key] = [value, is_selected, icon]
 
     def remove_item(self, key):
         self._items.pop(key)
 
+    def on_fire_click_event(self, props):
+        dsbld = props['disabled']
+        if dsbld is not None:
+            self._disabled = dsbld
+        iconpos = props['iconpos']
+        if iconpos is not None:
+            self._icon_pos = iconpos
+        clicked_item = props['clicked_item']
+        if self._click_callback is not None:
+            self._click_callback(clicked_item, props)
+
+    def _sync_properties(self, cmd, value):
+        emit("sync_properties_" + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
+
+    def _attach_script(self):
+        script = """
+                <script>
+                    (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s');
+
+                            socket.on('sync_properties_%s', function(props){
+                                selector.navbar("option", props['cmd'], props['value']);
+                                selector.navbar('refresh');
+                            });
+
+                            $('#%s a').bind('click', function(e){
+                            alert(e.source);
+                            props = {
+                                        'iconpos': selector.navbar('option', 'iconpos'),
+                                        'disabled': selector.navbar('option', 'disabled')
+                                     };
+                                socket.emit('fire_click_event', props);
+                            });
+                        });
+                    })(jQuery);
+                </script>
+                """ % (self._namespace, self._name, self._name, self._name)
+        return script
+
     def render(self):
-        content = "<div data-role='navbar' data-grid='d' >\n"
+        content = "<div data-role='navbar' id='" + self._name + "' "
+        if self._icon_pos is not None:
+            content += "data-iconpos='" + self._icon_pos + "' "
+        content += ">\n"
         content += "<ul>\n"
         for key in self._items:
             item = self._items.get(key)
             value = item[0]
             selected = item[1]
-            if not selected:
-                content += "<li id='" + key + "'><a href='#'>" + value + "</a></li>"
-            else:
-                content += "<li id='" + key + "'><a class='ui-btn-active' href='#'>" + value + "</a></li>"
+            icon = item[2]
+            content += "<li id='" + key + "'><a href='#' class='"
+            if selected:
+                content += "ui-btn-active "
+            if self._is_persist:
+                content += "ui-state-persist"
+            content += "' "
+            if icon is not None:
+                content += "data-icon='" + icon + "' "
+            if self._theme is not None:
+                content += "data-theme='" + self._theme + "' "
+            content += ">" + value + "</a></li>\n"
         content += "</ul>\n"
-        content += "</div>\n"
+        content += "</div>\n" + self._attach_script()
         return content
