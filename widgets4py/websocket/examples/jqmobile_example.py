@@ -3,7 +3,7 @@ from widgets4py.websocket.jqmobile.ui import MobilePage, Button, ButtonStyle, Fo
 from widgets4py.websocket.jqmobile.ui import CheckBox, Radio, Collapsible
 from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch
 from widgets4py.websocket.jqmobile.ui import GridLayout, SectionLayout
-from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar
+from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar, Panel
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -21,9 +21,9 @@ class MobileExample:
     def show_layout(self):
         self._pg = Page('pg', 'Mobile Example')
         self._mpg1 = MobilePage('mpg1', 'Page1 Example', socketio, footer_title="Footer", click_callback=self.pg_clicked)  # noqa
-        self._mpg2 = MobilePage('mpg2', 'Page2 Example', socketio, footer_title="Footer")
+        self._mpg2 = MobilePage('mpg2', 'Page2 Example', socketio, footer_title="Dialog Footer", is_dialog=True)
         self._btn = Button('btn', socketio, btn_styles=[ButtonStyle.ROUND_CORNERS, ButtonStyle.ICON_LEFT],
-                           title="My Button", icon='ui-icon-delete', click_callback=self.btn_clicked)
+                           title="My Button", icon='ui-icon-delete', click_callback=self.btn_clicked, href='#mpg2')
         self._btn1 = FormButton('btn1', socketio, title="Form Button", icon='ui-icon-delete',
                                 btn_styles=[ButtonStyle.ROUND_CORNERS, ButtonStyle.ICON_LEFT],
                                 click_callback=self.btn_clicked)
@@ -57,8 +57,9 @@ class MobileExample:
         self._grid.add(Button('gb2', socketio, title="Btn2"))
         self._grid.add(Button('gb3', socketio, title="Btn3"))
         self._grid.add(Button('gb4', socketio, title="Btn4"))
+        self._pnl = Panel('pnl', socketio, display='overlay', show_close_btn=True)
         self._sl = SectionLayout('sl', 'My Section', header_corners=True, body_corners=True, body_theme='a')
-        self._sl.add(Button('slb', socketio, title='Button'))
+        self._sl.add(Button('slb', socketio, title='Button', href='#pnl'))
         self._lv = ListView('lv', socketio, is_filterable=True)
         self._li1 = ListItem('li1', 'ListItem1', socketio, click_callback=self.li_clicked)
         self._li2 = ListItem('li2', 'ListItem2', socketio, click_callback=self.li_clicked)
@@ -84,6 +85,7 @@ class MobileExample:
         self._mpg1.add(self._sl)
         self._mpg1.add(self._lv)
         self._mpg1.add(self._nb)
+        self._mpg1.add_panel(self._pnl)
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
@@ -111,6 +113,7 @@ class MobileExample:
         print("Check Clicked: " + source + ", " + str(status))
 
     def btn_clicked(self, source, props):
+        print("Button clicked: " + source + ", Props: " + str(props))
         self._clsp1.is_collapsed = not self._clsp1.is_collapsed
         if self._btn.icon == 'ui-icon-delete':
             self._btn.icon = 'ui-icon-alert'

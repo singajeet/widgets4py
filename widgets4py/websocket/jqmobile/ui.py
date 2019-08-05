@@ -5,6 +5,7 @@ JQuery Mobile framework
 Author: Ajeet Singh
 Date: 07/30/2019
 """
+from flask import json
 from flask_socketio import Namespace, emit
 from widgets4py.base import Widget
 from enum import Enum
@@ -18,6 +19,7 @@ class MobilePage(Widget, Namespace):
     _title = None
     _header_widgets = None
     _footer_widgets = None
+    _panel_widgets = None
     _socketio = None
     _footer_title = None
     _before_render_callback = None
@@ -38,7 +40,8 @@ class MobilePage(Widget, Namespace):
                  child_widgets=None, footer_title=None, before_render_callback=None,
                  after_render_callback=None, close_button=None, close_button_text=None,
                  content_theme=None, corners=None, is_dialog=None, is_disabled=None,
-                 dom_cache=None, overlay_theme=None, theme=None, click_callback=None):
+                 dom_cache=None, overlay_theme=None, theme=None, click_callback=None,
+                 panel_widgets=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_page").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + name + "_page").replace('.', '_')
@@ -70,6 +73,10 @@ class MobilePage(Widget, Namespace):
         self._overlay_theme = overlay_theme
         self._theme = theme
         self._click_callback = click_callback
+        if panel_widgets is not None:
+            self._panel_widgets = panel_widgets
+        else:
+            self._panel_widgets = []
 
     @property
     def theme(self):
@@ -185,12 +192,38 @@ class MobilePage(Widget, Namespace):
         self._footer_widgets = val
 
     @property
+    def panel_widgets(self):
+        return self._panel_widgets
+
+    @panel_widgets.setter
+    def panel_widgets(self, val):
+        self._panel_widgets = val
+
+    @property
     def footer_title(self):
         return self._footer_title
 
     @footer_title.setter
     def footer_title(self, val):
         self._footer_title = val
+
+    def add_panel(self, panel):
+        self._panel_widgets.append(panel)
+
+    def remove_panel(self, panel):
+        self._panel_widgets.remove(panel)
+
+    def add_header_widget(self, widget):
+        self._header_widgets.append(widget)
+
+    def remove_header_widget(self, widget):
+        self._header_widgets.remove(widget)
+
+    def add_footer_widget(self, widget):
+        self._footer_widgets.append(widget)
+
+    def remove_footer_widget(self, widget):
+        self._footer_widgets.remove(widget)
 
     def on_before_render_event(self, callback):
         self._before_render_callback = callback
@@ -218,7 +251,7 @@ class MobilePage(Widget, Namespace):
                                 selector.page("option", props['cmd'], props['value']);
                             });
 
-                            selector.bind('click', function(){
+                            selector.bind('vclick', function(){
                                 props = {
                                             'closeBtn': selector.page("option", "closeBtn"),
                                             'closeBtnText': selector.page("option", "closeBtnText"),
@@ -238,11 +271,15 @@ class MobilePage(Widget, Namespace):
                 """ % (self._namespace, self._name, self._name)
         return script
 
-    def render(self):
+    def render(self):  # noqa
         """Render the contents of mobile page in browser"""
         if self._before_render_callback is not None:
             self._before_render_callback(self._name, {'title': self._title,
                                                       'footer_title': self._footer_title})
+        panel_content = ""
+        if self._panel_widgets is not None:
+            for pwidget in self._panel_widgets:
+                panel_content += pwidget.render()
         header_content = ""
         if self._header_widgets is not None:
             for hwidget in self._header_widgets:
@@ -265,9 +302,9 @@ class MobilePage(Widget, Namespace):
         if self._corners is not None:
             content += "data-corners='" + self._corners + "' "
         if self._is_dialog is not None:
-            content += "data-dialog='" + self._is_dialog + "' "
+            content += "data-dialog='" + json.dumps(self._is_dialog) + "' "
         if self._is_disabled is not None:
-            content += "data-disabled='" + self._is_disabled + "' "
+            content += "data-disabled='" + json.dumps(self._is_disabled) + "' "
         if self._dom_cache is not None:
             content += "data-dom_cache='" + self._dom_cache + "' "
         if self._overlay_theme is not None:
@@ -275,7 +312,9 @@ class MobilePage(Widget, Namespace):
         if self._theme is not None:
             content += "data-theme='" + self._theme + "' "
         content += ">"
-        content += """
+        content += """   <!-- panels -->
+                            %s
+                         <!-- /panels -->
                          <div data-role="header">
                             <h1>%s</h1>
                             %s
@@ -290,7 +329,7 @@ class MobilePage(Widget, Namespace):
                             %s
                          </div><!-- /footer -->
                     </div><!-- /page -->
-                """ % (self._title, header_content, child_content,
+                """ % (panel_content, self._title, header_content, child_content,
                        self._footer_title, footer_content)
         if self._after_render_callback is not None:
             self._after_render_callback(self._name, {'title': self._title,
@@ -372,9 +411,10 @@ class Button(Widget, Namespace):
     _socket_io = None
     _namespace = None
     _click_callback = None
+    _href = None
 
     def __init__(self, name, socket_io, title=None, icon=None, full_round=None, tag_type=None,
-                 btn_styles=None, click_callback=None):
+                 btn_styles=None, click_callback=None, href=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_mbtn").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + name + "_mbtn").replace('.', '_')
@@ -402,6 +442,7 @@ class Button(Widget, Namespace):
                 self._btn_styles.append(ButtonStyle.ICON_NOTEXT)
         self._socket_io.on_namespace(self)
         self._click_callback = click_callback
+        self._href = href
 
     @property
     def namespace(self):
@@ -576,10 +617,13 @@ class Button(Widget, Namespace):
                     """ % (self._namespace, self._name, self._name)
         return script
 
-    def render(self):
+    def render(self):  # noqa
         content = ""
         if self._tag_type == "A":
-            content = "<a href='#' "
+            if self._href is None:
+                content = "<a href='#' "
+            else:
+                content += "<a href='" + self._href + "' "
         else:
             content = "<button "
         content += "id='" + self._name + "' "
@@ -2501,5 +2545,114 @@ class NavBar(Widget, Namespace):
                 content += "data-theme='" + self._theme + "' "
             content += ">" + value + "</a></li>\n"
         content += "</ul>\n"
+        content += "</div>\n" + self._attach_script()
+        return content
+
+
+class Panel(Widget, Namespace):
+    """A panel can be shown of right or left side of the screen.
+    A panel can be displayed using any pf the three transitions:
+    Overlay, Reveal and Push. Visit Panel section under JQMobile site
+    for more information
+    """
+
+    _namespace = None
+    _socket_io = None
+    _position = None
+    _display = None
+    _is_swipe_close = None
+    _is_dismissible = None
+    _show_close_btn = None  # add the data-rel='close' to the btn
+    _animate = None
+    _is_position_fixed = None
+    _theme = None
+    _before_close_callback = None
+    _before_open_callback = None
+
+    def __init__(self, name, socket_io, position=None, display=None, swipe_close=None, dismissible=None,
+                 show_close_btn=None, animate=None, position_fixed=None, theme=None,
+                 before_close_callback=None, before_open_callback=None, child_widgets=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_pnl").replace(".", "_"))
+        self._namespace = '/' + str(__name__ + "_" + self._name + "_pnl").replace(".", "_")
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        self._position = position
+        self._display = display
+        self._is_swipe_close = swipe_close
+        self._is_dismissible = dismissible
+        self._show_close_btn = show_close_btn
+        self._animate = animate
+        self._is_position_fixed = position_fixed
+        self._theme = theme
+        if child_widgets is not None:
+            self._child_widgets = child_widgets
+        else:
+            self._child_widgets = []
+        self._before_close_callback = before_close_callback
+        self._before_open_callback = before_open_callback
+
+    def on_fire_before_close_event(self, props):
+        if self._before_close_callback is not None:
+            self._before_close_callback(self._name, props)
+
+    def on_fire_before_open_event(self, props):
+        if self._before_open_callback is not None:
+            self._before_open_callback(self._name, props)
+
+    def _sync_properties(self, cmd, value):
+        emit("sync_properties_" + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
+
+    def _attach_script(self):
+        script = """
+                <script>
+                    (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s');
+
+                            socket.on('sync_properties_%s', function(props){
+                                selector.navbar("option", props['cmd'], props['value']);
+                                selector.navbar('refresh');
+                            });
+
+                            selector.on('panelbeforeopen', function(e, ui){
+                                var props = {};
+                                socket.emit('fire_before_open_event', props);
+                            });
+                            selector.on('panelbeforeclose', function(e, ui){
+                            props = {
+                                     };
+                                socket.emit('fire_before_close_event', props);
+                            });
+                        });
+                    })(jQuery);
+                </script>
+                """ % (self._namespace, self._name, self._name)
+        return script
+
+    def render(self):
+        content = ""
+        content += "<div data-role='panel' id='" + self._name + "' "
+        if self._position is not None:
+            content += "data-position='" + self._position + "' "
+        if self._display is not None:
+            content += "data-display='" + self._display + "' "
+        if self._is_position_fixed is not None:
+            content += "data-position-fixed='" + json.dumps(self._is_position_fixed) + "' "
+        if self._is_swipe_close is not None:
+            content += "data-swipe-close='" + json.dumps(self._is_swipe_close) + "' "
+        if self._is_dismissible is not None:
+            content += "data-dismissible='" + json.dumps(self._is_dismissible) + "' "
+        if self._animate is not None:
+            content += "data-animate='" + self._animate + "' "
+        if self._theme is not None:
+            content += "data-theme='" + self._theme + "' "
+        content += ">\n"
+        for widget in self._child_widgets:
+            content += widget.render() + "\n"
+        if self._show_close_btn is not None and self._show_close_btn:
+            content += "<a href='#' data-rel='close'>Close</a>\n"
         content += "</div>\n" + self._attach_script()
         return content
