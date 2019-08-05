@@ -2592,6 +2592,85 @@ class Panel(Widget, Namespace):
         self._before_close_callback = before_close_callback
         self._before_open_callback = before_open_callback
 
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def position(self):
+        return self._position
+
+    @position.setter
+    def position(self, val):
+        self._position = val
+        self._sync_properties('position', val)
+
+    @property
+    def display(self):
+        return self._display
+
+    @display.setter
+    def display(self, val):
+        self._display = val
+        self._sync_properties('display', val)
+
+    @property
+    def is_swipe_close(self):
+        return self._is_swipe_close
+
+    @is_swipe_close.setter
+    def is_swipe_close(self, val):
+        self._is_swipe_close = val
+        self._sync_properties('swipeClose', val)
+
+    @property
+    def is_dismissible(self):
+        return self._is_dismissible
+
+    @is_dismissible.setter
+    def is_dismissible(self, val):
+        self._is_dismissible = val
+        self._sync_properties('dismissible', val)
+
+    @property
+    def show_close_btn(self):
+        return self._show_close_btn
+
+    @show_close_btn.setter
+    def show_close_btn(self, val):
+        self._show_close_btn = val
+
+    @property
+    def animate(self):
+        return self._animate
+
+    @animate.setter
+    def animate(self, val):
+        self._animate = val
+        self._sync_properties('animate', val)
+
+    @property
+    def is_position_fixed(self):
+        return self._is_position_fixed
+
+    @is_position_fixed.setter
+    def is_position_fixed(self, val):
+        self._is_position_fixed = val
+        self._sync_properties('positionFixed', val)
+
+    @property
+    def theme(self):
+        return self._theme
+
+    @theme.setter
+    def theme(self, val):
+        self._theme = val
+        self._sync_properties('theme', val)
+
     def on_fire_before_close_event(self, props):
         if self._before_close_callback is not None:
             self._before_close_callback(self._name, props)
@@ -2613,16 +2692,25 @@ class Panel(Widget, Namespace):
                             var selector = $('#%s');
 
                             socket.on('sync_properties_%s', function(props){
-                                selector.navbar("option", props['cmd'], props['value']);
-                                selector.navbar('refresh');
+                                selector.panel("option", props['cmd'], props['value']);
+                                selector.panel('refresh');
                             });
 
                             selector.on('panelbeforeopen', function(e, ui){
-                                var props = {};
+                                var props = {
+                                            };
                                 socket.emit('fire_before_open_event', props);
                             });
                             selector.on('panelbeforeclose', function(e, ui){
                             props = {
+                                        'animate': selector.panel('option', 'animate'),
+                                        'disabled': selector.panel('option', 'disabled'),
+                                        'dismissible': selector.panel('option': 'dismissible'),
+                                        'display': selector.panel('option', 'display'),
+                                        'position': selector.panel('option', 'position'),
+                                        'positionFixed': selector.panel('option', 'positionFixed'),
+                                        'swipeClose': selector.panel('option', 'swipeClose'),
+                                        'theme': selector.panel('option', 'theme')
                                      };
                                 socket.emit('fire_before_close_event', props);
                             });
@@ -2653,6 +2741,6 @@ class Panel(Widget, Namespace):
         for widget in self._child_widgets:
             content += widget.render() + "\n"
         if self._show_close_btn is not None and self._show_close_btn:
-            content += "<a href='#' data-rel='close'>Close</a>\n"
+            content += "<a class='ui-btn' href='#' data-rel='close'>Close</a>\n"
         content += "</div>\n" + self._attach_script()
         return content
