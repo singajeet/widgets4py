@@ -2672,6 +2672,30 @@ class Panel(Widget, Namespace):
         self._sync_properties('theme', val)
 
     def on_fire_before_close_event(self, props):
+        ani = props['animate']
+        if ani is not None:
+            self._animate = ani
+        dsbld = props['disabled']
+        if dsbld is not None:
+            self._display = dsbld
+        dismiss = props['dismissible']
+        if dismiss is not None:
+            self._is_dismissible = dismiss
+        dsply = props['display']
+        if dsply is not None:
+            self._display = dsply
+        pos = props['position']
+        if pos is not None:
+            self._position = pos
+        posFixed = props['positionFixed']
+        if posFixed is not None:
+            self._is_position_fixed = posFixed
+        swipcls = props['swipeClose']
+        if swipcls is not None:
+            self._is_swipe_close = swipcls
+        theme = props['theme']
+        if theme is not None:
+            self._theme = theme
         if self._before_close_callback is not None:
             self._before_close_callback(self._name, props)
 
@@ -2702,16 +2726,16 @@ class Panel(Widget, Namespace):
                                 socket.emit('fire_before_open_event', props);
                             });
                             selector.on('panelbeforeclose', function(e, ui){
-                            props = {
+                            var props = {
                                         'animate': selector.panel('option', 'animate'),
                                         'disabled': selector.panel('option', 'disabled'),
-                                        'dismissible': selector.panel('option': 'dismissible'),
+                                        'dismissible': selector.panel('option', 'dismissible'),
                                         'display': selector.panel('option', 'display'),
                                         'position': selector.panel('option', 'position'),
                                         'positionFixed': selector.panel('option', 'positionFixed'),
                                         'swipeClose': selector.panel('option', 'swipeClose'),
                                         'theme': selector.panel('option', 'theme')
-                                     };
+                                     }
                                 socket.emit('fire_before_close_event', props);
                             });
                         });
@@ -2744,3 +2768,79 @@ class Panel(Widget, Namespace):
             content += "<a class='ui-btn' href='#' data-rel='close'>Close</a>\n"
         content += "</div>\n" + self._attach_script()
         return content
+
+
+class Popup(Widget, Namespace):
+    """The popup widget can be used for various types of popups.
+    From a small tooltip popup to a large photo lightbox.
+    """
+
+    _namespace = None
+    _socket_io = None
+    _style_class = None
+    _theme = None
+    _overlay_theme = None
+    _corners = None
+    _is_dismissible = None
+    _height = None
+    _width = None
+    _is_arrow_visible = None
+    _show_close_button = None
+    _close_btn_position = None
+
+    def __init__(self, name, socket_io, style_class=None, theme=None, overlay_theme=None,
+                 corners=None, is_dismissible=None, height=None, width=None, is_arrow_visible=None,
+                 child_widgets=None, show_close_button=None, close_btn_position=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_popup").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + self._name + "_popup").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        self._style_class = style_class
+        self._theme = theme
+        self._overlay_theme = overlay_theme
+        self._corners = corners
+        self._is_dismissible = is_dismissible
+        self._height = height
+        self._width = width
+        self._is_arrow_visible = is_arrow_visible
+        if child_widgets is not None:
+            self._child_widgets = child_widgets
+        else:
+            self._child_widgets = []
+        if show_close_button is not None:
+            self._show_close_button = show_close_button
+        else:
+            self._show_close_button = False
+        if close_btn_position is not None:
+            self._close_btn_position = close_btn_position
+        else:
+            self._close_btn_position = "right"
+
+    def render(self):
+        constent = ""
+        content += "<div data-role='popup' "
+        content += "id='" + self._name + "' "
+        if self._style_class is not None:
+            content += "class='ui-content " + self._style_class + "' "
+        else:
+            content += "class='ui-content' "
+        if self._theme is not None:
+            content += "data-theme='" + self._theme + "' "
+        if self._overlay_theme is not None:
+            content += "data-overlay-theme='" + self._overlay_theme + "' "
+        if self._corners is not None:
+            content += "data-corners='" + json.dumps(self._corners) + "' "
+        if self._is_dismissible is not None:
+            content += "data-dismissible='" + json.dumps(self._is_dismissible) + "' "
+        if self._is_arrow_visible is not None:
+            content += "data-arrow='" + self._is_arrow_visible + "' "
+        if self._height is not None and self._width is not None:
+            content += "style='max-width:" + self._width + ", max-height: " + self._height + "' "
+        elif self._height is None and self._width is not None:
+            content += "style='max-width:" + self._width + "' "
+        elif self._height is not None and self._width is None:
+            content += "style='max-height: " + self._height + "' "
+        content += ">"
+
+

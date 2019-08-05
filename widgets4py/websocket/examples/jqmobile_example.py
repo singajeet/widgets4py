@@ -57,7 +57,7 @@ class MobileExample:
         self._grid.add(Button('gb2', socketio, title="Btn2"))
         self._grid.add(Button('gb3', socketio, title="Btn3"))
         self._grid.add(Button('gb4', socketio, title="Btn4"))
-        self._pnl = Panel('pnl', socketio, display='overlay', show_close_btn=True)
+        self._pnl = Panel('pnl', socketio, display='overlay', show_close_btn=True, before_close_callback=self.before_panel_closed)  # noqa
         self._sl = SectionLayout('sl', 'My Section', header_corners=True, body_corners=True, body_theme='a')
         self._sl.add(Button('slb', socketio, title='Button', href='#pnl'))
         self._lv = ListView('lv', socketio, is_filterable=True)
@@ -89,6 +89,9 @@ class MobileExample:
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
+
+    def before_panel_closed(self, source, props):
+        print("Before Panel Closed: " + source + ", Props: " + str(props))
 
     def pg_clicked(self, source, props):
         print("Mobile Page Clicked: " + source + ", Props:" + str(props))
