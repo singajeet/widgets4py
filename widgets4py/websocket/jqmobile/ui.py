@@ -412,9 +412,10 @@ class Button(Widget, Namespace):
     _namespace = None
     _click_callback = None
     _href = None
+    _data_rel = None
 
     def __init__(self, name, socket_io, title=None, icon=None, full_round=None, tag_type=None,
-                 btn_styles=None, click_callback=None, href=None):
+                 btn_styles=None, click_callback=None, href=None, data_rel=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_mbtn").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + name + "_mbtn").replace('.', '_')
@@ -443,6 +444,7 @@ class Button(Widget, Namespace):
         self._socket_io.on_namespace(self)
         self._click_callback = click_callback
         self._href = href
+        self._data_rel = data_rel
 
     @property
     def namespace(self):
@@ -500,6 +502,23 @@ class Button(Widget, Namespace):
     def btn_styles(self, val):
         self._btn_styles = val
         self._sync_properties()
+
+    @property
+    def href(self):
+        return self._href
+
+    @href.setter
+    def href(self, val):
+        self._href = val
+
+    @property
+    def data_rel(self):
+        return self._data_rel
+
+    @data_rel.setter
+    def data_rel(self, val):
+        self._data_rel = val
+
 
     def _sync_properties(self):
         emit('sync_properties_' + self._name, {'title': self._title,
@@ -624,6 +643,8 @@ class Button(Widget, Namespace):
                 content = "<a href='#' "
             else:
                 content += "<a href='" + self._href + "' "
+            if self._data_rel is not None:
+                content += "data-rel='" + self._data_rel + "' "
         else:
             content = "<button "
         content += "id='" + self._name + "' "
@@ -1024,12 +1045,13 @@ class Collapsible(Namespace, Widget):
     _disabled = None
     _socket_io = None
     _namespace = None
-    _click_callback = None
+    _collapse_callback = None
+    _expand_callback = None
 
     def __init__(self, name, title, socket_io, theme=None, content_theme=None, is_collapsed=None,
                  is_mini=None, collapsed_icon=None, expanded_icon=None, iconpos=None,
-                 is_fieldset=None, legend=None, is_inset=None, corners=None, click_callback=None,
-                 disabled=None):
+                 is_fieldset=None, legend=None, is_inset=None, corners=None, collapse_callback=None,
+                 expand_callback=None, disabled=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_colpse").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_colpse").replace('.', '_')
@@ -1048,7 +1070,8 @@ class Collapsible(Namespace, Widget):
         self._is_inset = is_inset
         self._corners = corners
         self._disabled = disabled
-        self._click_callback = click_callback
+        self._collapse_callback = collapse_callback
+        self._expand_callback = expand_callback
 
     @property
     def namespace(self):
@@ -1190,7 +1213,7 @@ class Collapsible(Namespace, Widget):
         self._disabled = val
         self._sync_properties('disabled', val)
 
-    def on_fire_click_event(self, props):  # noqa
+    def on_fire_collapse_event(self, props):  # noqa
         clspd = props['collapsed']
         if clspd is not None:
             self._is_collapsed = clspd
@@ -1224,8 +1247,45 @@ class Collapsible(Namespace, Widget):
         thm = props['theme']
         if thm is not None:
             self._theme = thm
-        if self._click_callback is not None:
-            self._click_callback(self._name, props)
+        if self._collapse_callback is not None:
+            self._collapse_callback(self._name, props)
+
+    def on_fire_expand_event(self, props):  # noqa
+        clspd = props['collapsed']
+        if clspd is not None:
+            self._is_collapsed = clspd
+        clspdIcn = props['collapsedIcon']
+        if clspdIcn is not None:
+            self._collapsed_icon = clspdIcn
+        conthme = props['contentTheme']
+        if conthme is not None:
+            self._content_theme = conthme
+        crnrs = props['corners']
+        if crnrs is not None:
+            self._corners = crnrs
+        dsbl = props['disabled']
+        if dsbl is not None:
+            self._disabled = dsbl
+        expndIcon = props['expandedIcon']
+        if expndIcon is not None:
+            self._expanded_icon = expndIcon
+        head = props['heading']
+        if head is not None and head != "h1,h2,h3,h4,h5,h6,legend":
+            self._title = head
+        icnpos = props['iconpos']
+        if icnpos is not None:
+            self._iconpos = icnpos
+        inst = props['inset']
+        if inst is not None:
+            self._is_inset = inst
+        mini = props['mini']
+        if mini is not None:
+            self._is_mini = mini
+        thm = props['theme']
+        if thm is not None:
+            self._theme = thm
+        if self._expand_callback is not None:
+            self._expand_callback(self._name, props)
 
     def _sync_properties(self, cmd, value):
         emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
@@ -1238,13 +1298,12 @@ class Collapsible(Namespace, Widget):
                         $(document).bind('pagecreate', function(e){
                             var socket = io('%s');
                             var selector = $('#%s');
-                            var head_selector = $('#%s_head');
 
                             socket.on('sync_properties_%s', function(props){
                                 selector.collapsible("option", props['cmd'], props['value']);
                             });
 
-                            selector.bind('vclick', function(){
+                            selector.on( "collapsiblecollapse", function( event, ui ) {
                                 props = {
                                             'collapsed': selector.collapsible("option", "collapsed"),
                                             'collapsedIcon': selector.collapsible("option", "collapsedIcon"),
@@ -1258,12 +1317,29 @@ class Collapsible(Namespace, Widget):
                                             'mini': selector.collapsible("option", "mini"),
                                             'theme': selector.collapsible("option", "theme")
                                         };
-                                socket.emit("fire_click_event", props);
-                            });
+                                socket.emit("fire_collapse_event", props);
+                            } );
+
+                            selector.on( "collapsibleexpand", function( event, ui ) {
+                                props = {
+                                            'collapsed': selector.collapsible("option", "collapsed"),
+                                            'collapsedIcon': selector.collapsible("option", "collapsedIcon"),
+                                            'contentTheme': selector.collapsible("option", "contentTheme"),
+                                            'corners': selector.collapsible("option", "corners"),
+                                            'disabled': selector.collapsible("option", "disabled"),
+                                            'expandedIcon': selector.collapsible("option", "expandedIcon"),
+                                            'heading': selector.collapsible("option", "heading"),
+                                            'iconpos': selector.collapsible("option", "iconpos"),
+                                            'inset': selector.collapsible("option", "inset"),
+                                            'mini': selector.collapsible("option", "mini"),
+                                            'theme': selector.collapsible("option", "theme")
+                                        };
+                                socket.emit("fire_expand_event", props);
+                            } );
                         });
                     })(jQuery);
                 </script>
-                """ % (self._namespace, self._name, self._name, self._name)
+                """ % (self._namespace, self._name, self._name)
         return script
 
     def render(self):       # noqa
@@ -1317,12 +1393,12 @@ class CollapsibleSet(Collapsible):
 
     def __init__(self, name, title, socket_io, theme=None, content_theme=None, is_collapsed=None,
                  is_mini=None, collapsed_icon=None, expanded_icon=None, iconpos=None,
-                 is_fieldset=None, legend=None, is_inset=None, click_callback=None, items=None, no_corners=None,
-                 use_filter=None):
+                 is_fieldset=None, legend=None, is_inset=None, collapse_callback=None, items=None,
+                 no_corners=None, use_filter=None):
         Collapsible.__init__(self, name, None, socket_io, theme=theme, content_theme=content_theme,
                              is_collapsed=is_collapsed, is_mini=is_mini, collapsed_icon=collapsed_icon,
                              expanded_icon=expanded_icon, iconpos=iconpos, is_fieldset=None, legend=None,
-                             is_inset=is_inset, click_callback=click_callback)
+                             is_inset=is_inset, collapse_callback=collapse_callback)
         if items is not None:
             self._child_widgets = items
         else:
@@ -2227,10 +2303,13 @@ class ListItem(Widget, Namespace):
     _img_src = None
     _click_callback = None
     _is_active = None
+    _href = None
+    _data_rel = None
 
     def __init__(self, name, title, socket_io, content=None, is_read_only=None, is_linked=None,
                  is_count_bubble_enabled=None, is_thumbnail_enabled=None, icon=None,
-                 is_list_divider=None, count=None, img_src=None, click_callback=None, is_active=None):
+                 is_list_divider=None, count=None, img_src=None, click_callback=None, is_active=None,
+                 href=None, data_rel=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_li").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_li").replace('.', '_')
@@ -2251,6 +2330,11 @@ class ListItem(Widget, Namespace):
         self._img_src = img_src
         self._click_callback = click_callback
         self._is_active = is_active
+        if href is not None:
+            self._href = href
+        else:
+            self._href = "#"
+        self._data_rel = data_rel
 
     @property
     def namespace(self):
@@ -2376,7 +2460,9 @@ class ListItem(Widget, Namespace):
                 else:
                     content += "<li "
                 content += "id='" + self._name + "'>"
-                content += "<a href='#' "
+                content += "<a href='" + self._href + "' "
+                if self._data_rel is not None:
+                    content += "data-rel='" + self._data_rel + "' "
                 if self._is_active is not None and self._is_active:
                     content += "class='ui-btn-active' "
                 content += ">"
@@ -2470,12 +2556,12 @@ class NavBar(Widget, Namespace):
         self._icon_pos = val
         self._sync_properties('iconpos', val)
 
-    def add_item(self, key, value, is_selected, icon=None):
+    def add_item(self, key, value, is_selected, href=None, icon=None, data_rel=None):
         if self._items is not None:
-            self._items[key] = [value, is_selected, icon]
+            self._items[key] = [value, is_selected, href, icon, data_rel]
         else:
             self._items = {}
-            self._items[key] = [value, is_selected, icon]
+            self._items[key] = [value, is_selected, href, icon, data_rel]
 
     def remove_item(self, key):
         self._items.pop(key)
@@ -2532,8 +2618,10 @@ class NavBar(Widget, Namespace):
             item = self._items.get(key)
             value = item[0]
             selected = item[1]
-            icon = item[2]
-            content += "<li><a id='" + key + "' href='#' class='"
+            href = item[2] if item[2] is not None else "#"
+            icon = item[3]
+            data_rel = item[4]
+            content += "<li><a id='" + key + "' href='" + href + "' class='"
             if selected:
                 content += "ui-btn-active "
             if self._is_persist:
@@ -2541,6 +2629,8 @@ class NavBar(Widget, Namespace):
             content += "' "
             if icon is not None:
                 content += "data-icon='" + icon + "' "
+            if data_rel is not None:
+                content += "data-rel='" + data_rel + "' "
             if self._theme is not None:
                 content += "data-theme='" + self._theme + "' "
             content += ">" + value + "</a></li>\n"
@@ -2818,7 +2908,7 @@ class Popup(Widget, Namespace):
             self._close_btn_position = "right"
 
     def render(self):
-        constent = ""
+        content = ""
         content += "<div data-role='popup' "
         content += "id='" + self._name + "' "
         if self._style_class is not None:
@@ -2842,5 +2932,14 @@ class Popup(Widget, Namespace):
         elif self._height is not None and self._width is None:
             content += "style='max-height: " + self._height + "' "
         content += ">"
-
-
+        for widget in self._child_widgets:
+            content += widget.render() + "\n"
+        if self._show_close_button is not None:
+            if self._close_btn_position is not None and self._close_btn_position == "right":
+                content += "<a href='#' data-rel='back' class='ui-btn ui-corner-all ui-shadow ui-btn-a\
+                 ui-icon-delete ui-btn-icon-notext ui-btn-right'>Close</a>"
+            if self._close_btn_position is not None and self._close_btn_position == "left":
+                content += "<a href='#' data-rel='back' class='ui-btn ui-corner-all ui-shadow ui-btn-a\
+                 ui-icon-delete ui-btn-icon-notext ui-btn-left'>Close</a>"
+        content += "</div>"
+        return content

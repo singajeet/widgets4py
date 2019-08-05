@@ -3,7 +3,7 @@ from widgets4py.websocket.jqmobile.ui import MobilePage, Button, ButtonStyle, Fo
 from widgets4py.websocket.jqmobile.ui import CheckBox, Radio, Collapsible
 from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch
 from widgets4py.websocket.jqmobile.ui import GridLayout, SectionLayout
-from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar, Panel
+from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar, Panel, Popup
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -21,9 +21,9 @@ class MobileExample:
     def show_layout(self):
         self._pg = Page('pg', 'Mobile Example')
         self._mpg1 = MobilePage('mpg1', 'Page1 Example', socketio, footer_title="Footer", click_callback=self.pg_clicked)  # noqa
-        self._mpg2 = MobilePage('mpg2', 'Page2 Example', socketio, footer_title="Dialog Footer", is_dialog=True)
+        self._mpg2 = MobilePage('mpg2', 'Page2 Example', socketio, footer_title="Dialog Footer", is_dialog=True)  # noqa
         self._btn = Button('btn', socketio, btn_styles=[ButtonStyle.ROUND_CORNERS, ButtonStyle.ICON_LEFT],
-                           title="My Button", icon='ui-icon-delete', click_callback=self.btn_clicked, href='#mpg2')
+                           title="My Button", icon='ui-icon-delete', click_callback=self.btn_clicked, href='#mpg2')  # noqa
         self._btn1 = FormButton('btn1', socketio, title="Form Button", icon='ui-icon-delete',
                                 btn_styles=[ButtonStyle.ROUND_CORNERS, ButtonStyle.ICON_LEFT],
                                 click_callback=self.btn_clicked)
@@ -43,9 +43,9 @@ class MobileExample:
         self._rd.add_item('rd_item4', 'RadioItem4')
         self._ctrl_gp = ControlGroup('ctrl_gp', socketio)
         self._ctrl_gp.add(self._rd)
-        self._clsp1 = Collapsible('clsp1', 'My Collapsible1', socketio, click_callback=self.clsp_clicked)
-        self._clsp2 = Collapsible('clsp2', 'My Collapsible2', socketio, click_callback=self.clsp_clicked)
-        self._clsp3 = Collapsible('clsp3', 'My Collapsible3', socketio, click_callback=self.clsp_clicked)
+        self._clsp1 = Collapsible('clsp1', 'My Collapsible1', socketio, collapse_callback=self.clsp_clicked)
+        self._clsp2 = Collapsible('clsp2', 'My Collapsible2', socketio, collapse_callback=self.clsp_clicked)
+        self._clsp3 = Collapsible('clsp3', 'My Collapsible3', socketio, collapse_callback=self.clsp_clicked)
         self._clsp = CollapsibleSet('clsp', '', socketio, use_filter=True)
         self._fs = FlipSwitch('fs', socketio, on_text="Light", off_text="Dark",
                               change_callback=self.fs_changed)
@@ -70,11 +70,12 @@ class MobileExample:
         self._lv.add(self._li3)
         self._lv.add(self._li4)
         self._nb = NavBar('nb', socketio, click_callback=self.nb_clicked)
-        self._nb.add_item('nb1', 'NB1', True)
+        self._nb.add_item('nb1', 'NB1', True, href='#pop', data_rel='popup')
         self._nb.add_item('nb2', 'NB2', False)
         self._nb.add_item('nb3', 'NB3', False)
         self._nb.add_item('nb4', 'NB4', False)
         self._nb.add_item('nb5', 'NB5', False)
+        self._pop = Popup('pop', socketio)
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)
@@ -86,6 +87,7 @@ class MobileExample:
         self._mpg1.add(self._lv)
         self._mpg1.add(self._nb)
         self._mpg1.add_panel(self._pnl)
+        self._mpg1.add(self._pop)
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
@@ -110,7 +112,7 @@ class MobileExample:
 
     def clsp_clicked(self, source, props):
         print("Collapsible clicked! Source: " + source + ", Props: " + str(props))
-        self._fs._is_checked = not self._fs._is_checked
+        # self._fs._is_checked = not self._fs._is_checked
 
     def chk_clicked(self, source, status, items):
         print("Check Clicked: " + source + ", " + str(status))
