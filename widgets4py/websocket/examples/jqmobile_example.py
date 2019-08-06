@@ -3,7 +3,7 @@ from widgets4py.websocket.jqmobile.ui import MobilePage, Button, ButtonStyle, Fo
 from widgets4py.websocket.jqmobile.ui import CheckBox, Radio, Collapsible
 from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch
 from widgets4py.websocket.jqmobile.ui import GridLayout, SectionLayout
-from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar, Panel, Popup
+from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar, Panel, Popup, HTML, RangeSlider
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -57,7 +57,9 @@ class MobileExample:
         self._grid.add(Button('gb2', socketio, title="Btn2"))
         self._grid.add(Button('gb3', socketio, title="Btn3"))
         self._grid.add(Button('gb4', socketio, title="Btn4"))
-        self._pnl = Panel('pnl', socketio, display='overlay', show_close_btn=True, before_close_callback=self.before_panel_closed)  # noqa
+        self._pnl_html = HTML('pnl_html', '<h2>My Panel</h2><br>This is a standard left panel with close button')
+        self._pnl = Panel('pnl', socketio, display='overlay', show_close_btn=True,
+                          before_close_callback=self.before_panel_closed, child_widgets=[self._pnl_html])
         self._sl = SectionLayout('sl', 'My Section', header_corners=True, body_corners=True, body_theme='a')
         self._sl.add(Button('slb', socketio, title='Button', href='#pnl'))
         self._lv = ListView('lv', socketio, is_filterable=True)
@@ -75,7 +77,9 @@ class MobileExample:
         self._nb.add_item('nb3', 'NB3', False)
         self._nb.add_item('nb4', 'NB4', False)
         self._nb.add_item('nb5', 'NB5', False)
-        self._pop = Popup('pop', socketio)
+        self._pop_html = HTML('pop_html', '<center><h4>My Popup</h4></center>This is an popup with a HTML child widget')
+        self._pop = Popup('pop', socketio, child_widgets=[self._pop_html])
+        self._rng = RangeSlider('rng', socketio, 'Title1', 'Title2')
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)
@@ -88,6 +92,7 @@ class MobileExample:
         self._mpg1.add(self._nb)
         self._mpg1.add_panel(self._pnl)
         self._mpg1.add(self._pop)
+        self._mpg1.add(self._rng)
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
@@ -111,7 +116,7 @@ class MobileExample:
         print("FlipSwitch Changed: " + source + ", Props:" + str(props))
 
     def clsp_clicked(self, source, props):
-        print("Collapsible clicked! Source: " + source + ", Props: " + str(props))
+        print("Collapsible closed! Source: " + source + ", Props: " + str(props))
         # self._fs._is_checked = not self._fs._is_checked
 
     def chk_clicked(self, source, status, items):

@@ -519,7 +519,6 @@ class Button(Widget, Namespace):
     def data_rel(self, val):
         self._data_rel = val
 
-
     def _sync_properties(self):
         emit('sync_properties_' + self._name, {'title': self._title,
                                                'icon': self._icon,
@@ -2907,7 +2906,7 @@ class Popup(Widget, Namespace):
         else:
             self._close_btn_position = "right"
 
-    def render(self):
+    def render(self):  # noqa
         content = ""
         content += "<div data-role='popup' "
         content += "id='" + self._name + "' "
@@ -2942,4 +2941,215 @@ class Popup(Widget, Namespace):
                 content += "<a href='#' data-rel='back' class='ui-btn ui-corner-all ui-shadow ui-btn-a\
                  ui-icon-delete ui-btn-icon-notext ui-btn-left'>Close</a>"
         content += "</div>"
+        return content
+
+
+class HTML(Widget):
+    """Widget to render html on a mobile page. The HTML can be passed
+    as argument to constructor or can be assigned to `html` property.
+    Apart from that you can pass CSS script which will be rendered
+    before HTML is rendered on page.
+    """
+
+    _html = None
+    _css = None
+
+    def __init__(self, name, html=None, child_widgets=None, css=None):
+        Widget.__init__(self, name)
+        self._html = html
+        self._css = css
+        if child_widgets is not None:
+            self._child_widgets = child_widgets
+        else:
+            self._child_widgets = []
+
+    @property
+    def html(self):
+        return self._html
+
+    @html.setter
+    def html(self, val):
+        self._html = val
+
+    @property
+    def css(self):
+        return self._css
+
+    @css.setter
+    def css(self, val):
+        self._css = val
+
+    def render(self):
+        content = ""
+        if self._css is not None:
+            content += "<style>" + "\n"
+            content += self._css + "\n"
+            content += "</style>"
+        if self._html is not None:
+            content += "<div id='" + self._name + "'>"
+            content += self._html + "\n"
+        if self._child_widgets is not None:
+            for widget in self._child_widgets:
+                content += widget.render() + "\n"
+        if self._html is not None:
+            content += "</div>"
+        return content
+
+
+class JavaScript(Widget):
+    """Renders the javascript in executionable container. The script
+    will be executed on `pagecreate` event, so that it have access to
+    DOM object of JQMobile widgets
+    """
+
+    _js = None
+
+    def __init__(self, name, js=None):
+        Widget.__init__(self, name)
+        self._js = js
+
+    @property
+    def javascript(self):
+        return self._js
+
+    @javascript.setter
+    def javascript(self, val):
+        self._js = val
+
+    def render(self):
+        js = """<script>
+                (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            %s
+                        });
+                    });
+            """ % (self._js)
+        return js
+
+
+class RangeSlider(Widget, Namespace):
+    """Range slider offer two handles to set a min
+    and max value along a numeric continuum.
+    """
+
+    _title1 = None
+    _title2 = None
+    _value1 = None
+    _value2 = None
+    _value1min = None
+    _value1max = None
+    _value2min = None
+    _value2max = None
+    _step1 = None
+    _step2 = None
+    _namespace = None
+    _socket_io = None
+    _highlight = None
+    _theme = None
+    _track_theme = None
+    _mini = None
+    _disabled = None
+    _value1_changed_callback = None
+    _value2_changed_callback = None
+
+    def __init__(self, name, socket_io, title1=None, title2=None, value1=None, value2=None,
+                 value1min=None, value1max=None, value2min=None, value2max=None, step1=None,
+                 step2=None, highlight=None, theme=None, track_theme=None, mini=None,
+                 disabled=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + '_' + self._name + '_rs').replace('.', '_'))
+        self._namespace = '/' + str(__name__ + '_' + self._name + '_rs').replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        if title1 is not None:
+            self._title1 = title1
+        else:
+            self._title1 = ""
+        if title2 is not None:
+            self._title2 = title2
+        else:
+            self._title2 = ""
+        if value1 is not None:
+            self._value1 = value1
+        else:
+            self._value1 = 0
+        if value2 is not None:
+            self._value2 = value2
+        else:
+            self._value2 = 100
+        if value1min is not None:
+            self._value1min = value1min
+        else:
+            self._value1min = 0
+        if value1max is not None:
+            self._value1max = value1max
+        else:
+            self._value1max = 100
+        if value2min is not None:
+            self._value2min = value2min
+        else:
+            self._value2min = 0
+        if value2max is not None:
+            self._value2max = value2max
+        else:
+            self._value2max = 100
+        self._step1 = step1
+        self._step2 = step2
+        self._highlight = highlight
+        self._theme = theme
+        self._track_theme = track_theme
+        self._mini = mini
+        self._disabled = disabled
+
+    def _attach_script(self):
+        script = """
+                <script>
+                    (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s1, #%s2');
+
+                            socket.on('sync_properties_%s', function(props){
+                                selector.panel("option", props['cmd'], props['value']);
+                                selector.panel('refresh');
+                            });
+
+                            selector.bind('change', function(e){
+                                alert('click');
+                            });
+                        });
+                    })(jQuery);
+                </script>
+                """ % (self._namespace, self._name, self._name, self._name)
+        return script
+
+    def render(self):
+        content = ""
+        content += "<div data-role='rangeslider' id='" + self._name + "' "
+        if self._highlight is not None:
+            content += "data-highlight='" + json.dumps(self._highlight) + "' "
+        if self._theme is not None:
+            content += "data-theme='" + self._theme + "' "
+        if self._track_theme is not None:
+            content += "data-track-theme='" + self._track_theme + "' "
+        if self._mini is not None:
+            content += "data-mini='" + json.dumps(self._mini) + "' "
+        content += ">\n"
+        content += "<label for='" + self._name + "1' >" + self._title1 + "</label>\n"
+        content += "<input type='range' id='" + self._name + "1' min='" + str(self._value1min)\
+            + "' max='" + str(self._value1max) + "' value='" + str(self._value1) + "' "
+        if self._step1 is not None:
+            content += "step='" + str(self._step1) + "' "
+        if self._disabled is not None and self._disabled:
+            content += "disabled='disabled' "
+        content += ">\n"
+        content += "<label for='" + self._name + "2' >" + self._title2 + "</label>\n"
+        content += "<input type='range' id='" + self._name + "2' min='" + str(self._value2min)\
+            + "' max='" + str(self._value2max) + "' value='" + str(self._value2) + "' "
+        if self._step2 is not None:
+            content += "step='" + self._step2 + "' "
+        if self._disabled is not None and self._disabled:
+            content += "disabled='disabled' "
+        content += ">\n"
+        content += "</div> \n" + self._attach_script()
         return content
