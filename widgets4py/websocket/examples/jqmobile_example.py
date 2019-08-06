@@ -79,7 +79,7 @@ class MobileExample:
         self._nb.add_item('nb5', 'NB5', False)
         self._pop_html = HTML('pop_html', '<center><h4>My Popup</h4></center>This is an popup with a HTML child widget')
         self._pop = Popup('pop', socketio, child_widgets=[self._pop_html])
-        self._rng = RangeSlider('rng', socketio, 'Title1', 'Title2')
+        self._rng = RangeSlider('rng', socketio, 'Title1', 'Title2', value_changed_callback=self.val_changed)
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)
@@ -96,6 +96,9 @@ class MobileExample:
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
+
+    def val_changed(self, source, props):
+        print('Value changed for: ' + source)
 
     def before_panel_closed(self, source, props):
         print("Before Panel Closed: " + source + ", Props: " + str(props))

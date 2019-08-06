@@ -2906,6 +2906,107 @@ class Popup(Widget, Namespace):
         else:
             self._close_btn_position = "right"
 
+    @property
+    def style_class(self):
+        return self._style_class
+
+    @style_class.setter
+    def style_class(self, val):
+        self._style_class = val
+
+    @property
+    def theme(self):
+        return self._theme
+
+    @theme.setter
+    def theme(self, val):
+        self._theme = val
+
+    @property
+    def overlay_theme(self):
+        return self._overlay_theme
+
+    @overlay_theme.setter
+    def overlay_theme(self, val):
+        self._overlay_theme = val
+
+    @property
+    def corners(self):
+        return self._corners
+
+    @corners.setter
+    def corners(self, val):
+        self._corners = val
+
+    @property
+    def is_dismissible(self):
+        return self._is_dismissible
+
+    @is_dismissible.setter
+    def is_dismissible(self, val):
+        self._is_dismissible = val
+
+    @property
+    def height(self):
+        return self._height
+
+    @height.setter
+    def height(self, val):
+        self._height = val
+
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, val):
+        self._width = val
+
+    @property
+    def is_arrow_visible(self):
+        return self._is_arrow_visible
+
+    @is_arrow_visible.setter
+    def is_arrow_visible(self, val):
+        self._is_arrow_visible = val
+
+    @property
+    def show_close_button(self):
+        return self._show_close_button
+
+    @show_close_button.setter
+    def show_close_button(self, val):
+        self._show_close_button = val
+
+    @property
+    def close_btn_position(self):
+        return self._close_btn_position
+
+    @close_btn_position.setter
+    def close_btn_position(self, val):
+        self._close_btn_position = val
+
+    def _attach_script(self):
+        script = """
+                <script>
+                (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s');
+
+                            selector.on('popupafterclose', function(){
+                                alert('Click');
+                            });
+
+                            selector.on('popupafteropen', function(){
+                                alert('Click');
+                            });
+                        });
+                    })(jQuery);
+                </script>
+                """ % (self._namespace, self._name)
+        return script
+
     def render(self):  # noqa
         content = ""
         content += "<div data-role='popup' "
@@ -2940,7 +3041,7 @@ class Popup(Widget, Namespace):
             if self._close_btn_position is not None and self._close_btn_position == "left":
                 content += "<a href='#' data-rel='back' class='ui-btn ui-corner-all ui-shadow ui-btn-a\
                  ui-icon-delete ui-btn-icon-notext ui-btn-left'>Close</a>"
-        content += "</div>"
+        content += "</div>" + "\n" + self._attach_script()
         return content
 
 
@@ -3022,7 +3123,8 @@ class JavaScript(Widget):
                         $(document).bind('pagecreate', function(e){
                             %s
                         });
-                    });
+                    })(jQuery);
+                </script>
             """ % (self._js)
         return js
 
@@ -3049,13 +3151,12 @@ class RangeSlider(Widget, Namespace):
     _track_theme = None
     _mini = None
     _disabled = None
-    _value1_changed_callback = None
-    _value2_changed_callback = None
+    _value_changed_callback = None
 
     def __init__(self, name, socket_io, title1=None, title2=None, value1=None, value2=None,
                  value1min=None, value1max=None, value2min=None, value2max=None, step1=None,
                  step2=None, highlight=None, theme=None, track_theme=None, mini=None,
-                 disabled=None):
+                 disabled=None, value_changed_callback=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + '_' + self._name + '_rs').replace('.', '_'))
         self._namespace = '/' + str(__name__ + '_' + self._name + '_rs').replace('.', '_')
@@ -3100,6 +3201,78 @@ class RangeSlider(Widget, Namespace):
         self._track_theme = track_theme
         self._mini = mini
         self._disabled = disabled
+        self._value_changed_callback = value_changed_callback
+
+    @property
+    def disabled(self):
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
+
+    @property
+    def highlight(self):
+        return self._highlight
+
+    @highlight.setter
+    def highlight(self, val):
+        self._highlight = val
+        self._sync_properties('highlight', val)
+
+    @property
+    def mini(self):
+        return self._mini
+
+    @mini.setter
+    def mini(self, val):
+        self._mini = val
+        self._sync_properties('mini', val)
+
+    @property
+    def theme(self):
+        return self._theme
+
+    @theme.setter
+    def theme(self, val):
+        self._theme = val
+        self._sync_properties('theme', val)
+
+    @property
+    def track_theme(self):
+        return self._track_theme
+
+    @track_theme.setter
+    def track_theme(self, val):
+        self._track_theme = val
+        self._sync_properties('trackTheme', val)
+
+    def on_value_changed_event(self, callback):
+        self._value_changed_callback = callable
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
+
+    def on_fire_change_event(self, props):
+        dsbld = props['disabled']
+        if dsbld is not None:
+            self._disabled = dsbld
+        highlight = props['highlight']
+        if highlight is not None:
+            self._highlight = highlight
+        mini = props['mini']
+        if mini is not None:
+            self._mini = mini
+        theme = props['theme']
+        if theme is not None:
+            self._theme = theme
+        trackTheme = props['trackTheme']
+        if trackTheme is not None:
+            self._track_theme = trackTheme
+        if self._value_changed_callback is not None:
+            self._value_changed_callback(self._name, props)
 
     def _attach_script(self):
         script = """
@@ -3107,20 +3280,27 @@ class RangeSlider(Widget, Namespace):
                     (function($, undefined){
                         $(document).bind('pagecreate', function(e){
                             var socket = io('%s');
-                            var selector = $('#%s1, #%s2');
+                            var selector = $('#%s');
 
                             socket.on('sync_properties_%s', function(props){
-                                selector.panel("option", props['cmd'], props['value']);
-                                selector.panel('refresh');
+                                selector.rangeslider("option", props['cmd'], props['value']);
+                                selector.rangeslider('refresh');
                             });
 
                             selector.bind('change', function(e){
-                                alert('click');
+                                var props = {
+                                            'disabled': selector.rangeslider('option', 'disabled'),
+                                            'highlight': selector.rangeslider('option', 'highlight'),
+                                            'mini': selector.rangeslider('option', 'mini'),
+                                            'theme': selector.rangeslider('option', 'theme'),
+                                            'trackTheme': selector.rangeslider('option', 'trackTheme')
+                                };
+                                socket.emit('fire_change_event', props);
                             });
                         });
                     })(jQuery);
                 </script>
-                """ % (self._namespace, self._name, self._name, self._name)
+                """ % (self._namespace, self._name, self._name)
         return script
 
     def render(self):
