@@ -3,7 +3,8 @@ from widgets4py.websocket.jqmobile.ui import MobilePage, Button, ButtonStyle, Fo
 from widgets4py.websocket.jqmobile.ui import CheckBox, Radio, Collapsible
 from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch
 from widgets4py.websocket.jqmobile.ui import GridLayout, SectionLayout
-from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar, Panel, Popup, HTML, RangeSlider
+from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar, Panel, Popup, HTML
+from widgets4py.websocket.jqmobile.ui import RangeSlider, Select
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -80,6 +81,13 @@ class MobileExample:
         self._pop_html = HTML('pop_html', '<center><h4>My Popup</h4></center>This is an popup with a HTML child widget')
         self._pop = Popup('pop', socketio, child_widgets=[self._pop_html])
         self._rng = RangeSlider('rng', socketio, 'Title1', 'Title2', value_changed_callback=self.val_changed)
+        self._sel = Select('sel', socketio)
+        self._sel.add_option('a', 'ABC', opt_group='Group1', disabled=True)
+        self._sel.add_option('d', 'DEF', opt_group='Group1')
+        self._sel.add_option('g', 'GHI', opt_group='Group2')
+        self._sel.add_option('j', 'JKL', opt_group='Group2')
+        self._sel.add_option('m', 'MNO')
+        self._sel.add_option('p', 'PQR')
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)
@@ -93,6 +101,7 @@ class MobileExample:
         self._mpg1.add_panel(self._pnl)
         self._mpg1.add(self._pop)
         self._mpg1.add(self._rng)
+        self._mpg1.add(self._sel)
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()

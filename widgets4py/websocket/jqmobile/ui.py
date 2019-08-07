@@ -2876,10 +2876,13 @@ class Popup(Widget, Namespace):
     _is_arrow_visible = None
     _show_close_button = None
     _close_btn_position = None
+    _after_close_callback = None
+    _after_open_callback = None
 
     def __init__(self, name, socket_io, style_class=None, theme=None, overlay_theme=None,
                  corners=None, is_dismissible=None, height=None, width=None, is_arrow_visible=None,
-                 child_widgets=None, show_close_button=None, close_btn_position=None):
+                 child_widgets=None, show_close_button=None, close_btn_position=None,
+                 after_close_callback=None, after_open_callback=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_popup").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_popup").replace('.', '_')
@@ -2905,6 +2908,8 @@ class Popup(Widget, Namespace):
             self._close_btn_position = close_btn_position
         else:
             self._close_btn_position = "right"
+        self._after_open_callback = after_open_callback
+        self._after_close_callback = after_close_callback
 
     @property
     def style_class(self):
@@ -2986,6 +2991,18 @@ class Popup(Widget, Namespace):
     def close_btn_position(self, val):
         self._close_btn_position = val
 
+    def on_fire_after_close_event(self, props):
+        if self._after_close_callback is not None:
+            self._after_close_callback(self._name, props)
+
+    def on_fire_after_open_event(self, props):
+        if self._after_open_callback is not None:
+            self._after_open_callback(self._name, props)
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace = self._namespace)
+
     def _attach_script(self):
         script = """
                 <script>
@@ -2994,17 +3011,21 @@ class Popup(Widget, Namespace):
                             var socket = io('%s');
                             var selector = $('#%s');
 
+                            socket.on('sync_properties_%s', function(props){
+                                selector.popup('option', props['cmd'], props['value']);
+                            });
+
                             selector.on('popupafterclose', function(){
-                                alert('Click');
+                                socket.emit('fire_after_close_event', {});
                             });
 
                             selector.on('popupafteropen', function(){
-                                alert('Click');
+                                socket.emit('fire_after_open_event', {});
                             });
                         });
                     })(jQuery);
                 </script>
-                """ % (self._namespace, self._name)
+                """ % (self._namespace, self._name, self._name)
         return script
 
     def render(self):  # noqa
@@ -3371,11 +3392,12 @@ class Select(Widget, Namespace):
     _theme = None
     _options = None
     _multiple = None
+    _click_callback = None
 
     def __init__(self, name, socket_io, close_text=None, corners=None, disabled=None, divider_theme=None,
                  hide_placeholder_menuitems=None, icon=None, icon_pos=None, icon_shadow=None, inline=None,
                  mini=None, native_menu=None, overlay_theme=None, shadow=None, theme=None, options=None,
-                 multiple=None):
+                 multiple=None, click_callback=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_sel").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_sel").replace('.', '_')
@@ -3400,6 +3422,131 @@ class Select(Widget, Namespace):
             self._options = options
         else:
             self._options = []
+        self._click_callback = click_callback
+
+    @property
+    def close_text(self):
+        return self._close_text
+
+    @close_text.setter
+    def close_text(self, val):
+        self._close_text = val
+
+    @property
+    def corners(self):
+        return self._corners
+
+    @corners.setter
+    def corners(self, val):
+        self._corners = val
+
+    @property
+    def disabled(self):
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+
+    @property
+    def divider_theme(self):
+        return self._divider_theme
+
+    @divider_theme.setter
+    def divider_theme(self, val):
+        self._divider_theme = val
+
+    @property
+    def hide_placeholder_menuitems(self):
+        return self._hide_placeholder_menuitems
+
+    @hide_placeholder_menuitems.setter
+    def hide_placeholder_menuitems(self, val):
+        self._hide_placeholder_menuitems = val
+
+    @property
+    def icon(self):
+        return self._icon
+
+    @icon.setter
+    def icon(self, val):
+        self._icon = val
+
+    @property
+    def icon_pos(self):
+        return self._icon_pos
+
+    @icon_pos.setter
+    def icon_pos(self, val):
+        self._icon_pos = val
+
+    @property
+    def icon_shadow(self):
+        return self._icon_shadow
+
+    @icon_shadow.setter
+    def icon_shadow(self, val):
+        self._icon_shadow = val
+
+    @property
+    def inline(self):
+        return self._inline
+
+    @inline.setter
+    def inline(self, val):
+        self._inline = val
+
+    @property
+    def mini(self):
+        return self._mini
+
+    @mini.setter
+    def mini(self, val):
+        self._mini = val
+
+    @property
+    def native_menu(self):
+        return self._native_menu
+
+    @native_menu.setter
+    def native_menu(self, val):
+        self._native_menu = val
+
+    @property
+    def overlay_theme(self):
+        return self._overlay_theme
+
+    @overlay_theme.setter
+    def overlay_theme(self, val):
+        self._overlay_theme = val
+
+    @property
+    def shadow(self):
+        return self._shadow
+
+    @shadow.setter
+    def shadow(self, val):
+        self._shadow = val
+
+    @property
+    def theme(self):
+        return self._theme
+
+    @theme.setter
+    def theme(self, val):
+        self._theme = val
+
+    @property
+    def multiple(self):
+        return self._multiple
+
+    @multiple.setter
+    def multiple(self, val):
+        self._multiple = val
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
 
     def add_option(self, option_value, option_title=None, selected=False, disabled=False, opt_group=None):
         option = {}
@@ -3415,6 +3562,32 @@ class Select(Widget, Namespace):
 
     def remove(self, option):
         self._options.remove(option)
+
+    def on_fire_click_event(self, props):
+        if self._click_callback is not None:
+            self._click_callback(self._name, props)
+
+    def _attach_script(self):
+        script = """
+                    <script>
+                    (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s');
+
+                            selector.bind('click', function(e){
+                                socket.emit('fire_click_event', {});
+                            });
+
+                            socket.on('sync_properties_%s', function(props){
+                                selector.selectmenu('option', props['cmd'], props['value']);
+                                selector.selectmenu('refresh');
+                            });
+                        });
+                    })(jQuery);
+                    </script>
+                """ % (self._namespace, self._name, self._name)
+        return script
 
     def render(self):
         content = ""
@@ -3434,7 +3607,8 @@ class Select(Widget, Namespace):
         if self._divider_theme is not None:
             content += "data-divider-theme='" + self._divider_theme + "' "
         if self._hide_placeholder_menuitems is not None:
-            content += "data-hide-placeholder-menu-items='" + json.dumps(self._hide_placeholder_menuitems) + "' "
+            content += "data-hide-placeholder-menu-items='"\
+                       + json.dumps(self._hide_placeholder_menuitems) + "' "
         if self._icon is not None:
             content += "data-icon='" + self._icon + "' "
         if self._icon_shadow is not None:
@@ -3464,12 +3638,29 @@ class Select(Widget, Namespace):
                     opt_groups[option['opt_group']].append(option)
                 else:
                     opt_groups[option['opt_group']].append(option)
-        for option is opt_groups:
+        print(str(opt_groups))
+        opt_text = ""
+        for option in opt_groups:
             if option == 'None':
-                option = opt_groups.get('None')
-                opt_text = "<option value='" + option['option_value'] + "' "
-                if option['selected']:
-                    opt_text += "selected='selected' "
-                if option['disabled']:
-                    opt_text += "disabled='disabled' "
-                opt_text += ">"
+                option_list = opt_groups.get('None')
+                for opt in option_list:
+                    opt_text += "<option value='" + opt['option_value'] + "' "
+                    if opt['selected']:
+                        opt_text += "selected='selected' "
+                    if opt['disabled']:
+                        opt_text += "disabled='disabled' "
+                    opt_text += ">" + opt['option_title'] + "</option>\n"
+            else:
+                option_list = opt_groups.get(option)
+                opt_text += "<optgroup label='" + option + "'>\n"
+                for opt in option_list:
+                    opt_text += "<option value='" + opt['option_value'] + "' "
+                    if opt['selected']:
+                        opt_text += "selected='selected' "
+                    if opt['disabled']:
+                        opt_text += "disabled='disabled' "
+                    opt_text += ">" + opt['option_title'] + "</option>\n"
+                opt_text += "</optgroup>\n"
+        content += opt_text
+        content += "</select>\n" + self._attach_script()
+        return content
