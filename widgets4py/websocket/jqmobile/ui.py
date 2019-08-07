@@ -3271,6 +3271,12 @@ class RangeSlider(Widget, Namespace):
         trackTheme = props['trackTheme']
         if trackTheme is not None:
             self._track_theme = trackTheme
+        val1 = props['value1']
+        if val1 is not None:
+            self._value1 = val1
+        val2 = props['value2']
+        if val2 is not None:
+            self._value2 = val2
         if self._value_changed_callback is not None:
             self._value_changed_callback(self._name, props)
 
@@ -3281,6 +3287,8 @@ class RangeSlider(Widget, Namespace):
                         $(document).bind('pagecreate', function(e){
                             var socket = io('%s');
                             var selector = $('#%s');
+                            var input1 = $('#%s1');
+                            var input2 = $('#%s2');
 
                             socket.on('sync_properties_%s', function(props){
                                 selector.rangeslider("option", props['cmd'], props['value']);
@@ -3293,14 +3301,16 @@ class RangeSlider(Widget, Namespace):
                                             'highlight': selector.rangeslider('option', 'highlight'),
                                             'mini': selector.rangeslider('option', 'mini'),
                                             'theme': selector.rangeslider('option', 'theme'),
-                                            'trackTheme': selector.rangeslider('option', 'trackTheme')
+                                            'trackTheme': selector.rangeslider('option', 'trackTheme'),
+                                            'value1': input1.val(),
+                                            'value2': input2.val()
                                 };
                                 socket.emit('fire_change_event', props);
                             });
                         });
                     })(jQuery);
                 </script>
-                """ % (self._namespace, self._name, self._name)
+                """ % (self._namespace, self._name, self._name, self._name, self._name)
         return script
 
     def render(self):
@@ -3333,3 +3343,133 @@ class RangeSlider(Widget, Namespace):
         content += ">\n"
         content += "</div> \n" + self._attach_script()
         return content
+
+
+class Select(Widget, Namespace):
+    """The select menu is based on a native select element, which is hidden from view and
+    replaced with a custom-styled select button that matches the look and feel of the jQuery
+    Mobile framework
+    Options should be a dict with value as sub dict {'option_value': '', 'option_title': '', 'selected': '',
+                                                     'disabled': '', 'opt_group': ''}
+    """
+
+    _namespace = None
+    _socket_io = None
+    _close_text = None
+    _corners = None
+    _disabled = None
+    _divider_theme = None
+    _hide_placeholder_menuitems = None
+    _icon = None
+    _icon_pos = None
+    _icon_shadow = None
+    _inline = None
+    _mini = None
+    _native_menu = None
+    _overlay_theme = None
+    _shadow = None
+    _theme = None
+    _options = None
+    _multiple = None
+
+    def __init__(self, name, socket_io, close_text=None, corners=None, disabled=None, divider_theme=None,
+                 hide_placeholder_menuitems=None, icon=None, icon_pos=None, icon_shadow=None, inline=None,
+                 mini=None, native_menu=None, overlay_theme=None, shadow=None, theme=None, options=None,
+                 multiple=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_sel").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + self._name + "_sel").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        self._close_text = close_text
+        self._corners = corners
+        self._disabled = disabled
+        self._divider_theme = divider_theme
+        self._hide_placeholder_menuitems = hide_placeholder_menuitems
+        self._icon = icon
+        self._icon_pos = icon_pos
+        self._icon_shadow = icon_shadow
+        self._inline = inline
+        self._mini = mini
+        self._native_menu = native_menu
+        self._overlay_theme = overlay_theme
+        self._shadow = shadow
+        self._theme = theme
+        self._multiple = multiple
+        if options is not None:
+            self._options = options
+        else:
+            self._options = []
+
+    def add_option(self, option_value, option_title=None, selected=False, disabled=False, opt_group=None):
+        option = {}
+        option['option_value'] = option_value
+        if option_title is None:
+            option['option_title'] = option_value
+        else:
+            option['option_title'] = option_title
+        option['selected'] = selected
+        option['disabled'] = disabled
+        option['opt_group'] = opt_group
+        self._options.append(option)
+
+    def remove(self, option):
+        self._options.remove(option)
+
+    def render(self):
+        content = ""
+        content += "<select id='" + self._name + "' "
+        if self._mini is not None:
+            content += "data-mini='" + json.dumps(self._mini) + "' "
+        if self._icon_pos is not None:
+            content += "data-iconpos='" + self._icon_pos + "' "
+        if self._multiple is not None and self._multiple:
+            content += "multiple "
+        if self._close_text is not None:
+            content += "data-close-text='" + self._close_text + "' "
+        if self._corners is not None:
+            content += "data-corners='" + json.dumps(self._corners) + "' "
+        if self._disabled is not None:
+            content += "data-disabled='" + json.dumps(self._disabled) + "' "
+        if self._divider_theme is not None:
+            content += "data-divider-theme='" + self._divider_theme + "' "
+        if self._hide_placeholder_menuitems is not None:
+            content += "data-hide-placeholder-menu-items='" + json.dumps(self._hide_placeholder_menuitems) + "' "
+        if self._icon is not None:
+            content += "data-icon='" + self._icon + "' "
+        if self._icon_shadow is not None:
+            content += "data-icon-shadow='" + json.dumps(self._icon_shadow) + "' "
+        if self._inline is not None:
+            content += "data-inline='" + json.dumps(self._inline) + "' "
+        if self._native_menu is not None:
+            content += "data-native-menu='" + json.dumps(self._native_menu) + "' "
+        if self._overlay_theme is not None:
+            content += "data-overlay-theme='" + self._overlay_theme + "' "
+        if self._shadow is not None:
+            content += "data-shadow='" + json.dumps(self._overlay_theme) + "' "
+        if self._theme is not None:
+            content += "data-theme='" + self._theme + "' "
+        content += ">"
+        opt_groups = {}
+        for option in self._options:
+            if option['opt_group'] is None:
+                if opt_groups.get('None') is None:
+                    opt_groups['None'] = []
+                    opt_groups['None'].append(option)
+                else:
+                    opt_groups['None'].append(option)
+            else:
+                if opt_groups.get(option['opt_group']) is None:
+                    opt_groups[option['opt_group']] = []
+                    opt_groups[option['opt_group']].append(option)
+                else:
+                    opt_groups[option['opt_group']].append(option)
+        for option is opt_groups:
+            if option == 'None':
+                option = opt_groups.get('None')
+                opt_text = "<option value='" + option['option_value'] + "' "
+                if option['selected']:
+                    opt_text += "selected='selected' "
+                if option['disabled']:
+                    opt_text += "disabled='disabled' "
+                opt_text += ">"

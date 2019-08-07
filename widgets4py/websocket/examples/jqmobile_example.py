@@ -98,7 +98,7 @@ class MobileExample:
         return self._pg.render()
 
     def val_changed(self, source, props):
-        print('Value changed for: ' + source)
+        print('Value changed for: ' + source + ", " + str(props))
 
     def before_panel_closed(self, source, props):
         print("Before Panel Closed: " + source + ", Props: " + str(props))
