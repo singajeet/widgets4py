@@ -3406,6 +3406,24 @@ class RangeSlider(Widget, Namespace):
         self._track_theme = val
         self._sync_properties('trackTheme', val)
 
+    @property
+    def value1(self):
+        return self._value1
+
+    @value1.setter
+    def value1(self, val):
+        self._value1 = val
+        self._sync_properties('value1', val)
+
+    @property
+    def value2(self):
+        return self._value2
+
+    @value2.setter
+    def value2(self, val):
+        self._value2 = val
+        self._sync_properties('value2', val)
+
     def on_value_changed_event(self, callback):
         self._value_changed_callback = callable
 
@@ -3449,7 +3467,13 @@ class RangeSlider(Widget, Namespace):
                             var input2 = $('#%s2');
 
                             socket.on('sync_properties_%s', function(props){
-                                selector.rangeslider("option", props['cmd'], props['value']);
+                                if(props['cmd'] == 'value1'){
+                                    input1.val(props['value']);
+                                }else if(props['cmd'] == 'value2'){
+                                    input2.val(props['value']);
+                                } else {
+                                    selector.rangeslider("option", props['cmd'], props['value']);
+                                }
                                 selector.rangeslider('refresh');
                             });
 
@@ -3893,4 +3917,194 @@ class SelectMenu(Widget, Namespace):
                 opt_text += "</optgroup>\n"
         content += opt_text
         content += "</select>\n" + self._attach_script()
+        return content
+
+
+class Slider(Widget, Namespace):
+    """Sliders are used to enter numeric values along a continuum and can
+    also be dual handle range sliders or flip switches.
+    """
+
+    _title = None
+    _value = None
+    _valuemin = None
+    _valuemax = None
+    _step = None
+    _namespace = None
+    _socket_io = None
+    _highlight = None
+    _theme = None
+    _track_theme = None
+    _mini = None
+    _disabled = None
+    _value_changed_callback = None
+
+    def __init__(self, name, socket_io, title=None, value=None, valuemin=None, valuemax=None,
+                 step=None, highlight=None, theme=None, track_theme=None, mini=None,
+                 disabled=None, value_changed_callback=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + '_' + self._name + '_slider').replace('.', '_'))
+        self._namespace = '/' + str(__name__ + '_' + self._name + '_slider').replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        if title is not None:
+            self._title = title
+        else:
+            self._title = ""
+        if value is not None:
+            self._value = value
+        else:
+            self._value = 0
+        if valuemin is not None:
+            self._valuemin = valuemin
+        else:
+            self._valuemin = 0
+        if valuemax is not None:
+            self._valuemax = valuemax
+        else:
+            self._valuemax = 100
+        self._step = step
+        self._highlight = highlight
+        self._theme = theme
+        self._track_theme = track_theme
+        self._mini = mini
+        self._disabled = disabled
+        self._value_changed_callback = value_changed_callback
+
+    @property
+    def disabled(self):
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
+
+    @property
+    def highlight(self):
+        return self._highlight
+
+    @highlight.setter
+    def highlight(self, val):
+        self._highlight = val
+        self._sync_properties('highlight', val)
+
+    @property
+    def mini(self):
+        return self._mini
+
+    @mini.setter
+    def mini(self, val):
+        self._mini = val
+        self._sync_properties('mini', val)
+
+    @property
+    def theme(self):
+        return self._theme
+
+    @theme.setter
+    def theme(self, val):
+        self._theme = val
+        self._sync_properties('theme', val)
+
+    @property
+    def track_theme(self):
+        return self._track_theme
+
+    @track_theme.setter
+    def track_theme(self, val):
+        self._track_theme = val
+        self._sync_properties('trackTheme', val)
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, val):
+        self._value = val
+        self._sync_properties('value', val)
+
+    def on_value_changed_event(self, callback):
+        self._value_changed_callback = callable
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
+
+    def on_fire_change_event(self, props):
+        dsbld = props['disabled']
+        if dsbld is not None:
+            self._disabled = dsbld
+        highlight = props['highlight']
+        if highlight is not None:
+            self._highlight = highlight
+        mini = props['mini']
+        if mini is not None:
+            self._mini = mini
+        theme = props['theme']
+        if theme is not None:
+            self._theme = theme
+        trackTheme = props['trackTheme']
+        if trackTheme is not None:
+            self._track_theme = trackTheme
+        val = props['value']
+        if val is not None:
+            self._value = val
+        if self._value_changed_callback is not None:
+            self._value_changed_callback(self._name, props)
+
+    def _attach_script(self):
+        script = """
+                <script>
+                    (function($, undefined){
+                        $(document).bind('pagecreate', function(e){
+                            var socket = io('%s');
+                            var selector = $('#%s');
+
+                            socket.on('sync_properties_%s', function(props){
+                                if(props['cmd'] == 'value'){
+                                    selector.val(props['value']);
+                                } else {
+                                    selector.slider('option', props['cmd'], props['value']);
+                                }
+                                selector.slider('refresh');
+                            });
+
+                            selector.bind('change', function(e){
+                                var props = {
+                                            'disabled': selector.slider('option', 'disabled'),
+                                            'highlight': selector.slider('option', 'highlight'),
+                                            'mini': selector.slider('option', 'mini'),
+                                            'theme': selector.slider('option', 'theme'),
+                                            'trackTheme': selector.slider('option', 'trackTheme'),
+                                            'value': selector.val()
+                                };
+                                socket.emit('fire_change_event', props);
+                            });
+                        });
+                    })(jQuery);
+                </script>
+                """ % (self._namespace, self._name, self._name)
+        return script
+
+    def render(self):
+        content = ""
+        content += "<label for='" + self._name + "'>" + self._title + "</label>\n"
+        content += "<input type='range' id='" + self._name + "' "
+        if self._highlight is not None:
+            content += "data-highlight='" + json.dumps(self._highlight) + "' "
+        if self._theme is not None:
+            content += "data-theme='" + self._theme + "' "
+        if self._track_theme is not None:
+            content += "data-track-theme='" + self._track_theme + "' "
+        if self._mini is not None:
+            content += "data-mini='" + json.dumps(self._mini) + "' "
+        content += "min='" + str(self._valuemin) + "' max='" + str(self._valuemax)\
+                           + "' value='" + str(self._value) + "' "
+        if self._step is not None:
+            content += "step='" + str(self._step) + "' "
+        if self._disabled is not None and self._disabled:
+            content += "disabled='disabled' "
+        content += ">\n" + self._attach_script()
         return content
