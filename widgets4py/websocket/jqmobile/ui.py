@@ -4108,3 +4108,24 @@ class Slider(Widget, Namespace):
             content += "disabled='disabled' "
         content += ">\n" + self._attach_script()
         return content
+
+
+class Table(Widget, Namespace):
+    """Table widget displays the data in tabular format. This widget provides a lot of options
+    to modify the table such as toggle list of columns to be displayed at runtime, toggle headings
+    and so on.
+    """
+
+    _namespace = None
+    _socket_io = None
+    _mode = None
+    _column_headers = None    # {'name': '', 'priority': '', 'group': ''}
+    _row_headers = None    # {'name': '', 'priority': '', 'group': ''}
+    _data = None
+    _row_rendering_option = None    # HTML or TEXT
+    _diplay_row_number = None
+    _column_btn_text = None
+    _column_btn_theme = None
+    _column_popup_theme = None
+    _make_responsive = None
+    _alternate_rows = None
