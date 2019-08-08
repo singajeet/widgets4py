@@ -3133,7 +3133,7 @@ class Popup(Widget, Namespace):
                             selector.on('popupafterclose', function(){
                             var props = {'arrow': selector.popup('option', 'arrow'),
                                          'disabled': selector.popup('option', 'disabled'),
-                                         'positionTo': selector.popup('optiokn', 'positionTo'),
+                                         'positionTo': selector.popup('option', 'positionTo'),
                                          'shadow': selector.popup('option', 'shadow'),
                                          'tolerance': selector.popup('option', 'tolerance'),
                                          'transition': selector.popup('option', 'transition'),
@@ -3148,7 +3148,7 @@ class Popup(Widget, Namespace):
                             selector.on('popupafteropen', function(){
                             var props = {'arrow': selector.popup('option', 'arrow'),
                                          'disabled': selector.popup('option', 'disabled'),
-                                         'positionTo': selector.popup('optiokn', 'positionTo'),
+                                         'positionTo': selector.popup('option', 'positionTo'),
                                          'shadow': selector.popup('option', 'shadow'),
                                          'tolerance': selector.popup('option', 'tolerance'),
                                          'transition': selector.popup('option', 'transition'),
@@ -3503,12 +3503,15 @@ class RangeSlider(Widget, Namespace):
         return content
 
 
-class Select(Widget, Namespace):
+class SelectMenu(Widget, Namespace):
     """The select menu is based on a native select element, which is hidden from view and
     replaced with a custom-styled select button that matches the look and feel of the jQuery
     Mobile framework
-    Options should be a dict with value as sub dict {'option_value': '', 'option_title': '', 'selected': '',
-                                                     'disabled': '', 'opt_group': ''}
+
+    Options is a dict with values as sub dict. Framework takes care of creatin these dict objects
+    once the `add_option` is called with required parameters...
+    {'option_value': '', 'option_title': '', 'selected': '', 'disabled': '', 'opt_group': ''}
+
     """
 
     _namespace = None
@@ -3530,11 +3533,12 @@ class Select(Widget, Namespace):
     _options = None
     _multiple = None
     _click_callback = None
+    _selected_value = None
 
     def __init__(self, name, socket_io, close_text=None, corners=None, disabled=None, divider_theme=None,
                  hide_placeholder_menuitems=None, icon=None, icon_pos=None, icon_shadow=None, inline=None,
                  mini=None, native_menu=None, overlay_theme=None, shadow=None, theme=None, options=None,
-                 multiple=None, click_callback=None):
+                 multiple=None, click_callback=None, selected_value=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + "_" + self._name + "_sel").replace('.', '_'))
         self._namespace = '/' + str(__name__ + "_" + self._name + "_sel").replace('.', '_')
@@ -3560,6 +3564,16 @@ class Select(Widget, Namespace):
         else:
             self._options = []
         self._click_callback = click_callback
+        self._selected_value = selected_value
+
+    @property
+    def selected_value(self):
+        return self._selected_value
+
+    @selected_value.setter
+    def selected_value(self, val):
+        self._selected_value = val
+        self._sync_properties('selectedValue', val)
 
     @property
     def close_text(self):
@@ -3568,6 +3582,7 @@ class Select(Widget, Namespace):
     @close_text.setter
     def close_text(self, val):
         self._close_text = val
+        self._sync_properties('closeText', val)
 
     @property
     def corners(self):
@@ -3576,6 +3591,7 @@ class Select(Widget, Namespace):
     @corners.setter
     def corners(self, val):
         self._corners = val
+        self._sync_properties('corners', val)
 
     @property
     def disabled(self):
@@ -3584,6 +3600,7 @@ class Select(Widget, Namespace):
     @disabled.setter
     def disabled(self, val):
         self._disabled = val
+        self._sync_properties('disabled', val)
 
     @property
     def divider_theme(self):
@@ -3592,6 +3609,7 @@ class Select(Widget, Namespace):
     @divider_theme.setter
     def divider_theme(self, val):
         self._divider_theme = val
+        self._sync_properties('dividerTheme', val)
 
     @property
     def hide_placeholder_menuitems(self):
@@ -3600,6 +3618,7 @@ class Select(Widget, Namespace):
     @hide_placeholder_menuitems.setter
     def hide_placeholder_menuitems(self, val):
         self._hide_placeholder_menuitems = val
+        self._sync_properties('hidePlaceholderMenuItems', val)
 
     @property
     def icon(self):
@@ -3608,6 +3627,7 @@ class Select(Widget, Namespace):
     @icon.setter
     def icon(self, val):
         self._icon = val
+        self._sync_properties('icon', val)
 
     @property
     def icon_pos(self):
@@ -3616,6 +3636,7 @@ class Select(Widget, Namespace):
     @icon_pos.setter
     def icon_pos(self, val):
         self._icon_pos = val
+        self._sync_properties('iconpos', val)
 
     @property
     def icon_shadow(self):
@@ -3624,6 +3645,7 @@ class Select(Widget, Namespace):
     @icon_shadow.setter
     def icon_shadow(self, val):
         self._icon_shadow = val
+        self._sync_properties('iconshadow', val)
 
     @property
     def inline(self):
@@ -3632,6 +3654,7 @@ class Select(Widget, Namespace):
     @inline.setter
     def inline(self, val):
         self._inline = val
+        self._sync_properties('inline', val)
 
     @property
     def mini(self):
@@ -3640,6 +3663,7 @@ class Select(Widget, Namespace):
     @mini.setter
     def mini(self, val):
         self._mini = val
+        self._sync_properties('mini', val)
 
     @property
     def native_menu(self):
@@ -3648,6 +3672,7 @@ class Select(Widget, Namespace):
     @native_menu.setter
     def native_menu(self, val):
         self._native_menu = val
+        self._sync_properties('nativeMenu', val)
 
     @property
     def overlay_theme(self):
@@ -3656,6 +3681,7 @@ class Select(Widget, Namespace):
     @overlay_theme.setter
     def overlay_theme(self, val):
         self._overlay_theme = val
+        self._sync_properties('overlayTheme', val)
 
     @property
     def shadow(self):
@@ -3664,6 +3690,7 @@ class Select(Widget, Namespace):
     @shadow.setter
     def shadow(self, val):
         self._shadow = val
+        self._sync_properties('shadow', val)
 
     @property
     def theme(self):
@@ -3672,6 +3699,7 @@ class Select(Widget, Namespace):
     @theme.setter
     def theme(self, val):
         self._theme = val
+        self._sync_properties('theme', val)
 
     @property
     def multiple(self):
@@ -3701,6 +3729,51 @@ class Select(Widget, Namespace):
         self._options.remove(option)
 
     def on_fire_click_event(self, props):
+        close_text = props['closeText']
+        if close_text is not None:
+            self._close_text = close_text
+        corners = props['corners']
+        if corners is not None:
+            self._corners = corners
+        disabled = props['disabled']
+        if disabled is not None:
+            self._disabled = disabled
+        divider_theme = props['dividerTheme']
+        if divider_theme is not None:
+            self._divider_theme = divider_theme
+        hide_placeholder_menuitems = props['hidePlaceholderMenuItems']
+        if hide_placeholder_menuitems is not None:
+            self._hide_placeholder_menuitems = hide_placeholder_menuitems
+        icon = props['icon']
+        if icon is not None:
+            self._icon = icon
+        icon_pos = props['iconpos']
+        if icon_pos is not None:
+            self._icon_pos = icon_pos
+        icon_shadow = props['iconshadow']
+        if icon_shadow is not None:
+            self._icon_shadow = icon_shadow
+        inline = props['inline']
+        if inline is not None:
+            self._inline = inline
+        mini = props['mini']
+        if mini is not None:
+            self._mini = mini
+        native_menu = props['nativeMenu']
+        if native_menu is not None:
+            self._native_menu = native_menu
+        overlay_theme = props['overlayTheme']
+        if overlay_theme is not None:
+            self._overlay_theme = overlay_theme
+        shadow = props['shadow']
+        if shadow is not None:
+            self._shadow = shadow
+        theme = props['theme']
+        if theme is not None:
+            self._theme = theme
+        selected_val = props['selectedValue']
+        if selected_val is not None:
+            self._selected_value = selected_val
         if self._click_callback is not None:
             self._click_callback(self._name, props)
 
@@ -3713,11 +3786,32 @@ class Select(Widget, Namespace):
                             var selector = $('#%s');
 
                             selector.bind('click', function(e){
-                                socket.emit('fire_click_event', {});
+                                var props = {
+                                                'closeText': selector.selectmenu('option', 'closeText'),
+                                                'corners': selector.selectmenu('option', 'corners'),
+                                                'disabled': selector.selectmenu('option', 'disabled'),
+                                                'dividerTheme': selector.selectmenu('option', 'dividerTheme'),
+                                                'hidePlaceholderMenuItems': selector.selectmenu('option', 'hidePlaceholderMenuItems'),
+                                                'icon': selector.selectmenu('option', 'icon'),
+                                                'iconpos': selector.selectmenu('option', 'iconpos'),
+                                                'iconshadow': selector.selectmenu('option', 'iconshadow'),
+                                                'inline': selector.selectmenu('option', 'inline'),
+                                                'mini': selector.selectmenu('option', 'mini'),
+                                                'nativeMenu': selector.selectmenu('option', 'nativeMenu'),
+                                                'overlayTheme': selector.selectmenu('option', 'overlayTheme'),
+                                                'shadow': selector.selectmenu('option', 'shadow'),
+                                                'theme': selector.selectmenu('option', 'theme'),
+                                                'selectedValue': selector.val()
+                                };
+                                socket.emit('fire_click_event', props);
                             });
 
                             socket.on('sync_properties_%s', function(props){
-                                selector.selectmenu('option', props['cmd'], props['value']);
+                                if(props['cmd'] == 'selectedValue'){
+                                    selector.val(props['value']);
+                                } else {
+                                    selector.selectmenu('option', props['cmd'], props['value']);
+                                }
                                 selector.selectmenu('refresh');
                             });
                         });
@@ -3775,7 +3869,6 @@ class Select(Widget, Namespace):
                     opt_groups[option['opt_group']].append(option)
                 else:
                     opt_groups[option['opt_group']].append(option)
-        print(str(opt_groups))
         opt_text = ""
         for option in opt_groups:
             if option == 'None':
