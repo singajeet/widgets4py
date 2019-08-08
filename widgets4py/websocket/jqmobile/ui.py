@@ -2878,6 +2878,11 @@ class Popup(Widget, Namespace):
     _close_btn_position = None
     _after_close_callback = None
     _after_open_callback = None
+    _disabled = None
+    _positionTo = None
+    _shadow = None
+    _tolerance = None
+    _transition = None
 
     def __init__(self, name, socket_io, style_class=None, theme=None, overlay_theme=None,
                  corners=None, is_dismissible=None, height=None, width=None, is_arrow_visible=None,
@@ -2926,6 +2931,7 @@ class Popup(Widget, Namespace):
     @theme.setter
     def theme(self, val):
         self._theme = val
+        self._sync_properties('theme', val)
 
     @property
     def overlay_theme(self):
@@ -2934,6 +2940,7 @@ class Popup(Widget, Namespace):
     @overlay_theme.setter
     def overlay_theme(self, val):
         self._overlay_theme = val
+        self._sync_properties('overlayTheme', val)
 
     @property
     def corners(self):
@@ -2942,6 +2949,7 @@ class Popup(Widget, Namespace):
     @corners.setter
     def corners(self, val):
         self._corners = val
+        self._sync_properties('corners', val)
 
     @property
     def is_dismissible(self):
@@ -2950,6 +2958,7 @@ class Popup(Widget, Namespace):
     @is_dismissible.setter
     def is_dismissible(self, val):
         self._is_dismissible = val
+        self._sync_properties('dismissible', val)
 
     @property
     def height(self):
@@ -2974,6 +2983,52 @@ class Popup(Widget, Namespace):
     @is_arrow_visible.setter
     def is_arrow_visible(self, val):
         self._is_arrow_visible = val
+        self._sync_properties('arrow', val)
+
+    @property
+    def disabled(self):
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
+
+    @property
+    def positionTo(self):
+        return self._positionTo
+
+    @positionTo.setter
+    def positionTo(self, val):
+        self._positionTo = val
+        self._sync_properties('positionTo', val)
+
+    @property
+    def shadow(self):
+        return self._shadow
+
+    @shadow.setter
+    def shadow(self, val):
+        self._shadow = val
+        self._sync_properties('shadow', val)
+
+    @property
+    def tolerance(self):
+        return self._tolerance
+
+    @tolerance.setter
+    def tolerance(self, val):
+        self._tolerance = val
+        self._sync_properties('tolerance', val)
+
+    @property
+    def transition(self):
+        return self._transition
+
+    @transition.setter
+    def transition(self, val):
+        self._transition = val
+        self._sync_properties('transition', val)
 
     @property
     def show_close_button(self):
@@ -2992,16 +3047,76 @@ class Popup(Widget, Namespace):
         self._close_btn_position = val
 
     def on_fire_after_close_event(self, props):
+        theme = props['theme']
+        if theme is not None:
+            self._theme = theme
+        overlay_theme = props['overlayTheme']
+        if overlay_theme is not None:
+            self._overlay_theme = overlay_theme
+        corners = props['corners']
+        if corners is not None:
+            self._corners = corners
+        is_dismissible = props['dismissible']
+        if is_dismissible is not None:
+            self._is_dimissible = is_dismissible
+        is_arrow_visible = props['arrow']
+        if is_arrow_visible is not None:
+            self._is_arrow_visibale = is_arrow_visible
+        disabled = props['disabled']
+        if disabled is not None:
+            self._disabled = disabled
+        positionTo = props['positionTo']
+        if positionTo is not None:
+            self._positionTo = positionTo
+        shadow = props['shadow']
+        if shadow is not None:
+            self._shadow = shadow
+        tolerance = props['tolerance']
+        if tolerance is not None:
+            self._tolerance = tolerance
+        transition = props['transition']
+        if transition is not None:
+            self._transition = transition
         if self._after_close_callback is not None:
             self._after_close_callback(self._name, props)
 
     def on_fire_after_open_event(self, props):
+        theme = props['theme']
+        if theme is not None:
+            self._theme = theme
+        overlay_theme = props['overlayTheme']
+        if overlay_theme is not None:
+            self._overlay_theme = overlay_theme
+        corners = props['corners']
+        if corners is not None:
+            self._corners = corners
+        is_dismissible = props['dismissible']
+        if is_dismissible is not None:
+            self._is_dimissible = is_dismissible
+        is_arrow_visible = props['arrow']
+        if is_arrow_visible is not None:
+            self._is_arrow_visibale = is_arrow_visible
+        disabled = props['disabled']
+        if disabled is not None:
+            self._disabled = disabled
+        positionTo = props['positionTo']
+        if positionTo is not None:
+            self._positionTo = positionTo
+        shadow = props['shadow']
+        if shadow is not None:
+            self._shadow = shadow
+        tolerance = props['tolerance']
+        if tolerance is not None:
+            self._tolerance = tolerance
+        transition = props['transition']
+        if transition is not None:
+            self._transition = transition
         if self._after_open_callback is not None:
             self._after_open_callback(self._name, props)
 
     def _sync_properties(self, cmd, value):
         emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
-             namespace = self._namespace)
+             namespace=self._namespace)
 
     def _attach_script(self):
         script = """
@@ -3016,11 +3131,33 @@ class Popup(Widget, Namespace):
                             });
 
                             selector.on('popupafterclose', function(){
-                                socket.emit('fire_after_close_event', {});
+                            var props = {'arrow': selector.popup('option', 'arrow'),
+                                         'disabled': selector.popup('option', 'disabled'),
+                                         'positionTo': selector.popup('optiokn', 'positionTo'),
+                                         'shadow': selector.popup('option', 'shadow'),
+                                         'tolerance': selector.popup('option', 'tolerance'),
+                                         'transition': selector.popup('option', 'transition'),
+                                         'theme': selector.popup('option', 'theme'),
+                                         'overlayTheme': selector.popup('option', 'overlayTheme'),
+                                         'corners': selector.popup('option', 'corners'),
+                                         'dismissible': selector.popup('option', 'dismissible')
+                                        };
+                                socket.emit('fire_after_close_event', props);
                             });
 
                             selector.on('popupafteropen', function(){
-                                socket.emit('fire_after_open_event', {});
+                            var props = {'arrow': selector.popup('option', 'arrow'),
+                                         'disabled': selector.popup('option', 'disabled'),
+                                         'positionTo': selector.popup('optiokn', 'positionTo'),
+                                         'shadow': selector.popup('option', 'shadow'),
+                                         'tolerance': selector.popup('option', 'tolerance'),
+                                         'transition': selector.popup('option', 'transition'),
+                                         'theme': selector.popup('option', 'theme'),
+                                         'overlayTheme': selector.popup('option', 'overlayTheme'),
+                                         'corners': selector.popup('option', 'corners'),
+                                         'dismissible': selector.popup('option', 'dismissible')
+                                        };
+                                socket.emit('fire_after_open_event', props);
                             });
                         });
                     })(jQuery);
@@ -3589,7 +3726,7 @@ class Select(Widget, Namespace):
                 """ % (self._namespace, self._name, self._name)
         return script
 
-    def render(self):
+    def render(self):  # noqa
         content = ""
         content += "<select id='" + self._name + "' "
         if self._mini is not None:
