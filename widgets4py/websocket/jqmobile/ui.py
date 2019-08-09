@@ -3752,7 +3752,7 @@ class SelectMenu(Widget, Namespace):
     def remove(self, option):
         self._options.remove(option)
 
-    def on_fire_click_event(self, props):
+    def on_fire_click_event(self, props):  # noqa
         close_text = props['closeText']
         if close_text is not None:
             self._close_text = close_text
@@ -3815,7 +3815,8 @@ class SelectMenu(Widget, Namespace):
                                                 'corners': selector.selectmenu('option', 'corners'),
                                                 'disabled': selector.selectmenu('option', 'disabled'),
                                                 'dividerTheme': selector.selectmenu('option', 'dividerTheme'),
-                                                'hidePlaceholderMenuItems': selector.selectmenu('option', 'hidePlaceholderMenuItems'),
+                                                'hidePlaceholderMenuItems': selector.selectmenu('option',
+                                                                                        'hidePlaceholderMenuItems'),
                                                 'icon': selector.selectmenu('option', 'icon'),
                                                 'iconpos': selector.selectmenu('option', 'iconpos'),
                                                 'iconshadow': selector.selectmenu('option', 'iconshadow'),
@@ -4110,6 +4111,16 @@ class Slider(Widget, Namespace):
         return content
 
 
+class RowRenderingOptions(Enum):
+    HTML = 0
+    TEXT = 1
+
+
+class TableModes(Enum):
+    REFLOW = 0
+    COLUMN_TOGGLE = 1
+
+
 class Table(Widget, Namespace):
     """Table widget displays the data in tabular format. This widget provides a lot of options
     to modify the table such as toggle list of columns to be displayed at runtime, toggle headings
@@ -4129,3 +4140,60 @@ class Table(Widget, Namespace):
     _column_popup_theme = None
     _make_responsive = None
     _alternate_rows = None
+    _disabled = None
+
+    def __init__(self, name, socket_io, mode=None, column_headers=None, row_headers=None, data=None,
+                 row_rendering_option=None, display_row_number=None, column_btn_text=None,
+                 column_btn_theme=None, column_popup_theme=None, make_reponsive=None, alternate_rows=None,
+                 disabled=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + '_' + name + '_table').replace('.', '_'))
+        self._namespace = '/' + str(__name__ + '_' + name + '_table').replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        if mode is not None:
+            self._mode = mode
+        else:
+            self._mode = TableModes.REFLOW
+        self._column_headers = column_headers
+        self._row_headers = row_headers
+        self._data = data
+        if row_rendering_option is not None:
+            self._row_rendering_option = row_rendering_option
+        else:
+            self._row_rendering_option = RowRenderingOptions.HTML
+        self._diplay_row_number = display_row_number
+        self._column_btn_text = column_btn_text
+        self._column_btn_theme = column_btn_theme
+        self._column_popup_theme = column_popup_theme
+        self._make_responsive = make_reponsive
+        self._alternate_rows = alternate_rows
+        self._disabled = disabled
+
+    def render(self):
+        content = ""
+        col_header_groups = {}
+        for col_header in self._column_headers:
+            col_group = ''
+            if col_header['group'] is None:
+                col_group = 'None'
+            else:
+                col_group = col_header['group']
+            if col_header_groups.get(col_group) is None:
+                col_header_groups[col_group]['count'] = 1
+                col_header_groups[col_group]['cols'] = [col_header['name']]
+            else:
+                col_header_groups[col_group]['count'] += 1
+                col_header_groups[col_group]['cols'].append(col_header['name'])
+        header_rows_count = 0
+        if len(col_header_groups.keys) == 1 and col_header_groups.get('None') is not None:
+            header_rows_count = 1
+        else:
+            header_rows_count = 2
+        th = ""
+        if header_rows_count == 1:
+            for col_header in self._column_headers:
+                th += "<th data-priority='" + col_header['priority'] + "' >" + col_header['name'] + "</th>"
+        else:
+            for group in col_header_groups:
+                th += "<th colspan='" + group['count']+ "'>" + group + "</th>"
