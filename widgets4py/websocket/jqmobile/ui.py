@@ -4117,8 +4117,8 @@ class RowRenderingOptions(Enum):
 
 
 class TableModes(Enum):
-    REFLOW = 0
-    COLUMN_TOGGLE = 1
+    REFLOW = "reflow"
+    COLUMN_TOGGLE = "columntoggle"
 
 
 class Table(Widget, Namespace):
@@ -4155,8 +4155,14 @@ class Table(Widget, Namespace):
             self._mode = mode
         else:
             self._mode = TableModes.REFLOW
-        self._column_headers = column_headers
-        self._row_headers = row_headers
+        if column_headers is not None:
+            self._column_headers = column_headers
+        else:
+            self._column_headers = []
+        if row_headers is not None:
+            self._row_headers = row_headers
+        else:
+            self._row_headers = []
         self._data = data
         if row_rendering_option is not None:
             self._row_rendering_option = row_rendering_option
@@ -4166,13 +4172,27 @@ class Table(Widget, Namespace):
         self._column_btn_text = column_btn_text
         self._column_btn_theme = column_btn_theme
         self._column_popup_theme = column_popup_theme
-        self._make_responsive = make_reponsive
-        self._alternate_rows = alternate_rows
+        if make_reponsive is not None:
+            self._make_responsive = make_reponsive
+        else:
+            self._make_responsive = True
+        if alternate_rows is not None:
+            self._alternate_rows = alternate_rows
+        else:
+            self._alternate_rows = True
         self._disabled = disabled
+
+    def add_column(self, name, priority, group):
+        column = {'name': name, 'priority': priority, 'group': group}
+        self._column_headers.append(column)
+
+    def remove_column(self, column):
+        self._column_headers.remove(column)
 
     def render(self):
         content = ""
         col_header_groups = {}
+        # Iterate all column headers and make list of unique groups
         for col_header in self._column_headers:
             col_group = ''
             if col_header['group'] is None:
@@ -4180,13 +4200,19 @@ class Table(Widget, Namespace):
             else:
                 col_group = col_header['group']
             if col_header_groups.get(col_group) is None:
+                col_header_groups[col_group] = {}
                 col_header_groups[col_group]['count'] = 1
                 col_header_groups[col_group]['cols'] = [col_header['name']]
+                col_header_groups[col_group]['priority'] = col_header['priority']
             else:
                 col_header_groups[col_group]['count'] += 1
                 col_header_groups[col_group]['cols'].append(col_header['name'])
+                col_header_groups[col_group]['priority'] = col_header['priority']
+        # if only one group exists i.e., None - no needs to create two header lines else
+        # two header line should be created, first one with group names (grouped using colspan)
+        # and second one with column names
         header_rows_count = 0
-        if len(col_header_groups.keys) == 1 and col_header_groups.get('None') is not None:
+        if len(col_header_groups.keys()) == 1 and col_header_groups.get('None') is not None:
             header_rows_count = 1
         else:
             header_rows_count = 2
@@ -4194,6 +4220,35 @@ class Table(Widget, Namespace):
         if header_rows_count == 1:
             for col_header in self._column_headers:
                 th += "<th data-priority='" + col_header['priority'] + "' >" + col_header['name'] + "</th>"
+                th = "<tr>" + th + "</tr>\n"
         else:
+            th1 = ""
+            th2 = ""
             for group in col_header_groups:
-                th += "<th colspan='" + group['count']+ "'>" + group + "</th>"
+                grp_data = col_header_groups.get(group)
+                th1 += "<th colspan='" + str(grp_data['count']) + "' data-priority='"\
+                    + str(grp_data['priority']) + "'>" + group + "</th>\n"
+                for col in grp_data['cols']:
+                    th2 += "<th>" + col + "</th>\n"
+            th = "<tr class='th-groups'>\n" + th1 + "</tr>\n<tr>\n" + th2 + "</tr>"
+        thead = "<thead>" + th + "</thead>"
+        content += "<table data-role='table' id='" + self._name +"' data-mode='" + self._mode.value + "' "
+        if self._column_btn_text is not None:
+            content += "data-column-btn-text='" + self._column_btn_text + "' "
+        if self._column_btn_theme is not None:
+            content += "data-column-btn-theme='" + self._column_btn_theme + "' "
+        if self._column_popup_theme is not None:
+            content += "data-column-popup-theme='" + self._column_popup_theme + "' "
+        if self._make_responsive and not self._alternate_rows:
+            content += "class='ui-responsive table-stroke ui-body-d ui-shadow' "
+        elif self._make_responsive and self._alternate_rows:
+            content += "class='ui-responsive table-stripe ui-body-d ui-shadow' "
+        elif not self._make_responsive and not self._alternate_rows:
+            content += "class='table-stroke ui-body-d ui-shadow' "
+        elif not self._make_responsive and self._alternate_rows:
+            content += "class='table-stripe ui-body-d ui-shadow' "
+        else:
+            content += "class='ui-body-d ui-shadow' "
+        content += ">"
+        content += thead + "<tbody></tbody></table>"
+        return content

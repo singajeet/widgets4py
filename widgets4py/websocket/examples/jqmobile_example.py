@@ -4,7 +4,7 @@ from widgets4py.websocket.jqmobile.ui import CheckBox, Radio, Collapsible
 from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch
 from widgets4py.websocket.jqmobile.ui import GridLayout, SectionLayout
 from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar, Panel, Popup, HTML
-from widgets4py.websocket.jqmobile.ui import RangeSlider, SelectMenu, Slider
+from widgets4py.websocket.jqmobile.ui import RangeSlider, SelectMenu, Slider, Table, TableModes
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -90,6 +90,14 @@ class MobileExample:
         self._sel.add_option('p', 'PQR')
         self._slide = Slider('slide', socketio, 'My Title', value_changed_callback=self.val_changed,
                              highlight=True)
+        self._tbl = Table('tbl', socketio, mode=TableModes.COLUMN_TOGGLE)
+        self._tbl.add_column('income', 1, 'Q12012')
+        self._tbl.add_column('profit', 1, 'Q12012')
+        self._tbl.add_column('change', 1, 'Q12012')
+        self._tbl.add_column('income', 1, 'Q22012')
+        self._tbl.add_column('profit', 1, 'Q22012')
+        self._tbl.add_column('change', 1, 'Q22012')
+        self._tbl.add_column('Total', 1, 'Total')
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)
@@ -105,6 +113,7 @@ class MobileExample:
         self._mpg1.add(self._rng)
         self._mpg1.add(self._sel)
         self._mpg1.add(self._slide)
+        self._mpg1.add(self._tbl)
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
