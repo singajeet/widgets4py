@@ -90,7 +90,7 @@ class MobileExample:
         self._sel.add_option('p', 'PQR')
         self._slide = Slider('slide', socketio, 'My Title', value_changed_callback=self.val_changed,
                              highlight=True)
-        self._tbl = Table('tbl', socketio, mode=TableModes.COLUMN_TOGGLE)
+        self._tbl = Table('tbl', socketio, mode=TableModes.COLUMN_TOGGLE, display_row_number=True)
         self._tbl.add_column('income', 1, 'Q12012')
         self._tbl.add_column('profit', 1, 'Q12012')
         self._tbl.add_column('change', 1, 'Q12012')
@@ -98,6 +98,10 @@ class MobileExample:
         self._tbl.add_column('profit', 1, 'Q22012')
         self._tbl.add_column('change', 1, 'Q22012')
         self._tbl.add_column('Total', 1, 'Total')
+        self._tbl.data = [[100, 20, 30, 120, 40, 40, 10],
+                          [199, 70, 50, 190, 60, 20, 30],
+                          [188, 23, 38, 126, 78, 56, 22]
+                          ]
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)

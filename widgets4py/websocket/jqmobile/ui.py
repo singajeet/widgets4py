@@ -4134,18 +4134,50 @@ class Table(Widget, Namespace):
     _row_headers = None    # {'name': '', 'priority': '', 'group': ''}
     _data = None
     _row_rendering_option = None    # HTML or TEXT
-    _diplay_row_number = None
+    _display_row_number = None
     _column_btn_text = None
     _column_btn_theme = None
     _column_popup_theme = None
     _make_responsive = None
     _alternate_rows = None
     _disabled = None
+    _default_css = """
+                    <style>
+                    /*These apply across all breakpoints because they are outside of a media query */
+                    table.default-table thead th {
+                        background-color: #fff !important;
+                    }
+                    table.default-table thead th h4 {
+                        text-transform: uppercase !important;
+                        font-size: 0.6em !important;
+                        margin: 0 !important;
+                    }
+                    table.default-table thead th h3 {
+                        font-size: .9em !important;
+                        margin: -.4em 0 .8em 0 !important;
+                    }
+                    table.default-table th.label {
+                        text-transform: uppercase !important;
+                        font-size: 0.6em !important;
+                        opacity: 0.5 !important;
+                        padding: 1.2em .8em !important;
+                        background-color: #ddd !important;
+                    }
+                    table.default-table tbody tr.photos td {
+                        background-color: #fff !important;
+                        padding: 0 !important;
+                    }
+                    table.default-table tbody tr.photos img {
+                        max-width: 100% !important;
+                        min-width: 60px !important;
+                    }
+                    </style>
+                    """
 
     def __init__(self, name, socket_io, mode=None, column_headers=None, row_headers=None, data=None,
                  row_rendering_option=None, display_row_number=None, column_btn_text=None,
                  column_btn_theme=None, column_popup_theme=None, make_reponsive=None, alternate_rows=None,
-                 disabled=None):
+                 disabled=None, css=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + '_' + name + '_table').replace('.', '_'))
         self._namespace = '/' + str(__name__ + '_' + name + '_table').replace('.', '_')
@@ -4168,7 +4200,10 @@ class Table(Widget, Namespace):
             self._row_rendering_option = row_rendering_option
         else:
             self._row_rendering_option = RowRenderingOptions.HTML
-        self._diplay_row_number = display_row_number
+        if display_row_number is not None:
+            self._display_row_number = display_row_number
+        else:
+            self._display_row_number = False
         self._column_btn_text = column_btn_text
         self._column_btn_theme = column_btn_theme
         self._column_popup_theme = column_popup_theme
@@ -4181,6 +4216,17 @@ class Table(Widget, Namespace):
         else:
             self._alternate_rows = True
         self._disabled = disabled
+        if css is not None:
+            self._default_css = css
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, val):
+        self._data = val
+
 
     def add_column(self, name, priority, group):
         column = {'name': name, 'priority': priority, 'group': group}
@@ -4190,7 +4236,7 @@ class Table(Widget, Namespace):
         self._column_headers.remove(column)
 
     def render(self):
-        content = ""
+        content = self._default_css + "\n\n"
         col_header_groups = {}
         # Iterate all column headers and make list of unique groups
         for col_header in self._column_headers:
@@ -4220,16 +4266,35 @@ class Table(Widget, Namespace):
         if header_rows_count == 1:
             for col_header in self._column_headers:
                 th += "<th data-priority='" + col_header['priority'] + "' >" + col_header['name'] + "</th>"
-                th = "<tr>" + th + "</tr>\n"
+            # if row header or row count needs to be displayed in table, an extra column
+            # should be added in the column headers
+            if len(self._row_headers) > 0 and self._display_row_number:
+                th = "<th class='label'>S.No.</th><th class='label'></th>" + th
+            elif len(self._row_headers) > 0 and not self._display_row_number:
+                th = "<th class='label'></th>" + th
+            elif len(self._row_headers) == 0 and self._display_row_number:
+                th = "<th class='label'>S.No.</th>" + th
+            th = "<tr>\n" + th + "</tr>\n"
         else:
             th1 = ""
             th2 = ""
             for group in col_header_groups:
                 grp_data = col_header_groups.get(group)
-                th1 += "<th colspan='" + str(grp_data['count']) + "' data-priority='"\
+                th1 += "<th class='label' colspan='" + str(grp_data['count']) + "' data-priority='"\
                     + str(grp_data['priority']) + "'>" + group + "</th>\n"
                 for col in grp_data['cols']:
-                    th2 += "<th>" + col + "</th>\n"
+                    th2 += "<th class='label'>" + col + "</th>\n"
+            # if row header or row count needs to be displayed in table, an extra column
+            # should be added in the column headers
+            if len(self._row_headers) > 0 and self._display_row_number:
+                th1 = "<th class='label'></th><th class='label'></th>" + th1
+                th2 = "<th class='label'>S.No.</th><th class='label'></th>" + th2
+            elif len(self._row_headers) > 0 and not self._display_row_number:
+                th1 = "<th class='label'></th>" + th1
+                th2 = "<th class='label'></th>" + th2
+            elif len(self._row_headers) == 0 and self._display_row_number:
+                th1 = "<th class='label'></th>" + th1
+                th2 = "<th class='label'>S.No.</th>" + th2
             th = "<tr class='th-groups'>\n" + th1 + "</tr>\n<tr>\n" + th2 + "</tr>"
         thead = "<thead>" + th + "</thead>"
         content += "<table data-role='table' id='" + self._name +"' data-mode='" + self._mode.value + "' "
@@ -4240,15 +4305,30 @@ class Table(Widget, Namespace):
         if self._column_popup_theme is not None:
             content += "data-column-popup-theme='" + self._column_popup_theme + "' "
         if self._make_responsive and not self._alternate_rows:
-            content += "class='ui-responsive table-stroke ui-body-d ui-shadow' "
+            content += "class='ui-responsive table-stroke ui-body-d ui-shadow default-table' "
         elif self._make_responsive and self._alternate_rows:
-            content += "class='ui-responsive table-stripe ui-body-d ui-shadow' "
+            content += "class='ui-responsive table-stripe ui-body-d ui-shadow default-table' "
         elif not self._make_responsive and not self._alternate_rows:
-            content += "class='table-stroke ui-body-d ui-shadow' "
+            content += "class='table-stroke ui-body-d ui-shadow default-table' "
         elif not self._make_responsive and self._alternate_rows:
-            content += "class='table-stripe ui-body-d ui-shadow' "
+            content += "class='table-stripe ui-body-d ui-shadow default-table' "
         else:
-            content += "class='ui-body-d ui-shadow' "
+            content += "class='ui-body-d ui-shadow default-table' "
         content += ">"
-        content += thead + "<tbody></tbody></table>"
+        body = ""
+        row_counter = 0
+        for row in self._data:
+            row_content = ""
+            if self._display_row_number:
+                row_content = "<th class='label'>" + str(row_counter + 1) + "</th>"
+            if self._row_headers is not None and len(self._row_headers) > 0:
+                row_content = row_content + "<th class='label'>" + self._row_headers[row_counter] + "</th>"
+            for cell in row:
+                if self._row_rendering_option == RowRenderingOptions.HTML:
+                    row_content += "<td>" + str(cell) + "</td>"
+                else:
+                    row_content += "<td>" + str(cell) + "</td>"
+            body += "<tr>" + row_content + "</tr>\n"
+            row_counter += 1
+        content += thead + "<tbody>" + body + "</tbody></table>\n"
         return content
