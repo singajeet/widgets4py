@@ -91,7 +91,7 @@ class MobileExample:
         self._slide = Slider('slide', socketio, 'My Title', value_changed_callback=self.val_changed,
                              highlight=True)
         self._tbl = Table('tbl', socketio, mode=TableModes.COLUMN_TOGGLE, display_row_number=True,
-                          row_rendering_option=RowRenderingOptions.TEXT)
+                          row_rendering_option=RowRenderingOptions.TEXT, click_callback=self.tbl_clicked)
         self._tbl.add_column('income', 1, 'Q12012')
         self._tbl.add_column('profit', 1, 'Q12012')
         self._tbl.add_column('change', 1, 'Q12012')
@@ -122,6 +122,9 @@ class MobileExample:
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()
+
+    def tbl_clicked(self, source, props):
+        print('Table clicked: ' + source + ', Props: ' + str(props))
 
     def select_clicked(self, source, props):
         print('Select widget clicked: ' + source + ", Props: " + str(props))

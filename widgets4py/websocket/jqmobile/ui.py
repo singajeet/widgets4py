@@ -4142,6 +4142,7 @@ class Table(Widget, Namespace):
     _make_responsive = None
     _alternate_rows = None
     _disabled = None
+    _click_callback = None
     _default_css = """
                     <style>
                     /* Show priority 1 at 320px (20em x 16px) */
@@ -4181,7 +4182,7 @@ class Table(Widget, Namespace):
     def __init__(self, name, socket_io, mode=None, column_headers=None, row_headers=None, data=None,
                  row_rendering_option=None, display_row_number=None, column_btn_text=None,
                  column_btn_theme=None, column_popup_theme=None, make_reponsive=None, alternate_rows=None,
-                 disabled=None, css=None):
+                 disabled=None, css=None, click_callback=None):
         Widget.__init__(self, name)
         Namespace.__init__(self, '/' + str(__name__ + '_' + name + '_table').replace('.', '_'))
         self._namespace = '/' + str(__name__ + '_' + name + '_table').replace('.', '_')
@@ -4222,6 +4223,7 @@ class Table(Widget, Namespace):
         self._disabled = disabled
         if css is not None:
             self._default_css = css
+        self._click_callback = click_callback
 
     @property
     def namespace(self):
@@ -4286,6 +4288,7 @@ class Table(Widget, Namespace):
     @column_btn_text.setter
     def column_btn_text(self, val):
         self._column_btn_text = val
+        self._sync_properties('columnBtnText', val)
 
     @property
     def column_btn_theme(self):
@@ -4294,6 +4297,7 @@ class Table(Widget, Namespace):
     @column_btn_theme.setter
     def column_btn_theme(self, val):
         self._column_btn_theme = val
+        self._sync_properties('columnBtnTheme', val)
 
     @property
     def column_popup_theme(self):
@@ -4302,6 +4306,7 @@ class Table(Widget, Namespace):
     @column_popup_theme.setter
     def column_popup_theme(self, val):
         self._column_popup_theme = val
+        self._sync_properties('columnPopupTheme', val)
 
     @property
     def make_responsive(self):
@@ -4311,12 +4316,74 @@ class Table(Widget, Namespace):
     def make_responsive(self, val):
         self._make_responsive = val
 
+    @property
+    def alternate_rows(self):
+        return self._alternate_rows
+
+    @alternate_rows.setter
+    def alternate_rows(self, val):
+        self._alternate_rows = val
+
+    @property
+    def CSS(self):
+        return self._default_css
+
+    @CSS.setter
+    def CSS(self, val):
+        if str(val).endswith("</style>") and str(val).startswith("<style>"):
+            self._default_css = val
+        else:
+            self._default_css = "<style>\n" + val + "\n</style>\n"
+
     def add_column(self, name, priority, group):
         column = {'name': name, 'priority': priority, 'group': group}
         self._column_headers.append(column)
 
     def remove_column(self, column):
         self._column_headers.remove(column)
+
+    def on_fire_click_event(self, props):
+        btn_txt = props['columnBtnText']
+        if btn_txt is not None:
+            self._column_btn_text = btn_txt
+        btn_theme = props['columnBtnTheme']
+        if btn_theme is not None:
+            self._column_btn_theme = btn_theme
+        popup_theme = props['columnPopupTheme']
+        if popup_theme is not None:
+            self._column_popup_theme = popup_theme
+        if self._click_callback is not None:
+            self._click_callback(self._name, props)
+
+    def _sync_properties(self, cmd, val):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': val},
+             namespace=self._namespace)
+
+    def _attach_script(self):
+        script = """
+                <script>
+                (function($, undefined){
+                    $(document).bind('pagecreate', function(){
+                        var socket = io('%s');
+                        var selector = $('%s');
+
+                        socket.on('sync_properties_%s', function(props){
+                            selector.table-columntoggle('option', props['cmd'], props['value']);
+                        });
+
+                        selector.bind('click', function(e){
+                            var props =
+                                    {'columnBtnText': selector.table-columntoggle('option', 'columnBtnText'),
+                                     'columnBtnTheme': selector.table-columntoggle('option', 'columnBtnTheme'),
+                                     'columnPopupTheme': selector.table-columntoggle('option', 'columnPopupTheme')
+                                    };
+                            socket.emit('fire_click_event', props);
+                        });
+                    });
+                })(jQuery);
+                </script>
+                """ % (self._namespace, self._name, self._name)
+        return script
 
     def render(self):  # noqa
         content = self._default_css + "\n\n"
@@ -4413,5 +4480,5 @@ class Table(Widget, Namespace):
                     row_content += "<td>" + cgi.escape(str(cell)) + "</td>"
             body += "<tr>" + row_content + "</tr>\n"
             row_counter += 1
-        content += thead + "<tbody>" + body + "</tbody></table>\n"
+        content += thead + "<tbody>" + body + "</tbody></table>\n" + self._attach_script() + "\n"
         return content
