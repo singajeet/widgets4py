@@ -5,6 +5,7 @@ JQuery Mobile framework
 Author: Ajeet Singh
 Date: 07/30/2019
 """
+import cgi
 from flask import json
 from flask_socketio import Namespace, emit
 from widgets4py.base import Widget
@@ -4143,33 +4144,36 @@ class Table(Widget, Namespace):
     _disabled = None
     _default_css = """
                     <style>
-                    /*These apply across all breakpoints because they are outside of a media query */
-                    table.default-table thead th {
-                        background-color: #fff !important;
+                    /* Show priority 1 at 320px (20em x 16px) */
+                    @media screen and (min-width: 20em) {
+                    .default-table th.ui-table-priority-1,
+                    .default-table td.ui-table-priority-1 {
+                            display: table-cell;
+                        }
                     }
-                    table.default-table thead th h4 {
-                        text-transform: uppercase !important;
-                        font-size: 0.6em !important;
-                        margin: 0 !important;
+                    /* Show priority 2 at 560px (35em x 16px) */
+                    @media screen and (min-width: 35em) {
+                    .default-table th.ui-table-priority-2,
+                    .default-table td.ui-table-priority-2 {
+                        display: table-cell;
+                        }
                     }
-                    table.default-table thead th h3 {
-                        font-size: .9em !important;
-                        margin: -.4em 0 .8em 0 !important;
+                    /* Show priority 3 at 720px (45em x 16px) */
+                    @media screen and (min-width: 45em) {
+                    .default-table th.ui-table-priority-3,
+                    .default-table td.ui-table-priority-3 {
+                        display: table-cell;
+                        }
                     }
-                    table.default-table th.label {
-                        text-transform: uppercase !important;
-                        font-size: 0.6em !important;
-                        opacity: 0.5 !important;
-                        padding: 1.2em .8em !important;
-                        background-color: #ddd !important;
+                    /* Manually hidden */
+                    .default-table th.ui-table-cell-hidden,
+                    .default-table td.ui-table-cell-hidden {
+                        display: none;
                     }
-                    table.default-table tbody tr.photos td {
-                        background-color: #fff !important;
-                        padding: 0 !important;
-                    }
-                    table.default-table tbody tr.photos img {
-                        max-width: 100% !important;
-                        min-width: 60px !important;
+                    /* Manually shown */
+                    .default-table th.ui-table-cell-visible,
+                    .default-table td.ui-table-cell-visible {
+                        display: table-cell;
                     }
                     </style>
                     """
@@ -4210,14 +4214,46 @@ class Table(Widget, Namespace):
         if make_reponsive is not None:
             self._make_responsive = make_reponsive
         else:
-            self._make_responsive = True
+            self._make_responsive = False
         if alternate_rows is not None:
             self._alternate_rows = alternate_rows
         else:
-            self._alternate_rows = True
+            self._alternate_rows = False
         self._disabled = disabled
         if css is not None:
             self._default_css = css
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @mode.setter
+    def mode(self, val):
+        self._mode = val
+
+    @property
+    def column_headers(self):
+        return self._column_headers
+
+    @column_headers.setter
+    def column_headers(self, val):
+        self._column_headers = val
+
+    @property
+    def row_headers(self):
+        return self._row_headers
+
+    @row_headers.setter
+    def row_headers(self, val):
+        self._row_headers = val
 
     @property
     def data(self):
@@ -4227,6 +4263,53 @@ class Table(Widget, Namespace):
     def data(self, val):
         self._data = val
 
+    @property
+    def row_rendering_option(self):
+        return self._row_rendering_option
+
+    @row_rendering_option.setter
+    def row_rendering_option(self, val):
+        self._row_rendering_option = val
+
+    @property
+    def display_row_number(self):
+        return self._display_row_number
+
+    @display_row_number.setter
+    def display_row_number(self, val):
+        self._display_row_number = val
+
+    @property
+    def column_btn_text(self):
+        return self._column_btn_text
+
+    @column_btn_text.setter
+    def column_btn_text(self, val):
+        self._column_btn_text = val
+
+    @property
+    def column_btn_theme(self):
+        return self._column_btn_theme
+
+    @column_btn_theme.setter
+    def column_btn_theme(self, val):
+        self._column_btn_theme = val
+
+    @property
+    def column_popup_theme(self):
+        return self._column_popup_theme
+
+    @column_popup_theme.setter
+    def column_popup_theme(self, val):
+        self._column_popup_theme = val
+
+    @property
+    def make_responsive(self):
+        return self._make_responsive
+
+    @make_responsive.setter
+    def make_responsive(self, val):
+        self._make_responsive = val
 
     def add_column(self, name, priority, group):
         column = {'name': name, 'priority': priority, 'group': group}
@@ -4235,7 +4318,7 @@ class Table(Widget, Namespace):
     def remove_column(self, column):
         self._column_headers.remove(column)
 
-    def render(self):
+    def render(self):  # noqa
         content = self._default_css + "\n\n"
         col_header_groups = {}
         # Iterate all column headers and make list of unique groups
@@ -4297,7 +4380,7 @@ class Table(Widget, Namespace):
                 th2 = "<th class='label'>S.No.</th>" + th2
             th = "<tr class='th-groups'>\n" + th1 + "</tr>\n<tr>\n" + th2 + "</tr>"
         thead = "<thead>" + th + "</thead>"
-        content += "<table data-role='table' id='" + self._name +"' data-mode='" + self._mode.value + "' "
+        content += "<table data-role='table' id='" + self._name + "' data-mode='" + self._mode.value + "' "
         if self._column_btn_text is not None:
             content += "data-column-btn-text='" + self._column_btn_text + "' "
         if self._column_btn_theme is not None:
@@ -4305,15 +4388,15 @@ class Table(Widget, Namespace):
         if self._column_popup_theme is not None:
             content += "data-column-popup-theme='" + self._column_popup_theme + "' "
         if self._make_responsive and not self._alternate_rows:
-            content += "class='ui-responsive table-stroke ui-body-d ui-shadow default-table' "
+            content += "class='ui-shadow ui-responsive table-stroke default-table' "
         elif self._make_responsive and self._alternate_rows:
-            content += "class='ui-responsive table-stripe ui-body-d ui-shadow default-table' "
+            content += "class='ui-shadow ui-reponsive table-strike default-table' "
         elif not self._make_responsive and not self._alternate_rows:
-            content += "class='table-stroke ui-body-d ui-shadow default-table' "
+            content += "class='ui-shadow table-stroke default-table' "
         elif not self._make_responsive and self._alternate_rows:
-            content += "class='table-stripe ui-body-d ui-shadow default-table' "
+            content += "class='ui-shadow table-stripe default-table' "
         else:
-            content += "class='ui-body-d ui-shadow default-table' "
+            content += " class='ui-shadow default-table' "
         content += ">"
         body = ""
         row_counter = 0
@@ -4327,7 +4410,7 @@ class Table(Widget, Namespace):
                 if self._row_rendering_option == RowRenderingOptions.HTML:
                     row_content += "<td>" + str(cell) + "</td>"
                 else:
-                    row_content += "<td>" + str(cell) + "</td>"
+                    row_content += "<td>" + cgi.escape(str(cell)) + "</td>"
             body += "<tr>" + row_content + "</tr>\n"
             row_counter += 1
         content += thead + "<tbody>" + body + "</tbody></table>\n"
