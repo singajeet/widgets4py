@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jQuery UI Widget - Default functionality</title>
+  <!-- <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"> -->
+  <style>
+  .custom-colorize {
+    font-size: 20px;
+    position: relative;
+    width: 75px;
+    height: 75px;
+  }
+  .custom-colorize-changer {
+    font-size: 10px;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+  }
+  </style>
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script>
+$ (function(){
+
+    //ListView widget to display list of items and provides ability to
+    //select list elements
+    $.widget("widgets4py.listview", {
+        options: {
+          selected_items: [],
+          //selected item callback
+          selected: null
+        },
+
+        _create: function() {
+          var main_childs = this.element.children();
+          var ul = main_childs[1];
+          this._child_elements = ul.children;
+
+          //bind click to all child elements
+          for(i=0; i<this._child_elements.length; i++){
+            var li = this._child_elements[i];
+            var li_childs = li.children;
+            var input_chk = li_childs[0];
+
+            this._on(input_chk, {
+              click: "select"
+            });
+          }
+        },
+
+        _refresh: function(){
+        },
+
+        select: function(event){
+          var chk_box = event.currentTarget;
+          chk_box.parentElement.classList.toggle('selected_item');
+        }
+    });
+
+    $("#list").listview();
+});
+</script>
+<style>
+    @import url(https://fonts.googleapis.com/css?familty=Roboto:500, 700)
+
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+
+    #list {
+        max-width: 250px;
+        border-top: 5px solid #435757;
+        color: #435757;
+        font: 500 1.2em/1.2 'Roboto', sans-serif;
+    }
+
+    h1 {
+        margin: 0px;
+        padding: 5px;
+        background-color: rgba(0, 0, 0, .1);
+        font-size: 1.4em;
+        text-align: center;
+    }
+
+    #list > ul {
+        background-color: rgba(0, 0, 0, .1);
+        box-shadow: 0 8px 6px -6px rgba(0, 0, 0, .5);
+        padding: 10px;
+    }
+
+    #list > ul > li {
+        display: block;
+        height: 30px;
+    }
+
+    #list input {
+        position: absolute;
+        margin-left: -9999px;
+    }
+
+    #list label {
+        padding-top: 5px;
+        padding-left:5px;
+        cursor: pointer;
+        display: block;
+    }
+
+    #list li:hover, input:hover {
+        background-color: rgba(0, 0, 0, .2);
+        /*box-shadow: 0 8px 6px -6px rgba(0, 0, 0, .5);*/
+    }
+
+    .selected_item {
+        background-color: rgba(0, 0, 0, .2);
+    }
+</style>
+</head>
+<body>
+  <div id="list">
+    <h1>My List</h1>
+    <ul>
+        <li>
+            <input type='checkbox' id="chk1" />
+            <label for="chk1">Tests</label>
+        </li>
+        <li>
+            <input type='checkbox' id="chk2" />
+            <label for="chk2">Q & A Forum</label>
+        </li>
+        <li>
+            <input type='checkbox' id="chk3" />
+            <label for="chk3">Interview QnA</label>
+        </li>
+        <li>
+            <input type='checkbox' id="chk4" />
+            <label for="chk4">Tutorials</label>
+        </li>
+        <li>
+            <input type='checkbox' id="chk5" />
+            <label for="chk5">Testimonials</label>
+        </li>
+    </ul>
+</div>
+</body>
+</html>
