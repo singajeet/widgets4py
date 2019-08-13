@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>jQuery UI Widget - Default functionality</title>
-  <!-- <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"> -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <style>
   .custom-colorize {
     font-size: 20px;
@@ -44,6 +44,9 @@ $ (function(){
             var li_childs = li.children;
             var input_chk = li_childs[0];
 
+            $(li).bind("mouseover", function(){this.classList.add('ui-state-hover');});
+            $(li).bind("mouseleave", function(){this.classList.remove('ui-state-hover');});
+
             this._on(input_chk, {
               click: "select"
             });
@@ -55,7 +58,7 @@ $ (function(){
 
         select: function(event){
           var chk_box = event.currentTarget;
-          chk_box.parentElement.classList.toggle('selected_item');
+          chk_box.parentElement.classList.toggle('ui-state-active');
         }
     });
 
@@ -86,14 +89,15 @@ $ (function(){
 
     #list > ul {
         background-color: rgba(0, 0, 0, .1);
-        box-shadow: 0 8px 6px -6px rgba(0, 0, 0, .5);
-        padding: 10px;
+        /*box-shadow: 0 8px 6px -6px rgba(0, 0, 0, .5);*/
+        padding: 2px;
         margin: 0px;
     }
 
     #list > ul > li {
         display: block;
         height: 30px;
+        border: none;
     }
 
     #list input {
@@ -103,42 +107,55 @@ $ (function(){
 
     #list label {
         padding-top: 5px;
-        padding-left:5px;
+        padding-left: 5px;
         cursor: pointer;
         display: block;
     }
 
-    #list li:hover, input:hover {
-        background-color: rgba(0, 0, 0, .2);
+    /*#list ui-state-hover li:hover /*, input:hover*/ {
+        /*background-color: rgba(0, 0, 0, .2);*/
         /*box-shadow: 0 8px 6px -6px rgba(0, 0, 0, .5);*/
+    /*}*/
+
+    /*.selected_item {
+        background-color: rgba(0, 0, 0, .2);
     }
 
-    .selected_item {
-        background-color: rgba(0, 0, 0, .2);
-    }
+    .selected_item::after {
+      content: '';
+      position: absolute;
+      border-color: #fff;
+      border-style: solid;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      height: 15px;
+      width: 7px;
+      margin-top: -23px;
+      margin-left: 200px;
+    }*/
 </style>
 </head>
 <body>
-  <div id="list">
-    <h1>My List</h1>
-    <ul>
-        <li>
+  <div id="list" class="ui-widget ui-widget-shadow">
+    <h1 class="ui-widget-header">My List</h1>
+    <ul class="ui-widget-content">
+        <li class="ui-widget-content">
             <input type='checkbox' id="chk1" />
             <label for="chk1">Tests</label>
         </li>
-        <li>
+        <li class="ui-widget-content">
             <input type='checkbox' id="chk2" />
             <label for="chk2">Q & A Forum</label>
         </li>
-        <li>
+        <li class="ui-widget-content">
             <input type='checkbox' id="chk3" />
             <label for="chk3">Interview QnA</label>
         </li>
-        <li>
+        <li class="ui-widget-content">
             <input type='checkbox' id="chk4" />
             <label for="chk4">Tutorials</label>
         </li>
-        <li>
+        <li class="ui-widget-content">
             <input type='checkbox' id="chk5" />
             <label for="chk5">Testimonials</label>
         </li>
