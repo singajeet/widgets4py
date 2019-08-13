@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jQuery UI Widget - Default functionality</title>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="css/ui.listview.css">
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="js/jquery.ui.listview.js"></script>
+</head>
+<body>
+  <div id="list">
+    <h1>My List</h1>
+    <ul>
+        <li>
+            <input type='checkbox' id="chk1" />
+            <label for="chk1">Tests</label>
+        </li>
+        <li>
+            <input type='checkbox' id="chk2" />
+            <label for="chk2">Q & A Forum</label>
+        </li>
+        <li>
+            <input type='checkbox' id="chk3" />
+            <label for="chk3">Interview QnA</label>
+        </li>
+        <li>
+            <input type='checkbox' id="chk4" />
+            <label for="chk4">Tutorials</label>
+        </li>
+        <li>
+            <input type='checkbox' id="chk5" />
+            <label for="chk5">Testimonials</label>
+        </li>
+    </ul>
+</div>
+  <script>
+    $("#list").listview();
+    $("#list").listview("addItem", "chk6", "NewItem1");
+    // $("#list").listview({
+    //   onSelected: function(event){
+    //     var items  = $("#list").listview("option", "selectedItems");
+    //     alert(items);
+    //   }
+    // });
+    $('#list').on("listviewonselected", function(evet){alert('Items selected: ');});
+  </script>
+</body>
+</html>
