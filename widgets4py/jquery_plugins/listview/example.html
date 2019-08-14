@@ -37,15 +37,21 @@
     </ul>
 </div>
   <script>
-    $("#list").listview();
-    $("#list").listview("addItem", "chk6", "NewItem1");
-    // $("#list").listview({
-    //   onSelected: function(event){
-    //     var items  = $("#list").listview("option", "selectedItems");
-    //     alert(items);
-    //   }
-    // });
-    $('#list').on("listviewonselected", function(evet){alert('Items selected: ');});
+	$(document).ready(function(){
+		$("#list").listview();
+    		$("#list").listview("addItem", "chk6", "NewItem1");
+    		// $("#list").listview({
+    		//   onSelected: function(event){
+    		//     var items  = $("#list").listview("option", "selectedItems");
+    		//     alert(items);
+    		//   }
+    		// });
+		$('#list').listview('selectItems', ['chk2', 'chk4']);
+    		$('#list').on("listviewonselected", 
+			function(evet){
+				alert('Items selected: ');
+			});
+	});
   </script>
 </body>
 </html>

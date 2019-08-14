@@ -77,6 +77,35 @@ $ (function(){
         this._trigger("onSelected");
       },
 
+	selectItems: function(items){
+		this.options.selectedItems = []
+		for(i=0; i < items.length; i++){
+			for(j=0; j < this._childElements.length; j++){
+				var li_childs = this._childElements[j].children;
+				var checkBox = li_childs[0];
+				var item_id = checkBox.id;
+				if(item_id == items[i]){
+					checkBox.parentElement.classList.add('ui-state-active');
+					this.options.selectedItems.push(item_id);
+				}
+			}
+		}
+	},
+
+	unselectItems: function(items){
+		for(i=0; i < items.length; i++){
+			for(j=0; j < this._childElements; j++){
+				var li_childs = this._childElements[j].children;
+				var checkBox = li_childs[0];
+				var item_id = checkBox.id;
+				if(item_id == items[i]){
+					checkBox.parentElement.classList.remove('ui-state-active');
+					this._removeArrayItem(this.options.selectedItems, item_id);
+				}
+			}
+		}
+	},
+
       _removeArrayItem: function(arr, item){
         for(var i=0; i < arr.length; i++){
           if(arr[i] === item){
