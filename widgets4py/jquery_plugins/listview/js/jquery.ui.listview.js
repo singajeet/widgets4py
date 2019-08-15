@@ -5,6 +5,8 @@ $ (function(){
     $.widget("widgets4py.listview", {
       options: {
         selectedItems: [],
+	disabled: false,
+	corners: false,
         //selected item callback
         onSelected: null
       },
@@ -112,6 +114,25 @@ $ (function(){
             arr.splice(i, 1);
           }
         }
-      }
+      },
+
+	_destroy: function(){
+	},
+	_setOption: function(key, value){
+		if(key === "disabled"){
+			if(value != undefined && value){
+				this.element.addClass('ii-state-disabled');
+			} else if(value != undefined && !value){
+				this.element.removeClass('ui-state-disabled');
+			}
+		} else if(key === "corners"){
+			if(value != undefined && value){
+				this.element.addClass('ui-corner-all');
+			} else if(value != undefined && !value){
+				this.element.removeClass('ui-corner-all');
+			}
+		}
+		this._super(key, value);
+	}
     });
 });
