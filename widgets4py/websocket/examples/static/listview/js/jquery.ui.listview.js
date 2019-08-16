@@ -12,7 +12,6 @@ $(function() {
     },
 
     _create: function() {
-
       //Add css classes
       this.element.addClass('ui-widget');
       this.element.addClass('ui-widget-shadow');
@@ -29,8 +28,6 @@ $(function() {
       for (i = 0; i < this._childElements.length; i++) {
         var li = this._childElements[i];
         li.classList.add('ui-widget-content');
-        // var liChilds = li.children;
-        // var inputCheck = liChilds[0];
 
         $(li).bind("mouseover", function() {
           this.classList.add('ui-state-hover');
@@ -39,9 +36,6 @@ $(function() {
           this.classList.remove('ui-state-hover');
         });
 
-        // this._on(inputCheck, {
-        //   click: "select"
-        // });
         this._on(li, {
           click: "select"
         });
@@ -53,8 +47,6 @@ $(function() {
       var count = childs.length;
       var newLi = childs[count - 1];
       newLi.classList.add('ui-widget-content');
-      // var liChilds = newLi.children;
-      // var inputCheck = liChilds[0];
 
       $(newLi).bind("mouseover", function() {
         this.classList.add('ui-state-hover');
@@ -63,9 +55,6 @@ $(function() {
         this.classList.remove('ui-state-hover');
       });
 
-      // this._on(inputCheck, {
-      //   click: "select"
-      // });
       this._on(newLi, {
         click: "select"
       });
@@ -73,7 +62,6 @@ $(function() {
 
     addItem: function(id, val) {
       itemCounter = this._childElements.length;
-      //$('<li><input type="checkbox" id="' + id + '" /><label for="' + id + '" >' + val + '</label></li>').appendTo(this._ul);
       $('<li id="' + id + '"><label>' + val + '</label></li>').appendTo(this._ul)
       this._refresh();
     },
@@ -83,13 +71,6 @@ $(function() {
     },
 
     select: function(event) {
-      // var checkBox = event.currentTarget;
-      // checkBox.parentElement.classList.toggle('ui-state-active');
-      // if (this.options.selectedItems.includes(checkBox.id)) {
-      //   this._removeArrayItem(this.options.selectedItems, checkBox.id);
-      // } else {
-      //   this.options.selectedItems.push(checkBox.id);
-      // }
       var li = event.currentTarget;
       li.classList.toggle('ui-state-active');
       if (this.options.selectedItems.includes(li.id)) {
@@ -105,9 +86,6 @@ $(function() {
       this.options.selectedItems = []
       for (i = 0; i < items.length; i++) {
         for (j = 0; j < this._childElements.length; j++) {
-          // var li_childs = this._childElements[j].children;
-          // var checkBox = li_childs[0];
-          // var item_id = checkBox.id;
           var li = this._childElements[j];
           var item_id = li.id;
           if (item_id == items[i]) {
@@ -121,9 +99,6 @@ $(function() {
     unselectItems: function(items) {
       for (i = 0; i < items.length; i++) {
         for (j = 0; j < this._childElements; j++) {
-          // var li_childs = this._childElements[j].children;
-          // var checkBox = li_childs[0];
-          // var item_id = checkBox.id;
           var li = this._childElements[j];
           var item_id = li.id;
           if (item_id == items[i]) {

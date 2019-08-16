@@ -406,6 +406,7 @@ class Page(Widget):
             self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/themes/bootstrap.min.css')
             self.add_css('http://w2ui.com/src/w2ui-1.5.rc1.min.css')
             self.add_css('http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css')
+            self.add_css('/static/listview/css/ui.listview.css')
         if self._jquery_js:
             self.add_js('https://code.jquery.com/jquery-3.4.1.min.js')
             self.add_js('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js')
@@ -415,6 +416,7 @@ class Page(Widget):
             self.add_js('http://w2ui.com/src/w2ui-1.5.rc1.min.js')
             self.add_js('https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.slim.js')
             self.add_js('http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js')
+            self.add_js('/static/listview/js/jquery.ui.listview.js')
 
     def add_js(self, path):
         """Adds an reference to javascript file to the page. The JS file could from the available

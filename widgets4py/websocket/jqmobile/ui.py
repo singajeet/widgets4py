@@ -4482,3 +4482,121 @@ class Table(Widget, Namespace):
             row_counter += 1
         content += thead + "<tbody>" + body + "</tbody></table>\n" + self._attach_script() + "\n"
         return content
+
+
+class SimpleListView(Widget, Namespace):
+    """Class to render listview with items shown in the list"""
+
+    _namespace = None
+    _socket_io = None
+    _title = None
+    _items = None
+    _disabled = None
+    _corners = None
+    _select_callback = None
+
+    def __init__(self, name, socket_io, title, disabled=None, corners=None, items=None,
+                 select_callback=None):
+        Widget.__init__(self, name)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_listview").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + name + "_listview").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        self._title = title
+        if disabled is not None:
+            self._disabled = disabled
+        else:
+            self._disabled = False
+        if corners is not None:
+            self._corners = corners
+        else:
+            self._corners = False
+        if items is not None:
+            self._items = items
+        else:
+            self._items = []
+        self._select_callback = select_callback
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def title(self):
+        return self._title
+
+    @title.setter
+    def title(self, val):
+        self._title = val
+
+    @property
+    def disabled(self):
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
+
+    @property
+    def corners(self):
+        return self._corners
+
+    @corners.setter
+    def corners(self, val):
+        self._corners = val
+        self._sync_properties('corners', val)
+
+    def add_item(self, value, title):
+        """Adds an item to the list view"""
+        item = {'key': value, 'title': title}
+        self._items.append(item)
+
+    def remove_item(self, value):
+        """Removes an item from the list view"""
+        for item in self._items:
+            if item['key'] == value:
+                self._items.remove(item)
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value})
+
+    def on_fire_select_event(self, props):
+        if self._select_callback is not None:
+            self._select_callback(self._name, props)
+
+    def _attach_script(self):
+        script = """<script>
+                    $(document).ready(function(){
+                            var selector = $('#%s');
+                            var socket = io('%s');
+
+                            selector.listview();
+                            socket.on('sync_properties_%s', function(props){
+                                selector.listview('option', props['cmd'], props['value']);
+                            });
+
+                            selector.on('listviewonselected', function(event){
+                                socket.emit('fire_select_event', {});
+                            });
+                        });
+                    </script>
+                """ % (self._name, self._namespace, self._name)
+        return script
+
+    def render(self):
+        content = ""
+        content += "<div id='" + self._name + "' >\n"
+        content += "<h1>" + self._title + "</h1>\n"
+        content += "<ul>\n"
+        for item in self._items:
+            content += """  <li id="%s">
+                                <label>%s</label>
+                            </li>
+                        """ % (item['key'], item['title'])
+        content += "\n</ul>\n</div>\n" + self._attach_script()
+        return content

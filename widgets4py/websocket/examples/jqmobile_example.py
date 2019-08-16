@@ -4,7 +4,8 @@ from widgets4py.websocket.jqmobile.ui import CheckBox, Radio, Collapsible
 from widgets4py.websocket.jqmobile.ui import CollapsibleSet, ControlGroup, FlipSwitch
 from widgets4py.websocket.jqmobile.ui import GridLayout, SectionLayout
 from widgets4py.websocket.jqmobile.ui import ListItem, ListView, NavBar, Panel, Popup, HTML
-from widgets4py.websocket.jqmobile.ui import RangeSlider, SelectMenu, Slider, Table, TableModes, RowRenderingOptions
+from widgets4py.websocket.jqmobile.ui import RangeSlider, SelectMenu, Slider, Table, TableModes
+from widgets4py.websocket.jqmobile.ui import RowRenderingOptions, SimpleListView
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -103,6 +104,13 @@ class MobileExample:
                           [199, 70, 50, 190, 60, 20, 30],
                           [188, 23, 38, 126, 78, 56, 22]
                           ]
+        self._slv = SimpleListView('slv', socketio, "Simple List View")
+        self._slv.add_item('itm1', 'Item 1')
+        self._slv.add_item('itm2', 'Item 2')
+        self._slv.add_item('itm3', 'Item 3')
+        self._slv.add_item('itm4', 'Item 4')
+        self._slv.add_item('itm5', 'Item 5')
+        self._slv.add_item('itm6', 'Item 6')
         self._mpg1.add(self._btn)
         self._mpg1.add(self._btn1)
         self._mpg1.add(self._chkbox)
@@ -119,6 +127,7 @@ class MobileExample:
         self._mpg1.add(self._sel)
         self._mpg1.add(self._slide)
         self._mpg1.add(self._tbl)
+        self._mpg1.add(self._slv)
         self._pg.add(self._mpg1)
         self._pg.add(self._mpg2)
         return self._pg.render()

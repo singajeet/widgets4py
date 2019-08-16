@@ -14,7 +14,7 @@
   <div id="list">
     <h1>My List</h1>
     <ul>
-        <!--<li>
+        <li>
             <input type='checkbox' id="chk1" />
             <label for="chk1">Tests</label>
         </li>
@@ -33,21 +33,6 @@
         <li>
             <input type='checkbox' id="chk5" />
             <label for="chk5">Testimonials</label>
-        </li> -->
-        <li id="chk1">
-            <label>Tests</label>
-        </li>
-        <li id="chk2">
-            <label>Q & A Forum</label>
-        </li>
-        <li id="chk3">
-            <label>Interview QnA</label>
-        </li>
-        <li id="chk4">
-            <label>Tutorials</label>
-        </li>
-        <li id="chk5">
-            <label>Testimonials</label>
         </li>
     </ul>
 </div>
@@ -63,7 +48,7 @@
     		// });
 		$('#list').listview('selectItems', ['chk2', 'chk4']);
 		$('#list').listview('option', 'corners', true);
-    		$('#list').on("listviewonselected",
+    		$('#list').on("listviewonselected", 
 			function(evet){
 				alert('Items selected: ');
 			});
