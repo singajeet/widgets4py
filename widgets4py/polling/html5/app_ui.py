@@ -175,7 +175,7 @@ class Button(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, self._name, url)
@@ -370,7 +370,7 @@ class TextBox(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, self._name, url)
@@ -569,7 +569,7 @@ class CheckBox(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, self._name, self._name, url)
@@ -824,7 +824,7 @@ class Color(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, self._name, url)
@@ -1125,7 +1125,7 @@ class Date(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, self._name, url)
@@ -1407,7 +1407,7 @@ class File(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, self._name, url)
@@ -1993,7 +1993,7 @@ class DropDown(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, self._name, url)

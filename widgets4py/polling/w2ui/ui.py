@@ -1195,7 +1195,7 @@ class Grid(Widget):
                                 }
                             });
                             %s_poll();
-                        }, 10000);
+                        }, 500);
                     })();
                     </script>
                 """ % (url, url, self._name, self._name, url)
@@ -1682,7 +1682,7 @@ class Toolbar(Widget):
                                 }
                             });
                             %s_poll();
-                        }, 10000);
+                        }, 500);
                     })();
                     </script>
                 """ % (url, url, self._name, url)
@@ -2130,7 +2130,7 @@ class Sidebar(Widget):
                                 }
                             });
                             %s_poll();
-                        }, 10000);
+                        }, 500);
                     })();
                     </script>
                 """ % (url, url, self._name, url)
@@ -2837,7 +2837,7 @@ class Popup(Widget):
                                 }
                             });
                             %s_poll();
-                        }, 10000);
+                        }, 500);
                     })();
                     </script>
                 """ % (url, url, self._name, url)

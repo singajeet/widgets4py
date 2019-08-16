@@ -425,7 +425,7 @@ class RadioButtonGroup(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, url)
@@ -614,7 +614,7 @@ class CheckBoxGroup(RadioButtonGroup):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, url)
@@ -791,7 +791,7 @@ class DialogBox(Widget):
                     },
                     dataType: "json"
                 });
-                },10000);
+                },500);
             })();
             </script>
             """ % (url, url, self._name, url)
@@ -1270,7 +1270,7 @@ class MenuItem(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, self._name, self._name, url)
@@ -1729,7 +1729,7 @@ class Slider(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, self._name, url)
@@ -1957,7 +1957,7 @@ class Spinner(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, self._name, url)
@@ -2324,7 +2324,7 @@ class Tab(Widget):
                                                             },
                                     dataType: "json"
                                 });
-                            },10000);
+                            },500);
                         })();
                     </script>
                 """ % (url, url, self._name, url)

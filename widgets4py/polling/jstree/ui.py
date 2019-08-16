@@ -2184,7 +2184,7 @@ class JSTree(Widget):
                                 }
                             });
                             %s_poll();
-                        }, 10000);
+                        }, 500);
                     })();
                 </script>
                 """ % (url, url, self._name, url)
