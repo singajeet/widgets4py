@@ -35,6 +35,7 @@ class SimpleGridLayout(Widget):
             self._columns_ratio = []
         self.add_css_class('ui-widget')
         self.add_css_class('ui-widget-content')
+        self.add_style('width', '100%')
 
     def render(self):
         """Renders the grid layout with its child components"""
