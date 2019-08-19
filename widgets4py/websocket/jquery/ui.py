@@ -121,7 +121,8 @@ class Section(Widget, Namespace):
             self._onclick_callback(self._name, props)
 
     def _sync_properties(self, cmd, value):
-        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value})
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
 
     def on_click(self, onclick_callback):
         """Adds an event handler to on_click event of the widget. The event handler can be
@@ -481,7 +482,8 @@ class RadioButtonGroup(Widget, Namespace):
         self._onclick_callback = onclick_callback
 
     def _sync_properties(self, cmd, value):
-        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value})
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
 
     def render(self):
         """Renders the Radio button group with title passed as param
@@ -728,7 +730,8 @@ class CheckBoxGroup(Widget, Namespace):
         self._onclick_callback = onclick_callback
 
     def _sync_properties(self, cmd, value):
-        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value})
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
 
     def render(self):
         """Renders the checkbox button group with title passed as param
@@ -767,13 +770,14 @@ class DialogTypes(Enum):
     MODAL_MESSAGE = 3
 
 
-class DialogBox(Widget):
+class DialogBox(Widget, Namespace):
     """Class to shown dialog boxes which is on overlay position within the viewport.
      It has a title bar and a content area, and can be moved, resized and closed with the 'x' icon by default.
      """
 
     _title = None
-    _app = None
+    _namespace = None
+    _socket_io = None
     _onok_pressed_callback = None
     _oncancel_pressed_callback = None
     _disabled = None
@@ -782,9 +786,10 @@ class DialogBox(Widget):
     _height = None
     _width = None
     _onbefore_close_callback = None
+    _is_dialog_open = None
 
-    def __init__(self, name, title, dlg_type, desc=None, prop=None, style=None, attr=None,
-                 disabled=False, required=False, app=None, css_cls=None, height=400, width=350,
+    def __init__(self, name, title, dlg_type, socket_io, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, required=False, css_cls=None, height=400, width=350,
                  onbefore_close_callback=None, onok_pressed_callback=None,
                  oncancel_pressed_callback=None):
         """Default constructor of the Label widget class
@@ -793,13 +798,13 @@ class DialogBox(Widget):
                 name (string): name of the widget for internal use
                 title (string): title of the button widget
                 dlg_type (DialogType): The type of the dialog box that needs to be created
+                socket_io (SocketIO): Instance of SocketIO class
                 desc (string, optional): description of the button widget
                 prop (dict, optional): dict of objects to be added as properties of widget
                 style (dict, optional): dict of objects to be added as style elements to HTML tag
                 attr (list, optional): list of objects to be added as attributes of HTML tag
                 disabled (Boolean, optional): Enabled or Disabled state of widget
                 onclick_callback (function, optional): A function to be called back on onclick event
-                app (Flask, optional): An instance of Flask class
                 css_cls (list, optional): An list of CSS class names to be added to current widget
                 height (int, optional): Height of the dialog box, used in dialog type = MODAL_CONFIRM,
                                         MODAL_FORM, MODAL_MESSAGE
@@ -812,8 +817,11 @@ class DialogBox(Widget):
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_dialog").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + name + "_dialog").replace('.', '_')
         self._title = title
-        self._app = app
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
         self._onok_pressed_callback = onok_pressed_callback
         self._oncancel_pressed_callback = oncancel_pressed_callback
         self._disabled = disabled
@@ -821,199 +829,198 @@ class DialogBox(Widget):
         self._height = height
         self._width = width
         self._onbefore_close_callback = onbefore_close_callback
+        self._is_dialog_open = False
         self.add_property('title', title)
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def title(self):
+        return self._title
+
+    @title.setter
+    def title(self, val):
+        self._title = val
+        self._sync_properties('title', val)
+
+    @property
+    def disabled(self):
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
+
+    @property
+    def dialog_type(self):
+        return self._dialog_type
+
+    @dialog_type.setter
+    def dialog_type(self, val):
+        self._dialog_type = val
+        self._sync_properties('dialog_type', val)
+
+    @property
+    def height(self):
+        return self._height
+
+    @height.setter
+    def height(self, val):
+        self._height = val
+        self._sync_properties('height', val)
+
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, val):
+        self._width = val
+        self._sync_properties('width', val)
+
+    @property
+    def is_dialog_open(self):
+        return self._is_dialog_open
+
+    @is_dialog_open.setter
+    def is_dialog_open(self, val):
+        self._is_dialog_open = val
+
 
     def open(self):
         """Opens the dialog box
         """
         self._command = "open"
+        self._sync_properties(self._command, "")
+        self._is_dialog_open = True
 
     def close(self):
         """Closes the dialog box
         """
         self._command = "close"
+        self._sync_properties(self._command, "")
+        self._is_dialog_open = False
 
-    def _onbefore_close_event(self):
+    def on_fire_before_close_event(self, props):
+        self._is_dialog_open = False
+        # Reset the command to close, before the dialogbox is closed using esc key,
+        # or on, cancel buttons
         self._command = "close"
         if self._onbefore_close_callback is not None:
-            return json.dumps({'result': self._onbefore_close_callback()})
-        else:
-            return json.dumps({'result': ''})
+            self._onbefore_close_callback(self._name, props)
 
-    def _onok_pressed_event(self):
+    def on_fire_ok_pressed_event(self, props):
         if self._onok_pressed_callback is not None:
-            return json.dumps({'result': self._onok_pressed_callback()})
-        else:
-            return json.dumps({'result': ''})
+            self._onok_pressed_callback(self._name, props)
 
-    def _oncancel_pressed_event(self):
+    def on_fire_cancel_pressed_event(self, props):
         if self._oncancel_pressed_callback is not None:
-            return json.dumps({'result': self._oncancel_pressed_callback()})
-        else:
-            return json.dumps({'result': ''})
+            self._oncancel_pressed_callback(self._name, props)
 
-    def _sync_properties(self):
-        return json.dumps({'title': self._title,
-                           'command': self._command
-                           })
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
 
-    def _attach_polling(self):
-        script = ""
-        if self._app is not None:
-            url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
-            script = """<script>
-            (function %s_poll(){
-                setTimeout(function(){
-                $.ajax({
-                    url: '/%s',
-                    success: function(props){
-                        selector = $('#%s');
-                        if (props.command == 'open'){
-                            var isOpen = selector.dialog('isOpen');
-                            if (!isOpen){
-                                selector.dialog('open');
-                            }
-                        }else if (props.command == 'close'){
-                            var isOpen = selector.dialog('isOpen');
-                            if (isOpen){
-                                selector.dialog('close');
-                            }
-                        }
-                        if (props.title != selector.dialog('option', 'title')){
-                            selector.dialog('option', 'title', props.title);
-                        }
-                        //poll again
-                        %s_poll();
-                    },
-                    error: function(err_status){
-                        alertify.error("Status Code: "
-                        + err_status.status + "<br />" + "Error Message:"
-                        + err_status.statusText);
-                    },
-                    dataType: "json"
-                });
-                },500);
-            })();
-            </script>
-            """ % (url, url, self._name, url)
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
-            if not found:
-                self._app.add_url_rule('/' + url, url,
-                                       self._sync_properties)
-        return script
-
-    def on_before_close(self, onbefore_close_callback, app=None):
+    def on_before_close(self, onbefore_close_callback):
         """Adds an event handler to on_click event of the widget. The event handler can be
-        a method or function. If no app is associated with current widget, it should be
-        linked by passing `app` param
+        a method or function.
 
             Args:
                 onbefore_close_callback (function): The function/callback that will be
                                                     called for this event
-                app (Flask, optional): An instance of Flask app, though this param is optional, it is
-                                        required to have events work properly. So, it should be passed
-                                        during creation of widget in the constructor or should be
-                                        passed in this function
         """
-        if app is not None:
-            self._app = app
         self._onbefore_close_callback = onbefore_close_callback
 
-    def on_ok_pressed(self, onok_pressed_callback, app=None):
+    def on_ok_pressed(self, onok_pressed_callback):
         """Adds an event handler to on_click event of the widget. The event handler can be
-        a method or function. If no app is associated with current widget, it should be
-        linked by passing `app` param
+        a method or function.
 
             Args:
                 onok_pressed_callback (function): The function/callback that will be
                                                     called for this event
-                app (Flask, optional): An instance of Flask app, though this param is optional, it is
-                                        required to have events work properly. So, it should be passed
-                                        during creation of widget in the constructor or should be
-                                        passed in this function
         """
-        if app is not None:
-            self._app = app
         self._onok_pressed_callback = onok_pressed_callback
 
-    def on_cancel_pressed(self, oncancel_pressed_callback, app=None):
+    def on_cancel_pressed(self, oncancel_pressed_callback):
         """Adds an event handler to on_click event of the widget. The event handler can be
-        a method or function. If no app is associated with current widget, it should be
-        linked by passing `app` param
+        a method or function.
 
             Args:
                 oncancel_pressed_callback (function): The function/callback that will be
                                                         called for this event
-                app (Flask, optional): An instance of Flask app, though this param is optional, it is
-                                        required to have events work properly. So, it should be passed
-                                        during creation of widget in the constructor or should be
-                                        passed in this function
         """
-        if app is not None:
-            self._app = app
         self._oncancel_pressed_callback = oncancel_pressed_callback
 
-    def _attach_script(self, dlg_type):  # noqa
-        if self._app is not None:
-            before_close_url = str(__name__ + "_" + self._name + "_onbefore_close").replace('.', '_')
-            ok_pressed_url = str(__name__ + "_" + self._name + "_onok_pressed").replace('.', '_')
-            cancel_pressed_url = str(__name__ + "_" + self._name +
-                                     "_oncancel_pressed").replace('.', '_')
-            # before close url rule
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == before_close_url:
-                    found = True
-            if not found:
-                self._app.add_url_rule('/' + before_close_url, before_close_url,
-                                       self._onbefore_close_event)
-            # ok pressed url rule
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == ok_pressed_url:
-                    found = True
-            if not found:
-                self._app.add_url_rule('/' + ok_pressed_url, ok_pressed_url,
-                                       self._onok_pressed_event)
-            # cancel pressed url rule
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == cancel_pressed_url:
-                    found = True
-            if not found:
-                self._app.add_url_rule('/' + cancel_pressed_url, cancel_pressed_url,
-                                       self._oncancel_pressed_event)
+    def _attach_dialog(self, dlg_type):  # noqa
         script = ""
         if dlg_type == DialogTypes.DEFAULT:
             script = """<script>
                             $(function(){
-                                $("#%s").dialog({
+                                var selector = $("#%s");
+                                var socket = io("%s");
+
+                                socket.on('sync_properties_%s', function(props){
+                                    cmd = props['cmd'];
+                                    value = props['value'];
+                                    if(cmd === 'open'){
+                                        var isOpen = selector.dialog('isOpen');
+
+                                        if(!isOpen){
+                                            selector.dialog('open');
+                                        }
+                                    } else if(cmd === 'close'){
+                                        var isOpen = selector.dialog('isOpen');
+                                        if(isOpen){
+                                            selector.dialog('close');
+                                        }
+                                    } else if(cmd === 'title'){
+                                        selector.dialog('option', 'title', value);
+                                    }
+                                });
+
+                                selector.dialog({
                                     autoOpen: false,
                                     resizable: true,
                                     beforeClose: function(event, ui){
-                                        $.ajax({
-                                            url: '/%s',
-                                            type: 'get',
-                                            dataType: "json",
-                                            success: function(status){},
-                                            error: function(err_status){
-                                                alertify.error("Status Code: "
-                                                + err_status.status + "<br />" + "Error Message:"
-                                                + err_status.statusText);
-                                            }
-                                        });
+                                        socket.emit('fire_before_close_event', {});
                                     }
                                 });
                             });
                         </script>
-                    """ % (self._name, before_close_url)
+                    """ % (self._name, self._namespace, self._name)
         elif dlg_type == DialogTypes.MODAL_CONFIRM:
             script = """<script>
                             $(function(){
-                                $("#%s").dialog({
+                                var selector = $("#%s");
+                                var socket = io("%s");
+
+                                socket.on('sync_properties_%s', function(props){
+                                    cmd = props['cmd'];
+                                    value = props['value'];
+                                    if(cmd === 'open'){
+                                        var isOpen = selector.dialog('isOpen');
+
+                                        if(!isOpen){
+                                            selector.dialog('open');
+                                        }
+                                    } else if(cmd === 'close'){
+                                        var isOpen = selector.dialog('isOpen');
+                                        if(isOpen){
+                                            selector.dialog('close');
+                                        }
+                                    } else if(cmd === 'title'){
+                                        selector.dialog('option', 'title', value);
+                                    }
+                                });
+
+                                selector.dialog({
                                     autoOpen: false,
                                     resizable: false,
                                     height: %d,
@@ -1022,57 +1029,48 @@ class DialogBox(Widget):
                                     buttons: {
                                         "Ok": function(){
                                             //Call the OK pressed callback or endpoint
-                                            $.ajax({
-                                                url: '/%s',
-                                                type: 'get',
-                                                dataType: 'json',
-                                                success: function(status){},
-                                                error: function(err_status){
-                                                    alertify.error("Status Code: "
-                                                    + err_status.status + "<br />" + "Error Message:"
-                                                    + err_status.statusText);
-                                                }
-                                            });
+                                            socket.emit('fire_ok_pressed_event', {});
                                             $(this).dialog('close');
                                         },
                                         "Cancel": function(){
                                             //Call the CANCEL pressed callback or endpoint
-                                            $.ajax({
-                                                url: '/%s',
-                                                type: 'get',
-                                                dataType: 'json',
-                                                success: function(status){},
-                                                error: function(err_status){
-                                                    alertify.error("Status Code: "
-                                                    + err_status.status + "<br />" + "Error Message:"
-                                                    + err_status.statusText);
-                                                }
-                                            });
+                                            socket.emit('fire_cancel_pressed_event', {});
                                             $(this).dialog('close');
                                         }
                                     },
                                     beforeClose: function(event, ui){
-                                        $.ajax({
-                                            url: '/%s',
-                                            type: 'get',
-                                            dataType: "json",
-                                            success: function(status){},
-                                            error: function(err_status){
-                                                alertify.error("Status Code: "
-                                                + err_status.status + "<br />" + "Error Message:"
-                                                + err_status.statusText);
-                                            }
-                                        });
+                                        socket.emit('fire_before_close_event', {});
                                     }
                                 });
                             });
                         </script>
-                    """ % (self._name, self._height, self._width, ok_pressed_url,
-                           cancel_pressed_url, before_close_url)
+                    """ % (self._name, self._namespace, self._name, self._height, self._width)
         elif dlg_type == DialogTypes.MODAL_FORM:
             script = """<script>
                             $(function(){
-                                $("#%s").dialog({
+                                var selector = $("#%s");
+                                var socket = io("%s");
+
+                                socket.on('sync_properties_%s', function(props){
+                                    cmd = props['cmd'];
+                                    value = props['value'];
+                                    if(cmd === 'open'){
+                                        var isOpen = selector.dialog('isOpen');
+
+                                        //if(!isOpen){
+                                            selector.dialog('open');
+                                        //}
+                                    } else if(cmd === 'close'){
+                                        var isOpen = selector.dialog('isOpen');
+                                        if(isOpen){
+                                            selector.dialog('close');
+                                        }
+                                    } else if(cmd === 'title'){
+                                        selector.dialog('option', 'title', value);
+                                    }
+                                });
+
+                                selector.dialog({
                                     autoOpen: false,
                                     resizable: true,
                                     height: %d,
@@ -1081,95 +1079,66 @@ class DialogBox(Widget):
                                     buttons: {
                                         "Ok": function(){
                                             //Call the OK pressed callback or endpoint
-                                            $.ajax({
-                                                url: '/%s',
-                                                type: 'get',
-                                                dataType: 'json',
-                                                success: function(status){},
-                                                error: function(err_status){
-                                                    alertify.error("Status Code: "
-                                                    + err_status.status + "<br />" + "Error Message:"
-                                                    + err_status.statusText);
-                                                }
-                                            });
+                                            socket.emit('fire_ok_pressed_event', {});
                                             $(this).dialog('close');
                                         },
                                         "Cancel": function(){
                                             //Call the CANCEL pressed callback or endpoint
-                                            $.ajax({
-                                                url: '/%s',
-                                                type: 'get',
-                                                dataType: 'json',
-                                                success: function(status){},
-                                                error: function(err_status){
-                                                    alertify.error("Status Code: "
-                                                    + err_status.status + "<br />" + "Error Message:"
-                                                    + err_status.statusText);
-                                                }
-                                            });
+                                            socket.emit('fire_cancel_pressed_event', {});
                                             $(this).dialog('close');
                                         }
                                     },
                                     beforeClose: function(event, ui){
-                                        $.ajax({
-                                            url: '/%s',
-                                            type: 'get',
-                                            dataType: "json",
-                                            success: function(status){},
-                                            error: function(err_status){
-                                                alertify.error("Status Code: "
-                                                + err_status.status + "<br />" + "Error Message:"
-                                                + err_status.statusText);
-                                            }
-                                        });
+                                        socket.emit('fire_before_close_event', {});
                                     }
 
                                 });
                             });
                         </script>
-                    """ % (self._name, self._height, self._width, ok_pressed_url,
-                           cancel_pressed_url, before_close_url)
+                    """ % (self._name, self._namespace, self._name, self._height, self._width)
         elif dlg_type == DialogTypes.MODAL_MESSAGE:
             script = """<script>
                             $(function(){
-                                $("#%s").dialog({
+                                var selector = $("#%s");
+                                var socket = io("%s");
+
+                                socket.on('sync_properties_%s', function(props){
+                                    cmd = props['cmd'];
+                                    value = props['value'];
+                                    if(cmd === 'open'){
+                                        var isOpen = selector.dialog('isOpen');
+
+                                        //if(!isOpen){
+                                            selector.dialog('open');
+                                        //}
+                                    } else if(cmd === 'close'){
+                                        var isOpen = selector.dialog('isOpen');
+                                        if(isOpen){
+                                            selector.dialog('close');
+                                        }
+                                    } else if(cmd === 'title'){
+                                        selector.dialog('option', 'title', value);
+                                    }
+                                });
+
+                                selector.dialog({
                                     autoOpen: false,
                                     modal: true,
                                     buttons: {
                                         "Ok": function(){
                                             //Call the OK pressed callback or endpoint
-                                            $.ajax({
-                                                url: '/%s',
-                                                type: 'get',
-                                                dataType: 'json',
-                                                success: function(status){},
-                                                error: function(err_status){
-                                                    alertify.error("Status Code: "
-                                                    + err_status.status + "<br />" + "Error Message:"
-                                                    + err_status.statusText);
-                                                }
-                                            });
+                                            socket.emit('fire_ok_pressed_event', {});
                                             $(this).dialog('close');
                                         }
                                     },
                                     beforeClose: function(event, ui){
-                                        $.ajax({
-                                            url: '/%s',
-                                            type: 'get',
-                                            dataType: "json",
-                                            success: function(status){},
-                                            error: function(err_status){
-                                                alertify.error("Status Code: "
-                                                + err_status.status + "<br />" + "Error Message:"
-                                                + err_status.statusText);
-                                            }
-                                        });
+                                        socket.emit('fire_before_close_event', {});
                                     }
 
                                 });
                             });
                         </script>
-                    """ % (self._name, ok_pressed_url, before_close_url)
+                    """ % (self._name, self._namespace, self._name)
         return script
 
     def render(self):
@@ -1177,8 +1146,8 @@ class DialogBox(Widget):
         for widget in self._child_widgets:
             content += "\n" + widget.render()
         content += self._render_post_content('div')
-        content += "\n" + self._attach_script(self._dialog_type)
-        self._widget_content = content + "\n" + self._attach_polling()
+        content += "\n" + self._attach_dialog(self._dialog_type)
+        self._widget_content = content + "\n"  # + self._attach_script()
         return self._widget_content
 
 
