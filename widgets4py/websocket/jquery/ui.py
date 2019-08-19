@@ -409,6 +409,7 @@ class RadioButtonGroup(Widget, Namespace):
         script = """
                     <script>
                         $(function(){
+                            var selector_lbl = $("label[id^='%s_lbl']");
                             var selector = $("input[id^='%s_rd']");
                             var socket = io("%s");
 
@@ -432,11 +433,16 @@ class RadioButtonGroup(Widget, Namespace):
                                 }
                             });
 
-                            $(document).on("click", selector, function(){
+                            selector_lbl.on("click", function(event){
+                                    checkbox = event.currentTarget.nextSibling;
                                     var checked = {}
                                     selector.each(function(index, value){
                                         var id = $(this).attr("id");
-                                        checked[id] = $(this).prop("checked");
+                                        if(id != checkbox.id){
+                                            checked[id] = false; //$(this).prop("checked");
+                                        } else {
+                                            checked[id] = !checkbox.checked;
+                                        }
                                     });
                                     var disabled = {}
                                     selector.each(function(index, value){
@@ -450,7 +456,7 @@ class RadioButtonGroup(Widget, Namespace):
 
                         });
                     </script>
-                """ % (self._name, self._namespace, json.dumps(True if self._show_icon else False),
+                """ % (self._name, self._name, self._namespace, json.dumps(True if self._show_icon else False),
                        self._name)
         return script
 
@@ -498,192 +504,250 @@ class RadioButtonGroup(Widget, Namespace):
         return self._widget_content
 
 
-class CheckBoxGroup(RadioButtonGroup):
+class CheckBoxGroup(Widget, Namespace):
     """Widget to display options provided in `dict` object as CheckBox grouped
     together under a title passed as parameter
     """
 
-    def __init__(self, name, title, items, show_icon=True, desc=None, prop=None, style=None, attr=None,
-                 onclick_callback=None, app=None, css_cls=None):
-        """Default constructor of the Label widget class
+    _title = None
+    _items = None
+    _show_icon = None
+    _onclick_callback = None
+    _checked = None
+    _disabled_buttons = None
+    _namespace = None
+    _socket_io = None
+
+    def __init__(self, name, title, socket_io, items=None, show_icon=False, desc=None, prop=None, style=None,
+                 attr=None, onclick_callback=None, css_cls=None):
+        """Default constructor of the checkbox widget class
 
             Args:
                 name (string): name of the widget for internal use
-                title (string): title of the Checkbox button group
+                title (string): title of the checkbox button group
                 items (dict): A dict object containing items in the following format...
                                 {'key1': ['title1', false]} false means radio will be shown unselected
+                socket_io (SocketIO): An instance of SocketIO class
                 show_icon (boolean, optional): whether to show icon or not, default is true
                 desc (string, optional): description of the button widget
                 prop (dict, optional): dict of objects to be added as properties of widget
                 style (dict, optional): dict of objects to be added as style elements to HTML tag
                 attr (list, optional): list of objects to be added as attributes of HTML tag
                 onclick_callback (function, optional): A function to be called back on onclick event
-                app (Flask, optional): An instance of Flask class
                 css_cls (list, optional): An list of CSS class names to be added to current widget
         """
-        RadioButtonGroup.__init__(self, name, title, items, show_icon=show_icon, desc=desc, prop=prop,
-                                  style=style, attr=attr, css_cls=css_cls, onclick_callback=onclick_callback,
-                                  app=app)
-        self._value = {}
-        for item in items:
-            record = items.get(item)
-            is_checked = record[1]
-            self._value[item] = is_checked
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_cbg").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + name + "_cbg").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
+        self._title = title
+        if items is not None:
+            self._items = items
+        else:
+            self._items = {}
+        self._show_icon = show_icon
+        self._onclick_callback = onclick_callback
+        self._disabled_buttons = {}
+        self._checked_buttons = {}
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def items(self):
+        return self._items
+
+    @items.setter
+    def items(self, val):
+        self._items = val
+
+    @property
+    def show_icon(self):
+        return self._show_icon
+
+    @show_icon.setter
+    def show_icon(self, val):
+        self._show_icon = val
+
+    @property
+    def disabled_buttons(self):
+        return self._disabled_buttons
+
+    @disabled_buttons.setter
+    def disabled_buttons(self, val):
+        self._disabled_buttons = val
+
+    @property
+    def checked_buttons(self):
+        return self._checked_buttons
+
+    @checked_buttons.setter
+    def checked_buttons(self, val):
+        self._checked_buttons = val
+
+    def set_disabled(self, btn, state):
+        """Sets whether the passed checkbox button should be set as disabled or not
+
+            Args:
+                btn (string): Name of the checkbox button that exists in this group
+                state (boolean): True or False
+        """
+        self._disabled_buttons[btn] = state
+        self._sync_properties("disabled", self._disabled_buttons)
+
+    def get_disabled(self, btn):
+        """Returns the state of the radio button passed as parameter
+
+            Args:
+                btn (string): Name of the checkbox button that exists in the ths group
+            Returns:
+                boolean: True or False based on current state
+        """
+        return self._disabled_buttons[btn]
+
+    def set_checked(self, btn, state):
+        """Sets whether the passed checkbox button should be set as checked or not
+
+            Args:
+                btn (string): Name of the checkbox button that exists in the group
+            Returns:
+                boolean: True or False based on current state
+        """
+        self._checked_buttons[btn] = state
+        self._sync_properties("checked", self._checked_buttons)
+
+    def get_checked(self, btn):
+        """Returns the state of the checkbox button passes as parameter
+
+            Args:
+                btn (string): Name of the checkbox button that exists in the ths group
+            Returns:
+                boolean: True or False based on current state
+        """
+        return self._checked_buttons[btn]
+
+    def add_item(self, name, title, is_selected):
+        """Adds an new item to the group of checkbox buttons
+
+            Args:
+                name (string): A unique identifier of the checkbox button
+                title (string): Title to be displyed along the checkbox button
+                is_selected (boolean): Shows check button as checked or not checked
+        """
+        self._items[name] = [title, is_selected]
+        self._checked_buttons[name] = is_selected
+        self._disabled_buttons[name] = False
+
+    def remove_item(self, name):
+        """Removes an checkbox button from the group
+
+            Args:
+                name (string): Unique identifier of the checkbox button
+        """
+        self._items.pop(name)
 
     def _attach_script(self):
-        script = """<script>
+
+        script = """
+                    <script>
                         $(function(){
-                            $("input[id^='%s_chk']").checkboxradio({
+                            var selector = $("input[id^='%s_cb']");
+                            var selector_lbl = $("label[id^='%s_lbl']");
+                            var socket = io("%s");
+
+                            selector.checkboxradio({
                                 icon: %s
+                            });
+
+                            socket.on("sync_properties_%s", function(props){
+                                if(props["cmd"] == "checked"){
+                                    var checked = props["value"];
+                                    selector.each(function(index, value){
+                                        var id = $(this).attr("id");
+                                        $(this).prop("checked", checked[id]);
+                                    });
+                                } else if(prop["cmd"] == "disabled"){
+                                    var disabled = props["value"];
+                                    selector.each(function(index, value){
+                                        var id = $(this).attr("id");
+                                        $(this).checkboxradio("option", "disabled", disabled[id]);
+                                    });
+                                }
+                            });
+
+                            selector_lbl.on("click", function(event){
+                                checkbox = event.currentTarget.nextSibling;
+                                var checked = {}
+                                selector.each(function(index, value){
+                                    var id = $(this).attr("id");
+                                    if(id != checkbox.id){
+                                        checked[id] = $(this).prop("checked");
+                                    } else {
+                                        checked[id] = !checkbox.checked;
+                                    }
+                                });
+                                var disabled = {}
+                                selector.each(function(index, value){
+                                    var id = $(this).attr("id");
+                                    disabled[id] = $(this).checkboxradio("option", "disabled");
+                                });
+                                var props = {"checked": checked, "disabled": disabled};
+                                socket.emit('fire_click_event', props);
                             });
                         });
                     </script>
-                """ % (self._name, "true" if self._show_icon else "false")
+                """ % (self._name, self._name, self._namespace, json.dumps(True if self._show_icon else False),
+                       self._name)
         return script
 
-    def on_click(self, onclick_callback, app=None):
+    def on_fire_click_event(self, props):
+        if props.__len__() > 0:
+            check = props['checked']
+            if check is not None:
+                self._checked_buttons = check
+            dsbld = props['disabled']
+            if dsbld is not None:
+                self._disabled_buttons = dsbld
+        if self._onclick_callback is not None:
+            self._onclick_callback(self._name, props)
+
+    def on_click(self, onclick_callback):
         """Adds an event handler to on_click event of the widget. The event handler can be
-        a method or function. If no app is associated with current widget, it should be
-        linked by passing `app` param
+        a method or function.
 
             Args:
                 onclick_callback (function): The function/callback that will be called for this event
-                app (Flask, optional): An instance of Flask app, though this param is optional, it is
-                                        required to have events work properly. So, it should be passed
-                                        during creation of widget in the constructor or should be
-                                        passed in this function
         """
-        if app is not None:
-            self._app = app
         self._onclick_callback = onclick_callback
-        for item in self._items:
-            self._attach_onclick(item)
 
-    def _attach_onclick(self, item):
-        ajax = ""
-        found = False
-        if self._app is not None and self._onclick_callback is not None:
-            url = str(__name__ + "_" + self._name).replace('.', '_')
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
-            name = (self._name + "_chk_" + item)
-            ajax = """
-                    var full_id = $("#%s").prop("id");
-                    var index = $("#%s").prop("id").indexOf("chk_") + 4; //4=len(chk_)
-                    var id = $("#%s").prop("id").substr(index);
-                    $.ajax({
-                        url: "/%s",
-                        dataType: "json",
-                        type: "get",
-                        data: {"key": id},
-                        success: function(status){alertify.success("Action completed successfully!");},
-                        error: function(err_status){
-                                                    alertify.error("Status Code: "
-                                                    + err_status.status + "<br />" + "Error Message:"
-                                                    + err_status.statusText);
-                                                }
-                    });
-                """ % (name, name, name, url)
-            if not found:
-                self._app.add_url_rule('/' + url, url,
-                                       self._process_onclick_callback)
-        return ajax
-
-    def _process_onclick_callback(self):
-        if request.args.__len__() > 0:
-            key = request.args['key']
-            if key is not None:
-                if self._value is not None:
-                    existing_val = self._value.get(key)
-                    if existing_val is not None:
-                        self._value[key] = not self._value.get(key)
-                    else:
-                        self._value[key] = True
-                else:
-                    self._value = {key: True}
-        return json.dumps({"result": self._onclick_callback()})
-
-    def _sync_properties(self):
-        return json.dumps({'name': self._name,
-                           'value': json.dumps(self._value),
-                           'disabled': json.dumps(self._disabled_buttons)
-                           })
-
-    def _attach_polling(self):
-        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
-        script = """<script>
-                        (function %s_poll(){
-                            setTimeout(function(){
-                                $.ajax({
-                                    url: "/%s",
-                                    success: function(props){
-                                        checks = JSON.parse(props.value)
-                                        for(check in checks){
-                                            id = props.name + "_chk_" + check;
-                                            selector = $("#" + id);
-                                            if(selector != undefined){
-                                                selector.prop('checked', checks[check]);
-                                                $('input[name^="' + props.name + '_chk"]').checkboxradio('refresh');
-                                            }
-                                        }
-                                        if(props.disabled != undefined && props.disabled != "")
-                                        {
-                                            checks = JSON.parse(props.disabled);
-                                            for(index in checks){
-                                                cb = props.name + "_chk_" + index;
-                                                if(checks[index]){
-                                                    $('#' + cb).checkboxradio('disable');
-                                                }
-                                                else{
-                                                    $('#' + cb).checkboxradio('enable');
-                                                }
-                                            }
-                                        }
-                                        //poll again
-                                        %s_poll();
-                                    },
-                                    error: function(err_status){
-                                                                alertify.error("Status Code: "
-                                                                + err_status.status + "<br />" + "Error Message:"
-                                                                + err_status.statusText);
-                                                            },
-                                    dataType: "json"
-                                });
-                            },500);
-                        })();
-                    </script>
-                """ % (url, url, url)
-        found = False
-        for rule in self._app.url_map.iter_rules():
-            if rule.endpoint == url:
-                found = True
-        if not found:
-            self._app.add_url_rule('/' + url, url,
-                                   self._sync_properties)
-        return script
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value})
 
     def render(self):
-        """Renders the checkbox group with title passed as param
+        """Renders the checkbox button group with title passed as param
         """
         content = "<fieldset>\n<legend>" + self._title + "</legend>\n"
         for item in self._items:
             val = self._items.get(item)
             title = val[0]
             is_sel = val[1]
-            name = self._name + "_chk_" + item
+            name = self._name + "_cb_" + item
             lbl_name = self._name + "_lbl_" + item
             label = "<label for='" + name + "' id='" + lbl_name + "' >"\
                 + (title if title is not None else item) + "</label>"
             checkbox = "<input id='" + name + "' type='checkbox'"\
                 + (" checked" if is_sel else "")\
-                + " name='" + self._name + "_chk'"\
-                + " onclick='" + self._attach_onclick(item) + "' />"
-            content += "\n" + label + "\n" + checkbox
-        self._widget_content = content + "\n</fieldset>"\
-                                       + self._attach_script() + "\n"\
-                                       + self._attach_polling()
+                + " name='" + name + "' />"
+            content += checkbox + "\n" + label
+            content += "\n</fieldset>"
+        self._widget_content = self._attach_script() + "\n" + content
         return self._widget_content
 
 

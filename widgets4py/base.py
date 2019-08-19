@@ -454,7 +454,7 @@ class Page(Widget):
         content = "<!DOCTYPE html>\n"
         content += "<html style='height:100%;width:100%'>\n<head>\n"
         # content += "<title>Page Title</title>\n"
-        content += "<meta name='viewport' content='width=device-width, initial-scale=1'>\n"
+        # content += "<meta name='viewport' content='width=device-width, initial-scale=1'>\n"
         content += "<title>" + self._title + "</title>\n"
         css_content = "\n"
         for cssp in self._style_sections:

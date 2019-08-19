@@ -1,7 +1,7 @@
 from widgets4py.base import Page
 from flask import Flask
 from flask_socketio import SocketIO
-from widgets4py.websocket.jquery.ui import Section, Accordion, RadioButtonGroup
+from widgets4py.websocket.jquery.ui import Section, Accordion, RadioButtonGroup, CheckBoxGroup
 from widgets4py.layouts import SimpleGridLayout
 
 
@@ -32,8 +32,17 @@ class PageTest:
         self._rbg.add_item('rd3', 'Radio 3', False)
         self._rbg.add_item('rd4', 'Radio 4', False)
         self._sg.add(self._rbg)
+        self._cbg = CheckBoxGroup('cbg', 'CheckBox Group', socketio, onclick_callback=self.cbg_clicked)
+        self._cbg.add_item('cb1', 'Checkbox 1', False)
+        self._cbg.add_item('cb2', 'Checkbox 2', False)
+        self._cbg.add_item('cb3', 'Checkbox 3', False)
+        self._cbg.add_item('cb4', 'Checkbox 4', False)
+        self._sg.add(self._cbg)
         self._pg.add(self._sg)
         return self._pg.render()
+
+    def cbg_clicked(self, source, props):
+        print("CBG Clicked: " + source + ", Props: " + str(props))
 
     def rbg_clicked(self, source, props):
         print("RBG Clicked: " + source + ", Props: " + str(props))
