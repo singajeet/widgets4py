@@ -2,7 +2,7 @@ from widgets4py.base import Page
 from flask import Flask
 from flask_socketio import SocketIO
 from widgets4py.websocket.jquery.ui import Section, Accordion, RadioButtonGroup, CheckBoxGroup, DialogBox
-from widgets4py.websocket.jquery.ui import DialogTypes
+from widgets4py.websocket.jquery.ui import DialogTypes, MenuItem, Menu, SubMenu, MenuTypes
 from widgets4py.layouts import SimpleGridLayout
 
 
@@ -40,9 +40,30 @@ class PageTest:
         self._cbg.add_item('cb4', 'Checkbox 4', False)
         self._sg.add(self._cbg)
         self._dlg = DialogBox('dlg', 'My Dialog', DialogTypes.MODAL_CONFIRM, socketio)
+        self.menu = Menu('menu', socketio, menu_type=MenuTypes.HORIZONTAL)
+        self.m_menu_itm1 = MenuItem('m_menu_itm1', 'Item1', socketio,
+                                    menu_clicked_callback=self.menu_clicked, icon='ui-icon-disk')
+        self.m_menu_itm2 = MenuItem('m_menu_itm2', 'Item2', socketio,
+                                    menu_clicked_callback=self.menu_clicked, icon='ui-icon-zoomin')
+        self.m_submenu_itm3 = SubMenu('m_submenu_itm3', 'Item3', socketio)
+        self.m_menu_itm4 = MenuItem('m_menu_itm4', 'Item4', socketio, menu_clicked_callback=self.menu_clicked)
+        self.sm_menu_itm1 = MenuItem('sm_menu_itm1', 'SubItem1', socketio,
+                                     menu_clicked_callback=self.menu_clicked, icon='ui-icon-play')
+        self.sm_menu_itm2 = MenuItem('sm_menu_itm2', 'SubItem2', socketio,
+                                     menu_clicked_callback=self.menu_clicked, icon='ui-icon-stop')
+        self.m_submenu_itm3.add(self.sm_menu_itm1)
+        self.m_submenu_itm3.add(self.sm_menu_itm2)
+        self.menu.add(self.m_menu_itm1)
+        self.menu.add(self.m_menu_itm2)
+        self.menu.add(self.m_submenu_itm3)
+        self.menu.add(self.m_menu_itm4)
+        self._pg.add(self.menu)
         self._pg.add(self._sg)
         self._pg.add(self._dlg)
         return self._pg.render()
+
+    def menu_clicked(self, source, props):
+        print("Menu clicked: " + source + ", Props: " + str(props))
 
     def cbg_clicked(self, source, props):
         print("CBG Clicked: " + source + ", Props: " + str(props))

@@ -1151,7 +1151,7 @@ class DialogBox(Widget, Namespace):
         return self._widget_content
 
 
-class MenuItem(Widget):
+class MenuItem(Widget, Namespace):
     """A menuitem represents the action item that is clickable or
     executable. A menuitem can have label, icon or submenus.
     Seperator's are built using dash or space as item
@@ -1159,199 +1159,144 @@ class MenuItem(Widget):
     _title = None
     _icon = None
     _menu_clicked_callback = None
-    _app = None
+    _socket_io = None
+    _namespace = None
     _disabled = None
 
-    def __init__(self, name, title, icon=None, desc=None, prop=None, style=None, attr=None,
-                 menu_clicked_callback=None, app=None, css_cls=None, disabled=None):
+    def __init__(self, name, title, socket_io, icon=None, desc=None, prop=None, style=None, attr=None,
+                 menu_clicked_callback=None, css_cls=None, disabled=None):
         """Default constructor of the Menuitem widget class
 
             Args:
                 name (string): name of the widget for internal use
                 title (string): title of the Checkbox button group
+                socket_io (SocketIO): An instance of the SocketIO class
                 icon (string, optional): whether to show icon or not, default is None
                 desc (string, optional): description of the button widget
                 prop (dict, optional): dict of objects to be added as properties of widget
                 style (dict, optional): dict of objects to be added as style elements to HTML tag
                 attr (list, optional): list of objects to be added as attributes of HTML tag
                 menu_clicked_callback (function, optional): A function to be called back on onclick event
-                app (Flask, optional): An instance of Flask class
                 css_cls (list, optional): An list of CSS class names to be added to current widget
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr, css_cls=css_cls)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_menuItem").replace(".", "_"))
+        self._namespace = '/' + str(__name__ + "_" + name + "_menuItem").replace(".", "_")
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
         self._title = title
         self._icon = icon
         self._menu_clicked_callback = menu_clicked_callback
-        self._app = app
         self._disabled = disabled
         if disabled:
             self.add_property('class', 'ui-state-disabled')
-        self._attach_onclick()
 
-    def set_disabled(self, val):
-        """Sets the menu item enabled or disabled based on the value passed as parameter
+    @property
+    def namespace(self):
+        return self._namespace
 
-            Args:
-                val (boolean): True or False to widget enabled or disabled
-        """
-        self._disabled = val
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
 
-    def get_disabled(self):
-        """Gets the state of MenuItem widget i.e., whether it is enabled or disabled
-
-            Returns:
-                boolean: True or False
-        """
+    @property
+    def disabled(self):
+        """Gets the state of MenuItem widget i.e., whether it is enabled or disabled"""
         return self._disabled
 
-    def set_title(self, val):
-        """Sets the title of the MenuItem widget as the value passed as parameter
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties("disabled", val)
 
-            Args:
-                val (string): title that needs to be set on MenuItem
-        """
-        self._title = val
-
-    def get_title(self):
-        """Returns the value of the title of current MenuItem
-
-            Returns:
-                string: The title of the MenuItem widget
-        """
+    @property
+    def title(self):
+        """Returns the value of the title of current MenuItem"""
         return self._title
 
-    def set_icon(self, val):
-        """Sets the icon to be used on the MenuItem. The passed value should be a valid
-        jquery-ui icon style class e.g., ui-icon-stop
+    @title.setter
+    def title(self, val):
+        self._title = val
+        self._sync_properties("title", val)
 
-            Args:
-                val (string): A valid jquery-ui icon class name
-        """
-        self._icon = val
-
-    def get_icon(self):
-        """Returns the name of the jquery-ui icon style class used for current widget
-
-            Returns:
-                string: Jquey-UI icon style class name
-        """
+    @property
+    def icon(self):
+        """Returns the name of the jquery-ui icon style class used for current widget"""
         return self._icon
 
-    def _attach_onclick(self):
-        if self._app is not None and self._menu_clicked_callback is not None:
-            url = str(__name__ + "_" + self._name).replace('.', '_')
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
-            ajax = """$.ajax({
-                                url: "/%s",
-                                dataType: "json",
-                                data: {
-                                    "name": "%s",
-                                    "title": "%s",
-                                    "disabled": %s
-                                    },
-                                type: "get",
-                                success: function(status){alertify.success("Action completed successfully!");},
-                                error: function(err_status){
-                                                alertify.error("Status Code: "
-                                                + err_status.status + "<br />" + "Error Message:"
-                                                + err_status.statusText);}
-                                                });
-            """ % (url, self._name, self._title, "true" if self._disabled else "false")
-            self.add_property('onclick', ajax)
-            if not found:
-                self._app.add_url_rule("/" + url, url, self._process_menu_clicked_callback)
+    @icon.setter
+    def icon(self, val):
+        self._icon = val
+        self._sync_properties("icon", val)
 
-    def on_menu_clicked(self, menu_clicked_callback, app=None):
+    def _attach_script(self):
+        script = """
+                    <script>
+                        $(function(){
+                            var selector = $('#%s');
+                            var socket = io('%s');
+
+                            selector.on("click", function(event){
+                                var props = {
+                                    'disabled': selector.hasClass('ui-state-disabled'),
+                                    'icon': '',
+                                    'title': selector.children('div').text(),
+                                };
+                                socket.emit("fire_click_event", props);
+                            });
+
+                            socket.on('sync_properties_%s', function(props){
+                                if(props['cmd'] == "title" && props["value"] != undefined && props["value"] != ""){
+                                    selector.text(props["value"]);
+                                }
+
+                                if(props["cmd"] == "disabled" && props["value"]){
+                                    if(!selector.hasClass('ui-state-disabled')){
+                                            selector.addClass('ui-state-disabled');
+                                    }
+                                } else if(props["cmd"] == "disabled" && !props["value"]) {
+                                    if(selector.hasClass('ui-state-disabled')){
+                                        selector.removeClass('ui-state-disabled');
+                                    }
+                                }
+
+                                if(props["cmd"] == "icon" && props["value"] != ""){
+                                    icon_selector = $('#%s_icon');
+                                    if(icon_selector != undefined){
+                                        if(!icon_selector.hasClass(props["value"])){
+                                            icon_selector.addClass(props["value"]);
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    </script>
+                    """ % (self._name, self._namespace, self._name, self._name)
+        return script
+
+    def on_menu_clicked(self, menu_clicked_callback):
         """Adds an event handler to on_click event of the widget. The event handler can be
-        a method or function. If no app is associated with current widget, it should be
-        linked by passing `app` param
+        a method or function.
 
             Args:
                 menu_clicked_callback (function): The function/callback that will be
                                                     called for this event
-                app (Flask, optional): An instance of Flask app, though this param is optional, it is
-                                        required to have events work properly. So, it should be passed
-                                        during creation of widget in the constructor or should be
-                                        passed in this function
         """
-        if app is not None:
-            self._app = app
         self._menu_clicked_callback = menu_clicked_callback
-        self._attach_onclick()
 
-    def _process_menu_clicked_callback(self):
-        if request.args.__len__() > 0:
-            tit = request.args['title']
+    def on_fire_click_event(self, props):
+        if props.__len__() > 0:
+            tit = props['title']
             if tit is not None:
                 self._title = tit
-            dsbld = request.args['disabled']
+            dsbld = props['disabled']
             if dsbld is not None:
-                self._disabled = True if dsbld == "true" else False
+                self._disabled = dsbld
         if self._menu_clicked_callback is not None:
-            return json.dumps({'result': self._menu_clicked_callback()})
-        return json.dumps({'result': ''})
+            self._menu_clicked_callback(self._name, props)
 
-    def _sync_properties(self):
-        return json.dumps({'title': self._title,
-                           'disabled': self._disabled if self._disabled is not None else False,
-                           'icon': self._icon
-                           })
-
-    def _attach_polling(self):
-        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
-        script = """<script>
-                        (function %s_poll(){
-                            setTimeout(function(){
-                                $.ajax({
-                                    url: "/%s",
-                                    success: function(props){
-                                        selector = $('#%s');
-                                        //Sets the title of MenuItem
-                                        //selector.text(props.title);
-                                        //Set disable or enable
-                                        if(props.disabled){
-                                            if(!selector.hasClass('ui-state-disabled')){
-                                                selector.addClass('ui-state-disabled');
-                                            }
-                                        } else {
-                                            if(selector.hasClass('ui-state-disabled')){
-                                                selector.removeClass('ui-state-disabled');
-                                            }
-                                        }
-                                        if(props.icon != undefined && props.icon != ""){
-                                            icon_selector = $('#%s_icon');
-                                            if(icon_selector != undefined){
-                                                if(!icon_selector.hasClass(props.icon)){
-                                                    icon_selector.addClass(props.icon)
-                                                }
-                                            }
-                                        }
-
-                                        //poll again
-                                        %s_poll();
-                                    },
-                                    error: function(err_status){
-                                                                alertify.error("Status Code: "
-                                                                + err_status.status + "<br />" + "Error Message:"
-                                                                + err_status.statusText);
-                                                            },
-                                    dataType: "json"
-                                });
-                            },500);
-                        })();
-                    </script>
-                """ % (url, url, self._name, self._name, url)
-        found = False
-        for rule in self._app.url_map.iter_rules():
-            if rule.endpoint == url:
-                found = True
-        if not found:
-            self._app.add_url_rule('/' + url, url,
-                                   self._sync_properties)
-        return script
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value})
 
     def render(self):
         """Renders the menuitem and returns the content to parent widget
@@ -1364,7 +1309,7 @@ class MenuItem(Widget):
                        + "' class='ui-icon " + self._icon + "'></span>"\
                        + self._title + "</div>"
         content += self._render_post_content('li')
-        self._widget_content = content + "\n" + self._attach_polling()
+        self._widget_content = content + "\n" + self._attach_script()
         return self._widget_content
 
 
@@ -1373,24 +1318,27 @@ class SubMenu(MenuItem):
     dropdown panel.
     """
 
-    def __init__(self, name, title, icon=None, desc=None, prop=None, style=None, attr=None,
-                 menu_clicked_callback=None, app=None, css_cls=None):
+    def __init__(self, name, title, socket_io, icon=None, desc=None, prop=None, style=None, attr=None,
+                 menu_clicked_callback=None, css_cls=None):
         """Default constructor of the Menuitem widget class
 
             Args:
                 name (string): name of the widget for internal use
                 title (string): title of the Checkbox button group
                 icon (string, optional): whether to show icon or not, default is None
+                socket_io (SocketIO): An instance of SocketIO class
                 desc (string, optional): description of the button widget
                 prop (dict, optional): dict of objects to be added as properties of widget
                 style (dict, optional): dict of objects to be added as style elements to HTML tag
                 attr (list, optional): list of objects to be added as attributes of HTML tag
                 menu_clicked_callback (function, optional): A function to be called back on onclick event
-                app (Flask, optional): An instance of Flask class
                 css_cls (list, optional): An list of CSS class names to be added to current widget
         """
-        MenuItem.__init__(self, name, title, icon=icon, desc=desc, prop=prop, style=style, attr=attr,
-                          menu_clicked_callback=menu_clicked_callback, app=app, css_cls=css_cls)
+        MenuItem.__init__(self, name, title, socket_io, icon=icon, desc=desc, prop=prop, style=style, attr=attr,
+                          menu_clicked_callback=menu_clicked_callback, css_cls=css_cls)
+        self._namespace = '/' + str(__name__ + "_" + name + "_submenu").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
 
     def render(self):
         content = self._render_pre_content('li')
@@ -1409,7 +1357,7 @@ class MenuTypes(Enum):
     HORIZONTAL = 1
 
 
-class Menu(Widget):
+class Menu(Widget, Namespace):
     """The root of the menu used to layout menu in the desired position and uses various options to
     customize the menu. This is the class that will init the menu system and renders to its parent
     widget
@@ -1417,24 +1365,29 @@ class Menu(Widget):
 
     _app = None
     _menu_type = None
+    _socket_io = None
+    _namespace = None
 
-    def __init__(self, name, menu_type=None, desc=None, prop=None, style=None, attr=None,
-                 app=None, css_cls=None):
+    def __init__(self, name, socket_io, menu_type=None, desc=None, prop=None, style=None, attr=None,
+                 css_cls=None):
         """Default constructor of the Menu widget class
 
             Args:
                 name (string): name of the widget for internal use
                 menu_type (MenuTypes): Specify which menu type to render, default is vertical
+                socket_io (SocketIO): An instance of SocketIO class
                 desc (string, optional): description of the button widget
                 prop (dict, optional): dict of objects to be added as properties of widget
                 style (dict, optional): dict of objects to be added as style elements to HTML tag
                 attr (list, optional): list of objects to be added as attributes of HTML tag
-                app (Flask, optional): An instance of Flask class
                 css_cls (list, optional): An list of CSS class names to be added to current widget
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
-        self._app = app
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_menu").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + name + "_menu").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
         if menu_type is None:
             self._menu_type = MenuTypes.VERTICAL
         else:
