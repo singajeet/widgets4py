@@ -2,7 +2,7 @@ from widgets4py.base import Page
 from flask import Flask
 from flask_socketio import SocketIO
 from widgets4py.websocket.jquery.ui import Section, Accordion, RadioButtonGroup, CheckBoxGroup, DialogBox
-from widgets4py.websocket.jquery.ui import DialogTypes, MenuItem, Menu, SubMenu, MenuTypes
+from widgets4py.websocket.jquery.ui import DialogTypes, MenuItem, Menu, SubMenu, MenuTypes, Slider
 from widgets4py.layouts import SimpleGridLayout
 
 
@@ -58,9 +58,14 @@ class PageTest:
         self.menu.add(self.m_submenu_itm3)
         self.menu.add(self.m_menu_itm4)
         self._pg.add(self.menu)
+        self._slide = Slider('slide', socketio, onclick_callback=self.slider_clicked)
+        self._sg.add(self._slide)
         self._pg.add(self._sg)
         self._pg.add(self._dlg)
         return self._pg.render()
+
+    def slider_clicked(self, source, props):
+        print("Slider Clicked: " + source + ", Props: " + str(props))
 
     def menu_clicked(self, source, props):
         print("Menu clicked: " + source + ", Props: " + str(props))

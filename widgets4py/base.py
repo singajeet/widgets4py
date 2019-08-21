@@ -4,6 +4,7 @@ from Widget class.
 Author: Ajeet Singh
 Date: 06/24/2019
 """
+from enum import Enum
 
 
 class Widget:
@@ -328,6 +329,12 @@ class Widget:
         return self._widget_content
 
 
+class DeviceTypes(Enum):
+    MOBILE = 0
+    DESKTOP = 1
+    ALL = 2
+
+
 class Page(Widget):
     """The page class represents an HTML page and the root container that will host all
     other widgets at its children. All the widgets or their parent widgets needs to be
@@ -350,8 +357,9 @@ class Page(Widget):
     _title = "Home"
     _jquery_css = True
     _jquery_js = True
+    _device_type = None
 
-    def __init__(self, name, title, desc=None, j_cc=True, j_js=True, prop=None,
+    def __init__(self, name, title, device_type=None, desc=None, j_cc=True, j_js=True, prop=None,
                  style=None, attr=None, css_cls=None):
         """The default constructor have the following arguments...
 
@@ -361,6 +369,8 @@ class Page(Widget):
                     Name of the widget to be used internally by the framework
                 title : str
                     Title of the page to be rendered using this class
+                device_type : DeviceTypes
+                    A value from the DeviceTypes Enum class
                 desc : str, optional
                     Description of the widget to be shown in tooltip
                 prop : dict, optionl
@@ -393,6 +403,10 @@ class Page(Widget):
         self._title = title
         self._jquery_css = j_cc
         self._jquery_js = j_js
+        if device_type is None:
+            self._device_type = DeviceTypes.DESKTOP
+        else:
+            self._device_type = device_type
         # init sections
         self._style_sections = []
         self._script_sections = []
@@ -405,7 +419,8 @@ class Page(Widget):
             self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/alertify.min.css')
             self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/themes/bootstrap.min.css')
             self.add_css('http://w2ui.com/src/w2ui-1.5.rc1.min.css')
-            self.add_css('http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css')
+            if self._device_type == DeviceTypes.MOBILE or self._device_type == DeviceTypes.ALL:
+                self.add_css('http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css')
             self.add_css('/static/listview/css/ui.listview.css')
         if self._jquery_js:
             self.add_js('https://code.jquery.com/jquery-3.4.1.min.js')
@@ -415,7 +430,8 @@ class Page(Widget):
             self.add_js('http://code.jquery.com/jquery-2.1.1.min.js')
             self.add_js('http://w2ui.com/src/w2ui-1.5.rc1.min.js')
             self.add_js('https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.slim.js')
-            self.add_js('http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js')
+            if self._device_type == DeviceTypes.MOBILE or self._device_type == DeviceTypes.ALL:
+                self.add_js('http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js')
             self.add_js('/static/listview/js/jquery.ui.listview.js')
 
     def add_js(self, path):

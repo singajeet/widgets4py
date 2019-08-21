@@ -434,15 +434,15 @@ class RadioButtonGroup(Widget, Namespace):
                                 }
                             });
 
-                            selector_lbl.on("click", function(event){
-                                    checkbox = event.currentTarget.nextSibling;
+                            selector.on("click", function(event){
+                                    checkbox = event.currentTarget;
                                     var checked = {}
                                     selector.each(function(index, value){
                                         var id = $(this).attr("id");
                                         if(id != checkbox.id){
-                                            checked[id] = false; //$(this).prop("checked");
+                                            checked[id] = $(this).prop("checked");
                                         } else {
-                                            checked[id] = !checkbox.checked;
+                                            checked[id] = checkbox.checked;
                                         }
                                     });
                                     var disabled = {}
@@ -684,15 +684,15 @@ class CheckBoxGroup(Widget, Namespace):
                                 }
                             });
 
-                            selector_lbl.on("click", function(event){
-                                checkbox = event.currentTarget.nextSibling;
+                            selector.on("click", function(event){
+                                checkbox = event.currentTarget;
                                 var checked = {}
                                 selector.each(function(index, value){
                                     var id = $(this).attr("id");
                                     if(id != checkbox.id){
                                         checked[id] = $(this).prop("checked");
                                     } else {
-                                        checked[id] = !checkbox.checked;
+                                        checked[id] = checkbox.checked;
                                     }
                                 });
                                 var disabled = {}
@@ -749,7 +749,7 @@ class CheckBoxGroup(Widget, Namespace):
                 + (" checked" if is_sel else "")\
                 + " name='" + name + "' />"
             content += checkbox + "\n" + label
-            content += "\n</fieldset>"
+        content += "\n</fieldset>"
         self._widget_content = self._attach_script() + "\n" + content
         return self._widget_content
 
@@ -1057,9 +1057,9 @@ class DialogBox(Widget, Namespace):
                                     if(cmd === 'open'){
                                         var isOpen = selector.dialog('isOpen');
 
-                                        //if(!isOpen){
+                                        if(!isOpen){
                                             selector.dialog('open');
-                                        //}
+                                        }
                                     } else if(cmd === 'close'){
                                         var isOpen = selector.dialog('isOpen');
                                         if(isOpen){
@@ -1108,9 +1108,9 @@ class DialogBox(Widget, Namespace):
                                     if(cmd === 'open'){
                                         var isOpen = selector.dialog('isOpen');
 
-                                        //if(!isOpen){
+                                        if(!isOpen){
                                             selector.dialog('open');
-                                        //}
+                                        }
                                     } else if(cmd === 'close'){
                                         var isOpen = selector.dialog('isOpen');
                                         if(isOpen){
@@ -1468,7 +1468,7 @@ class Menu(Widget, Namespace):
         return self._widget_content
 
 
-class Slider(Widget):
+class Slider(Widget, Namespace):
     """Slider class to render an slider widget on a page. This class provides
     the callback functionality whenever value is changed in the slider through
     mouse drag operation. The latest value of slider can be captured in the
@@ -1482,15 +1482,17 @@ class Slider(Widget):
     _disabled = None
     _orientation = None
     _max = None
-    _app = None
+    _namespace = None
+    _socket_io = None
 
-    def __init__(self, name, value=None, orientation=None, max=None, desc=None, prop=None, style=None, attr=None,
-                 disabled=False, onclick_callback=None, slider_changed_callback=None, app=None, css_cls=None):
+    def __init__(self, name, socket_io, value=None, orientation=None, max=None, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, onclick_callback=None, slider_changed_callback=None, css_cls=None):
         """Default constructor of the Label widget class
 
             Args:
                 name (string): name of the widget for internal use
                 title (string): title of the button widget
+                socket_io (SocketIO): An instance of SocketIO class
                 value (int): Initial value of the slider
                 orientation (string): Horizontal or Vertical
                 max (int): Maximum value of the slider
@@ -1502,16 +1504,18 @@ class Slider(Widget):
                 required (Boolean, optional): Widget is required to be filled-in or not
                 onclick_callback (function, optional): A function to be called back on onclick event
                 slider_changed_callback (function, optional): Called whenever value of slider changes
-                app (Flask, optional): An instance of Flask class
                 css_cls (list, optional): An list of CSS class names to be added to current widget
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_slider").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + name + "_slider").replace('.', '_')
         if value is None:
             self._value = 0
         else:
             self._value = value
-        self._app = app
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
         self._slider_changed_callback = slider_changed_callback
         self._onclick_callback = onclick_callback
         self._disabled = disabled
@@ -1523,178 +1527,94 @@ class Slider(Widget):
             self._max = 100
         else:
             self._max = max
-        self.add_property('onclick', self._attach_onclick())
 
-    def _attach_onclick(self):
-        ajax = ""
-        if self._app is not None and self._onclick_callback is not None:
-            url = str(__name__ + "_" + self._name).replace('.', '_')
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
-            ajax = """
-                var val = $("#%s").slider('value')
-                $.ajax({
-                    url: "/%s",
-                    dataType: "json",
-                    data: {"value":  val},
-                    type: "get",
-                    success: function(status){alertify.success("Action completed successfully!");},
-                    error: function(err_status){
-                                                alertify.error("Status Code: "
-                                                + err_status.status + "<br />" + "Error Message:"
-                                                + err_status.statusText);
-                                            }
-                });
-            """ % (self._name, url)
-            if not found:
-                self._app.add_url_rule('/' + url, url,
-                                       self._process_onclick_callback)
-        return ajax
+    @property
+    def namespace(self):
+        return self._namespace
 
-    def _process_onclick_callback(self):
-        if request.args.__len__() > 0:
-            val = request.args['value']
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    def _attach_script(self):
+        script = """
+                    <script>
+                        $(function(){
+                            var selector = $('#%s');
+                            var socket = io('%s');
+
+                            selector.slider();
+
+                            selector.on("click", function(event){
+                                var prop = {
+                                    'value': selector.slider('value')
+                                };
+                                socket.emit('fire_click_event', prop);
+                            });
+
+                            socket.on('sync_properties_%s', function(props){
+                                var cmd = props['cmd'];
+                                if(cmd === 'value'){
+                                    selector.slider('value', props['value']);
+                                }
+                            });
+                        });
+                    </script>
+                """ % (self._name, self._namespace, self._name)
+        return script
+
+    def on_fire_click_event(self, props):
+        if props.__len__() > 0:
+            val = props['value']
             if val is not None:
                 self._value = val
-        return json.dumps({"result": self._onclick_callback()})
+        if self._onclick_callback is not None:
+            self._onclick_callback(self._name, props)
 
-    def on_click(self, onclick_callback, app=None):
+    def on_slider_clicked(self, onclick_callback):
         """Adds an event handler to on_click event of the widget. The event handler can be
-        a method or function. If no app is associated with current widget, it should be
-        linked by passing `app` param
+        a method or function.
 
             Args:
                 onclick_callback (function): The function/callback that will be called for this event
-                app (Flask, optional): An instance of Flask app, though this param is optional, it is
-                                        required to have events work properly. So, it should be passed
-                                        during creation of widget in the constructor or should be
-                                        passed in this function
         """
-        if app is not None:
-            self._app = app
         self._onclick_callback = onclick_callback
-        self.add_property('onclick', self._attach_onclick())
 
-    def set_value(self, val):
-        """Sets the initial value of the slider
-
-            Args:
-                val (int): An initial value of the slider
-        """
-        self._value = val
-
-    def get_value(self):
-        """Returns the current value of the slider
-
-            Returns:
-                int: current value of the slider
-        """
+    @property
+    def value(self):
+        """Returns the current value of the slider"""
         return self._value
 
-    def set_orientation(self, val):
-        """Sets the orientation of the slider either Horizontally or vertically
+    @value.setter
+    def value(self, val):
+        self._value = val
 
-            Args:
-                val (string): valid values are "horizontal" and "vartical"
-        """
-        self._orientation = val
-
-    def get_orientation(self):
-        """Returns the value of orientation of the slider
-
-            Returns:
-                string: horizontal or vertical
-        """
+    @property
+    def orientation(self):
+        """Returns the value of orientation of the slider"""
         return self._orientation
 
-    def set_max(self, val):
-        """Sets the maximum value of the slider till it can reach
+    @orientation.setter
+    def orientation(self, val):
+        self._orientation = val
 
-            Args:
-                val (int): Maximum value of the slider
-        """
-        self._max = val
-
-    def get_max(self):
-        """Returns the maximum value of the slider
-
-            Returns:
-                int: Maximum value of slider
-        """
+    @property
+    def max(self):
+        """Returns the maximum value of the slider"""
         return self._max
 
-    def set_disabled(self, val):
-        """Sets the slider widget to disabled mode
+    @max.setter
+    def max(self, val):
+        self._max = val
 
-            Args:
-                val (boolean): true or false as required
-        """
-        self._disabled = val
-
-    def get_disabled(self):
-        """Returns the disabled state of the slider widget
-
-            Returns:
-                boolean: true or false
-        """
+    @property
+    def disabled(self):
+        """Returns the disabled state of the slider widget"""
         return self._disabled
 
-    def _attach_script(self):
-        script = ""
-        if self._app is not None:
-            url = str(__name__ + "_" + self._name + "_slider_changed").replace('.', '_')
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
-            script = """<script>
-                        $(function(){
-                            var handle = $('#%s_handle');
-                            $('#%s').slider({
-                                orientation: "%s",
-                                max: %d,
-                                value: %d,
-                                change: refreshValue,
-                                create: function() {
-                                    handle.text( $( this ).slider( "value" ) );
-                                },
-                                slide: function( event, ui ) {
-                                    handle.text( ui.value );
-                                }
-                             });
-                            function refreshValue(){
-                                var val = $("#%s").slider("value");
-                                $.ajax({
-                                    url: "/%s",
-                                    type: "get",
-                                    data: {"value": val},
-                                    dataType: "json",
-                                    success: function(status){alertify("Action completed successfully!");},
-                                    error: function(err_status){
-                                                alertify.error("Status Code: "
-                                                + err_status.status + "<br />" + "Error Message:"
-                                                + err_status.statusText);
-                                    }
-                                });
-                            }
-                        });
-                    </script>
-                """ % (self._name, self._name, self._orientation, self._max, self._value, self._name, url)
-            if not found:
-                self._app.add_url_rule('/' + url, url,
-                                       self._process_slider_changed_callback)
-        return script
-
-    def _process_slider_changed_callback(self):
-        if request.args.__len__() > 0:
-            val = request.args['value']
-            if val is not None:
-                self._value = val
-        if self._slider_changed_callback is not None:
-            return json.dumps({'result': self._slider_changed_callback()})
-        return json.dumps({'result': ''})
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
 
     def _attach_css(self):
         css = """<style>
@@ -1710,60 +1630,8 @@ class Slider(Widget):
             """ % (self._name)
         return css
 
-    def _sync_properties(self):
-        return json.dumps({'value': self._value,
-                           'orientation': self._orientation,
-                           'max': self._max,
-                           'disabled': self._disabled
-                           })
-
-    def _attach_polling(self):
-        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
-        script = """<script>
-                        (function %s_poll(){
-                            setTimeout(function(){
-                                $.ajax({
-                                    url: "/%s",
-                                    success: function(props){
-                                        selector = $('#%s');
-                                        //fill up the values
-                                        if(props.value != undefined){
-                                            var existing_val = selector.slider('option', 'value');
-                                            if(existing_val != props.value){
-                                                selector.slider('option', 'value', props.value);
-                                            }
-                                        }
-                                        if(props.max != undefined){
-                                            selector.slider('option', 'max', props.max);
-                                        }
-                                        if(props.orientation != undefined){
-                                            selector.slider('option', 'orientation', props.orientation);
-                                        }
-                                        if(props.disabled != undefined){
-                                            selector.slider('option', 'disabled', props.disabled);
-                                        }
-                                        //poll again
-                                        %s_poll();
-                                    },
-                                    error: function(err_status){
-                                                                alertify.error("Status Code: "
-                                                                + err_status.status + "<br />" + "Error Message:"
-                                                                + err_status.statusText);
-                                                            },
-                                    dataType: "json"
-                                });
-                            },500);
-                        })();
-                    </script>
-                """ % (url, url, self._name, url)
-        found = False
-        for rule in self._app.url_map.iter_rules():
-            if rule.endpoint == url:
-                found = True
-        if not found:
-            self._app.add_url_rule('/' + url, url,
-                                   self._sync_properties)
-        return script
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value})
 
     def render(self):
         """Renders the slider widget under parent widget
@@ -1772,7 +1640,7 @@ class Slider(Widget):
         content += self._render_pre_content('div')
         content += "<div id='" + self._name + "_handle' class='ui-slider-handle'></div>"
         content += self._render_post_content('div')
-        self._widget_content = content + "\n" + self._attach_script() + "\n" + self._attach_polling()
+        self._widget_content = content + "\n" + self._attach_script()
         return self._widget_content
 
 
