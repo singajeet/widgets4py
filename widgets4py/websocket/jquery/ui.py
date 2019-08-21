@@ -1478,7 +1478,7 @@ class Slider(Widget, Namespace):
     _value = None
     _app = None
     _onclick_callback = None
-    _slider_changed_callback = None
+    _onchange_callback = None
     _disabled = None
     _orientation = None
     _max = None
@@ -1486,7 +1486,7 @@ class Slider(Widget, Namespace):
     _socket_io = None
 
     def __init__(self, name, socket_io, value=None, orientation=None, max=None, desc=None, prop=None, style=None, attr=None,
-                 disabled=False, onclick_callback=None, slider_changed_callback=None, css_cls=None):
+                 disabled=False, onclick_callback=None, onchange_callback=None, css_cls=None):
         """Default constructor of the Label widget class
 
             Args:
@@ -1516,7 +1516,7 @@ class Slider(Widget, Namespace):
             self._value = value
         self._socket_io = socket_io
         self._socket_io.on_namespace(self)
-        self._slider_changed_callback = slider_changed_callback
+        self._onchange_callback = onchange_callback
         self._onclick_callback = onclick_callback
         self._disabled = disabled
         if orientation is None:
@@ -1552,6 +1552,13 @@ class Slider(Widget, Namespace):
                                 socket.emit('fire_click_event', prop);
                             });
 
+                            selector.on("slidechange", function(event){
+                                var props = {
+                                    'value': selector.slider('value')
+                                };
+                                socket.emit('fire_change_event', props);
+                            });
+
                             socket.on('sync_properties_%s', function(props){
                                 var cmd = props['cmd'];
                                 if(cmd === 'value'){
@@ -1571,6 +1578,14 @@ class Slider(Widget, Namespace):
         if self._onclick_callback is not None:
             self._onclick_callback(self._name, props)
 
+    def on_fire_change_event(self, props):
+        if props.__len__() > 0:
+            val = props['value']
+            if val is not None:
+                self._value = val
+        if self._onchange_callback is not None:
+            self._onchange_callback(self._name, props)
+
     def on_slider_clicked(self, onclick_callback):
         """Adds an event handler to on_click event of the widget. The event handler can be
         a method or function.
@@ -1579,6 +1594,15 @@ class Slider(Widget, Namespace):
                 onclick_callback (function): The function/callback that will be called for this event
         """
         self._onclick_callback = onclick_callback
+
+    def on_slider_changed(self, onchange_callback):
+        """Adds an event handler to on_click event of the widget. The event handler can be
+        a method or function.
+
+            Args:
+                onclick_callback (function): The function/callback that will be called for this event
+        """
+        self._onchange_callback = onchange_callback
 
     @property
     def value(self):

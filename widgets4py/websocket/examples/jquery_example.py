@@ -58,7 +58,7 @@ class PageTest:
         self.menu.add(self.m_submenu_itm3)
         self.menu.add(self.m_menu_itm4)
         self._pg.add(self.menu)
-        self._slide = Slider('slide', socketio, onclick_callback=self.slider_clicked)
+        self._slide = Slider('slide', socketio, onclick_callback=self.slider_clicked, onchange_callback=self.slider_clicked)
         self._sg.add(self._slide)
         self._pg.add(self._sg)
         self._pg.add(self._dlg)
