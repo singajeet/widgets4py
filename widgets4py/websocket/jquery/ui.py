@@ -159,6 +159,10 @@ class Accordion(Widget, Namespace):
     _fill_space = None
     _namespace = None
     _socket_io = None
+    _active = None
+    _animate = None
+    _event_to_toggle = None
+    _height_style = None
 
     def __init__(self, name, socket_io, collapsible=False, desc=None, prop=None, style=None,
                  attr=None, disabled=False, required=False, onclick_callback=None, css_cls=None,
@@ -198,6 +202,24 @@ class Accordion(Widget, Namespace):
         self._fill_space = fill_space
 
     @property
+    def active(self):
+        return self._active
+
+    @active.setter
+    def active(self, val):
+        self._active = val
+        self._sync_properties('active', val)
+
+    @property
+    def animate(self):
+        return self._animate
+
+    @animate.setter
+    def animate(self, val):
+        self._animate = val
+        self._sync_properties('animate', val)
+
+    @property
     def namespace(self):
         return self._namespace
 
@@ -213,15 +235,48 @@ class Accordion(Widget, Namespace):
     @collapsible.setter
     def collapsible(self, val):
         self._collapsible = val
+        self._sync_properties('collapsible', val)
 
     @property
-    def icon(self):
-        """Returns JavaScript `dict` of CSS classes related to icons of sections"""
-        return self._icon
+    def disabled(self):
+        return self._disabled
 
-    @icon.setter
-    def icon(self, val):
-        self._icon = val
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
+
+    @property
+    def event_to_toggle(self):
+        return self._event_to_toggle
+
+    @event_to_toggle.setter
+    def event_to_toggle(self, val):
+        self._event_to_toggle = val
+        self._sync_properties('event', val)
+
+    @property
+    def height_style(self):
+        return self._height_style
+
+    @height_style.setter
+    def height_style(self, val):
+        self._height_style = val
+        self._sync_properties('height_style', val)
+
+    @property
+    def icons(self):
+        """Returns JavaScript `dict` of CSS classes related to icons of sections
+
+            Example:
+                { "header": "ui-icon-plus", "activeHeader": "ui-icon-minus" }
+        """
+        return self._icons
+
+    @icons.setter
+    def icons(self, val):
+        self._icons = val
+        self._sync_properties('icons', val)
 
     @property
     def fill_space(self):
@@ -233,6 +288,10 @@ class Accordion(Widget, Namespace):
     def fill_space(self, val):
         self._fill_space = val
 
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
+
     def render(self):
         """Method to render the content of Accordion and its child widget's
         i.e., `Section`
@@ -243,15 +302,22 @@ class Accordion(Widget, Namespace):
         content += self._render_post_content('div')
         content += """<script>
                         $(function(){
-                            $("#%s").accordion({
+                            var selector = $("#%s");
+                            var socket = io("%s");
+
+                            selector.accordion({
                                 collapsible: %s,
                                 icons: %s,
                                 heightStyle: "%s"
                             });
+
+                            socket.on('sync_properties_%s', function(props){
+                                selector.accordion("option", props['cmd'], props['value']);
+                            });
                         });
                         </script>
-                    """ % (self._name, "true" if self._collapsible else "false",
-                           self._icons, "fill" if self._fill_space else "")
+                    """ % (self._name, self._namespace, "true" if self._collapsible else "false",
+                           self._icons, "fill" if self._fill_space else "", self._name)
         self._widget_content = content
         return self._widget_content
 
@@ -775,7 +841,6 @@ class DialogBox(Widget, Namespace):
      It has a title bar and a content area, and can be moved, resized and closed with the 'x' icon by default.
      """
 
-    _title = None
     _namespace = None
     _socket_io = None
     _onok_pressed_callback = None
@@ -783,10 +848,26 @@ class DialogBox(Widget, Namespace):
     _disabled = None
     _command = None
     _dialog_type = None
-    _height = None
-    _width = None
     _onbefore_close_callback = None
     _is_dialog_open = None
+    _title = None
+    _height = None
+    _width = None
+    _append_to = None
+    _autoOpen = None
+    _buttons = None
+    _closeOnEscape = None
+    _closeText = None
+    _draggable = None
+    _hide = None
+    _maxHeight = None
+    _maxWidth = None
+    _minHeight = None
+    _minWidth = None
+    _modal = None
+    _position = None
+    _resizable = None
+    _show = None
 
     def __init__(self, name, title, dlg_type, socket_io, desc=None, prop=None, style=None, attr=None,
                  disabled=False, required=False, css_cls=None, height=400, width=350,
@@ -841,15 +922,6 @@ class DialogBox(Widget, Namespace):
         self._namespace = val
 
     @property
-    def title(self):
-        return self._title
-
-    @title.setter
-    def title(self, val):
-        self._title = val
-        self._sync_properties('title', val)
-
-    @property
     def disabled(self):
         return self._disabled
 
@@ -865,7 +937,15 @@ class DialogBox(Widget, Namespace):
     @dialog_type.setter
     def dialog_type(self, val):
         self._dialog_type = val
-        self._sync_properties('dialog_type', val)
+
+    @property
+    def title(self):
+        return self._title
+
+    @title.setter
+    def title(self, val):
+        self._title = val
+        self._sync_properties('title', val)
 
     @property
     def height(self):
@@ -893,6 +973,140 @@ class DialogBox(Widget, Namespace):
     def is_dialog_open(self, val):
         self._is_dialog_open = val
 
+    @property
+    def appendTo(self):
+        return self._appendTo
+
+    @appendTo.setter
+    def appendTo(self, val):
+        self._appendTo = val
+        self._sync_properties('appendTo', val)
+
+    @property
+    def autoOpen(self):
+        return self._autoOpen
+
+    @autoOpen.setter
+    def autoOpen(self, val):
+        self._autoOpen = val
+        self._sync_properties('autoOpen', val)
+
+    @property
+    def buttons(self):
+        return self._buttons
+
+    @buttons.setter
+    def buttons(self, val):
+        self._buttons = val
+        self._sync_properties('buttons', val)
+
+    @property
+    def closeOnEscape(self):
+        return self._closeOnEscape
+
+    @closeOnEscape.setter
+    def closeOnEscape(self, val):
+        self._closeOnEscape = val
+        self._sync_properties('closeOnEscape', val)
+
+    @property
+    def closeText(self):
+        return self._closeText
+
+    @closeText.setter
+    def closeText(self, val):
+        self._closeText = val
+        self._sync_properties('closeText', val)
+
+    @property
+    def draggable(self):
+        return self._draggable
+
+    @draggable.setter
+    def draggable(self, val):
+        self._draggable = val
+        self._sync_properties('draggable', val)
+
+    @property
+    def hide(self):
+        return self._hide
+
+    @hide.setter
+    def hide(self, val):
+        self._hide = val
+        self._sync_properties('hide', val)
+
+    @property
+    def maxHeight(self):
+        return self._maxHeight
+
+    @maxHeight.setter
+    def maxHeight(self, val):
+        self._maxHeight = val
+        self._sync_properties('maxHeight', val)
+
+    @property
+    def maxWidth(self):
+        return self._maxWidth
+
+    @maxWidth.setter
+    def maxWidth(self, val):
+        self._maxWidth = val
+        self._sync_properties('maxWidth', val)
+
+    @property
+    def minHeight(self):
+        return self._minHeight
+
+    @minHeight.setter
+    def minHeight(self, val):
+        self._minHeight = val
+        self._sync_properties('minHeight', val)
+
+    @property
+    def minWidth(self):
+        return self._minWidth
+
+    @minWidth.setter
+    def minWidth(self, val):
+        self._minWidth = val
+        self._sync_properties('minWidth', val)
+
+    @property
+    def modal(self):
+        return self._modal
+
+    @modal.setter
+    def modal(self, val):
+        self._modal = val
+        self._sync_properties('modal', val)
+
+    @property
+    def position(self):
+        return self._position
+
+    @position.setter
+    def position(self, val):
+        self._position = val
+        self._sync_properties('position', val)
+
+    @property
+    def resizable(self):
+        return self._resizable
+
+    @resizable.setter
+    def resizable(self, val):
+        self._resizable = val
+        self._sync_properties('resizable', val)
+
+    @property
+    def show(self):
+        return self._show
+
+    @show.setter
+    def show(self, val):
+        self._show = val
+        self._sync_properties('show', val)
 
     def open(self):
         """Opens the dialog box
@@ -980,8 +1194,8 @@ class DialogBox(Widget, Namespace):
                                         if(isOpen){
                                             selector.dialog('close');
                                         }
-                                    } else if(cmd === 'title'){
-                                        selector.dialog('option', 'title', value);
+                                    } else{
+                                        selector.dialog('option', cmd, value);
                                     }
                                 });
 
@@ -1015,8 +1229,8 @@ class DialogBox(Widget, Namespace):
                                         if(isOpen){
                                             selector.dialog('close');
                                         }
-                                    } else if(cmd === 'title'){
-                                        selector.dialog('option', 'title', value);
+                                    } else {
+                                        selector.dialog('option', cmd, value);
                                     }
                                 });
 
@@ -1065,8 +1279,8 @@ class DialogBox(Widget, Namespace):
                                         if(isOpen){
                                             selector.dialog('close');
                                         }
-                                    } else if(cmd === 'title'){
-                                        selector.dialog('option', 'title', value);
+                                    } else{
+                                        selector.dialog('option', cmd, value);
                                     }
                                 });
 
@@ -1116,8 +1330,8 @@ class DialogBox(Widget, Namespace):
                                         if(isOpen){
                                             selector.dialog('close');
                                         }
-                                    } else if(cmd === 'title'){
-                                        selector.dialog('option', 'title', value);
+                                    } else {
+                                        selector.dialog('option', cmd, value);
                                     }
                                 });
 
@@ -1362,11 +1576,15 @@ class Menu(Widget, Namespace):
     customize the menu. This is the class that will init the menu system and renders to its parent
     widget
     """
-
-    _app = None
     _menu_type = None
     _socket_io = None
     _namespace = None
+    _disabled = None
+    _icons = None
+    _items = None
+    _menus = None
+    _position = None
+    _role = None
 
     def __init__(self, name, socket_io, menu_type=None, desc=None, prop=None, style=None, attr=None,
                  css_cls=None):
@@ -1392,6 +1610,64 @@ class Menu(Widget, Namespace):
             self._menu_type = MenuTypes.VERTICAL
         else:
             self._menu_type = menu_type
+
+    @property
+    def disabled(self):
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
+
+    @property
+    def icons(self):
+        return self._icons
+
+    @icons.setter
+    def icons(self, val):
+        self._icons = val
+        self._sync_properties('icons', val)
+
+    @property
+    def items(self):
+        return self._items
+
+    @items.setter
+    def items(self, val):
+        self._items = val
+        self._sync_properties('items', val)
+
+    @property
+    def menus(self):
+        return self._menus
+
+    @menus.setter
+    def menus(self, val):
+        self._menus = val
+        self._sync_properties('menus', val)
+
+    @property
+    def position(self):
+        return self._position
+
+    @position.setter
+    def position(self, val):
+        self._position = val
+        self._sync_properties('position', val)
+
+    @property
+    def role(self):
+        return self._role
+
+    @role.setter
+    def role(self, val):
+        self._role = val
+        self._sync_properties('role', val)
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
 
     def _attach_css(self):
         css = ""
@@ -1433,15 +1709,26 @@ class Menu(Widget, Namespace):
         if self._menu_type == MenuTypes.VERTICAL:
             script = """<script>
                             $(function(){
-                                $('#%s').menu();
+                                var selector = $('#%s');
+                                var socket = io('%s');
+
+                                selector.menu();
+
+                                socket.on('sync_properties_%s', function(props){
+                                    selector.menu('option', props['cmd'], props['value']);
+                                });
                             });
                         </script>
-                    """ % (self._name)
+                    """ % (self._name, self._namespace, self._name)
         elif self._menu_type == MenuTypes.HORIZONTAL:
-            script = """<script>$(function() {
-                            $('#%s').menu();
+            script = """<script>
+                        $(function() {
+                            var selector = $('#%s');
+                            var socket = io('%s');
 
-                            $('#%s').menu({
+                            selector.menu();
+
+                            selector.menu({
                                 position: { my: 'left top', at: 'left bottom' },
                                 blur: function() {
                                             $(this).menu('option', 'position', { my: 'left top', at: 'left bottom' });
@@ -1452,9 +1739,13 @@ class Menu(Widget, Namespace):
                                     }
                                 },
                             });
+
+                            socket.on('sync_properties_%s', function(props){
+                                selector.menu('option', props['cmd'], props['value']);
+                            });
                         });
                     </script>
-                    """ % (self._name, self._name, self._name)
+                    """ % (self._name, self._namespace, self._name, self._name)
         return script
 
     def render(self):
@@ -1475,15 +1766,19 @@ class Slider(Widget, Namespace):
     callback function
     """
 
-    _value = None
-    _app = None
     _onclick_callback = None
     _onchange_callback = None
-    _disabled = None
-    _orientation = None
-    _max = None
     _namespace = None
     _socket_io = None
+    _animate = None
+    _disabled = None
+    _max = None
+    _min = None
+    _orientation = None
+    _range = None
+    _step = None
+    _value = None
+    _values = None
 
     def __init__(self, name, socket_io, value=None, orientation=None, max=None, desc=None, prop=None, style=None, attr=None,
                  disabled=False, onclick_callback=None, onchange_callback=None, css_cls=None):
@@ -1561,9 +1856,8 @@ class Slider(Widget, Namespace):
 
                             socket.on('sync_properties_%s', function(props){
                                 var cmd = props['cmd'];
-                                if(cmd === 'value'){
-                                    selector.slider('value', props['value']);
-                                }
+                                var value = props['value'];
+                                selector.slider('option', cmd, value);
                             });
                         });
                     </script>
@@ -1605,31 +1899,13 @@ class Slider(Widget, Namespace):
         self._onchange_callback = onchange_callback
 
     @property
-    def value(self):
-        """Returns the current value of the slider"""
-        return self._value
+    def animate(self):
+        return self._animate
 
-    @value.setter
-    def value(self, val):
-        self._value = val
-
-    @property
-    def orientation(self):
-        """Returns the value of orientation of the slider"""
-        return self._orientation
-
-    @orientation.setter
-    def orientation(self, val):
-        self._orientation = val
-
-    @property
-    def max(self):
-        """Returns the maximum value of the slider"""
-        return self._max
-
-    @max.setter
-    def max(self, val):
-        self._max = val
+    @animate.setter
+    def animate(self, val):
+        self._animate = val
+        self._sync_properties('animate', val)
 
     @property
     def disabled(self):
@@ -1639,6 +1915,73 @@ class Slider(Widget, Namespace):
     @disabled.setter
     def disabled(self, val):
         self._disabled = val
+        self._sync_properties('disabled', val)
+
+    @property
+    def max(self):
+        """Returns the maximum value of the slider"""
+        return self._max
+
+    @max.setter
+    def max(self, val):
+        self._max = val
+        self._sync_properties('max', val)
+
+    @property
+    def min(self):
+        return self._min
+
+    @min.setter
+    def min(self, val):
+        self._min = val
+        self._sync_properties('min', val)
+
+    @property
+    def orientation(self):
+        """Returns the value of orientation of the slider"""
+        return self._orientation
+
+    @orientation.setter
+    def orientation(self, val):
+        self._orientation = val
+        self._sync_properties('orientation', val)
+
+    @property
+    def range(self):
+        return self._range
+
+    @range.setter
+    def range(self, val):
+        self._range = val
+        self._sync_properties('range', val)
+
+    @property
+    def step(self):
+        return self._step
+
+    @step.setter
+    def step(self, val):
+        self._step = val
+        self._sync_properties('step', val)
+
+    @property
+    def value(self):
+        """Returns the current value of the slider"""
+        return self._value
+
+    @value.setter
+    def value(self, val):
+        self._value = val
+        self._sync_properties('value', val)
+
+    @property
+    def values(self):
+        return self._values
+
+    @values.setter
+    def values(self, val):
+        self._values = val
+        self._sync_properties('values', val)
 
     def _attach_css(self):
         css = """<style>
@@ -1655,7 +1998,8 @@ class Slider(Widget, Namespace):
         return css
 
     def _sync_properties(self, cmd, value):
-        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value})
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
 
     def render(self):
         """Renders the slider widget under parent widget
@@ -1668,7 +2012,7 @@ class Slider(Widget, Namespace):
         return self._widget_content
 
 
-class Spinner(Widget):
+class Spinner(Widget, Namespace):
     """The spinner widget enhances a text input for entring numeric values, with up/down
     buttons and arrow key handling. Spinner supports the functionality to have min & max
     fixed value, the starting point of the spinner, value of step for incremeting or
@@ -1676,30 +2020,35 @@ class Spinner(Widget):
     """
 
     _name = None
-    _app = None
-    _disabled = None
-    _min = None
-    _max = None
-    _start = None
-    _step = None
-    _number_format = None
+    _namespace = None
+    _socket_io = None
     _value = None
+    _start = None
     _onchange_callback = None
+    _culture = None
+    _disabled = None
+    _icons = None
+    _incremental = None
+    _max = None
+    _min = None
+    _number_format = None
+    _page = None
+    _step = None
 
-    def __init__(self, name, value=None, desc=None, prop=None, style=None, attr=None,
-                 disabled=False, app=None, css_cls=None, min=None, max=None, start=None, step=None,
+    def __init__(self, name, socket_io, value=None, desc=None, prop=None, style=None, attr=None,
+                 disabled=False, css_cls=None, min=None, max=None, start=None, step=None,
                  number_format=None, onchange_callback=None):
         """Default constructor of the Spinner widget class
 
             Args:
                 name (string): name of the widget for internal use
+                socket_io (SocketIO): A instance of SocketIO class
                 value (int, optional): Current value of the spinner
                 desc (string, optional): description of the button widget
                 prop (dict, optional): dict of objects to be added as properties of widget
                 style (dict, optional): dict of objects to be added as style elements to HTML tag
                 attr (list, optional): list of objects to be added as attributes of HTML tag
                 disabled (Boolean, optional): Enabled or Disabled state of widget
-                app (Flask, optional): An instance of Flask class
                 css_cls (list, optional): An list of CSS class names to be added to current widget
                 min (int, optional): Minimum value of the spinner widget. Default=0
                 max (int, optional): The max range spinner can go upto. Default=100
@@ -1710,7 +2059,10 @@ class Spinner(Widget):
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
-        self._app = app
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_spinner").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + name + "_spinner").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
         self._onchange_callback = onchange_callback
         self._disabled = disabled
         if value is not None:
@@ -1743,6 +2095,14 @@ class Spinner(Widget):
             self._disabled = False
 
     @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
     def value(self):
         """The current value of the spinner widget"""
         return self._value
@@ -1750,29 +2110,6 @@ class Spinner(Widget):
     @value.setter
     def value(self, val):
         self._value = val
-
-    @property
-    def min(self):
-        """The minium value allowed for the spinner widget
-        Default value is 0
-        """
-        return self._min
-
-    @min.setter
-    def min(self, val):
-        self._min = val
-
-    @property
-    def max(self):
-        """The maximum value of spinner widget. Once it is reached, the number
-        will not increment anymore
-        Default value is 100
-        """
-        return self._max
-
-    @max.setter
-    def max(self, val):
-        self._max = val
 
     @property
     def start(self):
@@ -1786,15 +2123,66 @@ class Spinner(Widget):
         self._start = val
 
     @property
-    def step(self):
-        """The value by which spinner widget will incr/decr its value
-        Default value is 1
-        """
-        return self._step
+    def culture(self):
+        return self._culture
 
-    @step.setter
-    def step(self, val):
-        self._step = val
+    @culture.setter
+    def culture(self, val):
+        self._culture = val
+        self._sync_properties('culture', val)
+
+    @property
+    def disabled(self):
+        """Whether to enable or disable the spinner widget"""
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
+
+    @property
+    def icons(self):
+        return self._icons
+
+    @icons.setter
+    def icons(self, val):
+        self._icons = val
+        self._sync_properties('icons', val)
+
+    @property
+    def incremental(self):
+        return self._incremental
+
+    @incremental.setter
+    def incremental(self, val):
+        self._incremental = val
+        self._sync_properties('incremental', val)
+
+    @property
+    def max(self):
+        """The maximum value of spinner widget. Once it is reached, the number
+        will not increment anymore
+        Default value is 100
+        """
+        return self._max
+
+    @max.setter
+    def max(self, val):
+        self._max = val
+        self._sync_properties('max', val)
+
+    @property
+    def min(self):
+        """The minium value allowed for the spinner widget
+        Default value is 0
+        """
+        return self._min
+
+    @min.setter
+    def min(self, val):
+        self._min = val
+        self._sync_properties('min', val)
 
     @property
     def number_format(self):
@@ -1806,152 +2194,85 @@ class Spinner(Widget):
     @number_format.setter
     def number_format(self, val):
         self._number_format = val
+        self._sync_properties('numberFormat', val)
 
     @property
-    def disabled(self):
-        """Whether to enable or disable the spinner widget"""
-        return self._disabled
+    def page(self):
+        return self._page
 
-    @disabled.setter
-    def disabled(self, val):
-        self._disabled = val
+    @page.setter
+    def page(self, val):
+        self._page = val
+        self._sync_properties('page', val)
 
-    def _sync_properties(self):
-        return json.dumps({'min': self._min,
-                           'max': self._max,
-                           'start': self._start,
-                           'step': self._step,
-                           'numberFormat': self._number_format,
-                           'value': self._value,
-                           'disabled': self._disabled
-                           })
+    @property
+    def step(self):
+        """The value by which spinner widget will incr/decr its value
+        Default value is 1
+        """
+        return self._step
 
-    def _attach_polling(self):
-        script = ""
-        if self._app is not None:
-            url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
-            script = """<script>
-                        (function %s_poll(){
-                            setTimeout(function(){
-                                $.ajax({
-                                    url: "/%s",
-                                    success: function(props){
-                                        selector = $('#%s');
-                                        //fill up the values
-                                        if(props.value != undefined){
-                                            var existing_val = selector.spinner('value');
-                                            if(existing_val != props.value){
-                                                selector.spinner('value', props.value);
-                                            }
-                                        }
-                                        if(props.max != undefined){
-                                            selector.spinner('option', 'max', props.max);
-                                        }
-                                        if(props.min != undefined){
-                                            selector.spinner('option', 'min', props.min);
-                                        }
-                                        if(props.start != undefined){
-                                            selector.spinner('option', 'start', props.start);
-                                        }
-                                        if(props.step != undefined){
-                                            selector.spinner('option', 'step', props.step);
-                                        }
-                                        if(props.numberFormat != undefined){
-                                            selector.spinner('option', 'numberFormat', props.numberFormat);
-                                        }
-                                        if(props.disabled != undefined){
-                                            selector.spinner('option', 'disabled', props.disabled);
-                                        }
-                                        //poll again
-                                        %s_poll();
-                                    },
-                                    error: function(err_status){
-                                                                alertify.error("Status Code: "
-                                                                + err_status.status + "<br />" + "Error Message:"
-                                                                + err_status.statusText);
-                                                            },
-                                    dataType: "json"
-                                });
-                            },500);
-                        })();
-                    </script>
-                """ % (url, url, self._name, url)
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
-            if not found:
-                self._app.add_url_rule('/' + url, url,
-                                       self._sync_properties)
-        return script
+    @step.setter
+    def step(self, val):
+        self._step = val
+        self._sync_properties('step', val)
+
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
 
     def _attach_script(self):
         script = ""
-        found = True
-        if self._app is not None:
-            url = str(__name__ + "_" + self._name + "_spinner_changed").replace('.', '_')
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
         script = """
                     <script>
                         $(function(){
-                            $("#%s").spinner({
+                            var selector = $("#%s");
+                            var socket = io("%s");
+
+                            selector.spinner({
                                 min: %d,
                                 max: %d,
                                 start: %d,
                                 step: %d,
                                 numberFormat: "%s",
-                                stop: refreshValue
+                                stop: sendValue
                             });
-                """ % (self._name, self._min, self._max, self._start, self._step,
-                       self._number_format)
-        if self._app is not None:
-            script += """
-                            var selector = $("#%s");
-                            function refreshValue(){
-                                $.ajax({
-                                    url: "/%s",
-                                    type: "get",
-                                    dataType: "json",
-                                    data: {"value": selector.val()},
-                                    success: function(status){alertify("Action completed successfully!");},
-                                    error: function(err_status){
-                                            alertify.error("Status Code: "
-                                            + err_status.status + "<br />" + "Error Message:"
-                                            + err_status.statusText);
-                                    }
-                                });
+
+                            function sendValue(){
+                                var props = {
+                                                'value': selector.spinner('value')
+                                            };
+                                socket.emit('fire_spinner_changed', props);
                             }
+
+                            selector.on('spinchange', function(event){
+                                var props = {
+                                                'value': selector.spinner('value')
+                                            };
+                                socket.emit('fire_spinner_changed', props);
+                            });
+
+                            socket.on('sync_properties_%s', function(props){
+                                selector.spinner('option', props['cmd'], props['value']);
+                            });
                         });
                     </script>
-                """ % (self._name, url)
-        else:
-            script += """
-                        function refreshValue(){}
-                        });
-                        </script>
-                    """
-        if not found:
-            self._app.add_url_rule('/' + url, url,
-                                   self._process_spinner_changed_callback)
+                """ % (self._name, self._namespace, self._min, self._max, self._start, self._step,
+                       self._number_format, self._name)
         return script
 
-    def _process_spinner_changed_callback(self):
-        if request.args.__len__() > 0:
-            val = request.args["value"]
+    def on_fire_spinner_changed(self, props):
+        if props.__len__() > 0:
+            val = props["value"]
             if val is not None:
                 self._value = val
         if self._onchange_callback is not None:
-            return json.dumps({'result': self._onchange_callback()})
-        return json.dumps({'result': ''})
+            self._onchange_callback(self._name, props)
 
     def render(self):
         content = self._render_pre_content('input')
         content += self._render_post_content('input')
         content += "\n" + self._attach_script()
-        content += "\n" + self._attach_polling()
         self._widget_content = content
         return content
 

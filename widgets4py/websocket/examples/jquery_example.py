@@ -2,7 +2,7 @@ from widgets4py.base import Page
 from flask import Flask
 from flask_socketio import SocketIO
 from widgets4py.websocket.jquery.ui import Section, Accordion, RadioButtonGroup, CheckBoxGroup, DialogBox
-from widgets4py.websocket.jquery.ui import DialogTypes, MenuItem, Menu, SubMenu, MenuTypes, Slider
+from widgets4py.websocket.jquery.ui import DialogTypes, MenuItem, Menu, SubMenu, MenuTypes, Slider, Spinner
 from widgets4py.layouts import SimpleGridLayout
 
 
@@ -60,9 +60,14 @@ class PageTest:
         self._pg.add(self.menu)
         self._slide = Slider('slide', socketio, onclick_callback=self.slider_clicked, onchange_callback=self.slider_clicked)
         self._sg.add(self._slide)
+        self._spin = Spinner('spin', socketio, onchange_callback=self.spin_changed)
+        self._sg.add(self._spin)
         self._pg.add(self._sg)
         self._pg.add(self._dlg)
         return self._pg.render()
+
+    def spin_changed(self, source, props):
+        print("Spinner Changed: " + source + ", Props: " + str(props))
 
     def slider_clicked(self, source, props):
         print("Slider Clicked: " + source + ", Props: " + str(props))
