@@ -3,6 +3,7 @@ from flask import Flask
 from flask_socketio import SocketIO
 from widgets4py.websocket.jquery.ui import Section, Accordion, RadioButtonGroup, CheckBoxGroup, DialogBox
 from widgets4py.websocket.jquery.ui import DialogTypes, MenuItem, Menu, SubMenu, MenuTypes, Slider, Spinner
+from widgets4py.websocket.jquery.ui import TabSection, Tab
 from widgets4py.layouts import SimpleGridLayout
 
 
@@ -62,9 +63,22 @@ class PageTest:
         self._sg.add(self._slide)
         self._spin = Spinner('spin', socketio, onchange_callback=self.spin_changed)
         self._sg.add(self._spin)
+        self._tab1 = TabSection('tab1', 'Tab1')
+        self._tab2 = TabSection('tab2', 'Tab2')
+        self._tab3 = TabSection('tab3', 'Tab3')
+        self._tab4 = TabSection('tab4', 'Tab4')
+        self._tab = Tab('tab', socketio, tab_activated_callback=self.tab_changed)
+        self._tab.add(self._tab1)
+        self._tab.add(self._tab2)
+        self._tab.add(self._tab3)
+        self._tab.add(self._tab4)
+        self._sg.add(self._tab)
         self._pg.add(self._sg)
         self._pg.add(self._dlg)
         return self._pg.render()
+
+    def tab_changed(self, source, props):
+        print("Tab activated: " + source + ", Props: " + str(props))
 
     def spin_changed(self, source, props):
         print("Spinner Changed: " + source + ", Props: " + str(props))

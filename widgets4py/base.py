@@ -413,26 +413,46 @@ class Page(Widget):
         self._scripts = []
         self.set_root_widget(self)
         # add script if required
+        # if self._jquery_css:
+        #     self.add_css('https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css')
+        #     self.add_css('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css')
+        #     self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/alertify.min.css')
+        #     self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/themes/bootstrap.min.css')
+        #     self.add_css('http://w2ui.com/src/w2ui-1.5.rc1.min.css')
+        #     if self._device_type == DeviceTypes.MOBILE or self._device_type == DeviceTypes.ALL:
+        #         self.add_css('http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css')
+        #     self.add_css('/static/listview/css/ui.listview.css')
+        # if self._jquery_js:
+        #     self.add_js('https://code.jquery.com/jquery-3.4.1.min.js')
+        #     self.add_js('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js')
+        #     self.add_js('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js')
+        #     self.add_js('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/alertify.min.js')
+        #     self.add_js('http://code.jquery.com/jquery-2.1.1.min.js')
+        #     self.add_js('http://w2ui.com/src/w2ui-1.5.rc1.min.js')
+        #     self.add_js('https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.slim.js')
+        #     if self._device_type == DeviceTypes.MOBILE or self._device_type == DeviceTypes.ALL:
+        #         self.add_js('http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js')
+        #     self.add_js('/static/listview/js/jquery.ui.listview.js')
         if self._jquery_css:
-            self.add_css('https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css')
-            self.add_css('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css')
-            self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/alertify.min.css')
-            self.add_css('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/css/themes/bootstrap.min.css')
-            self.add_css('http://w2ui.com/src/w2ui-1.5.rc1.min.css')
+            self.add_css('/static/css/jquery-ui.css')
+            self.add_css('/static/css/style.min.css')
+            self.add_css('/static/css/alertify.min.css')
+            self.add_css('/static/css/bootstrap.min.css')
+            self.add_css('/static/css/w2ui-1.5.rc1.min.css')
             if self._device_type == DeviceTypes.MOBILE or self._device_type == DeviceTypes.ALL:
-                self.add_css('http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css')
-            self.add_css('/static/listview/css/ui.listview.css')
+                self.add_css('/static/css/jquery.mobile-1.4.5.min.css')
+            self.add_css('/static/css/ui.listview.css')
         if self._jquery_js:
-            self.add_js('https://code.jquery.com/jquery-3.4.1.min.js')
-            self.add_js('https://code.jquery.com/ui/1.12.1/jquery-ui.min.js')
-            self.add_js('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js')
-            self.add_js('https://cdn.jsdelivr.net/npm/alertifyjs@1.11.4/build/alertify.min.js')
-            self.add_js('http://code.jquery.com/jquery-2.1.1.min.js')
-            self.add_js('http://w2ui.com/src/w2ui-1.5.rc1.min.js')
-            self.add_js('https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.slim.js')
+            self.add_js('/static/js/jquery-3.4.1.min.js')
+            self.add_js('/static/js/jquery-ui.min.js')
+            self.add_js('/static/js/jstree.min.js')
+            self.add_js('/static/js/alertify.min.js')
+            self.add_js('/static/js/jquery-2.1.1.min.js')
+            self.add_js('/static/js/w2ui-1.5.rc1.min.js')
+            self.add_js('/static/js/socket.io.slim.js')
             if self._device_type == DeviceTypes.MOBILE or self._device_type == DeviceTypes.ALL:
-                self.add_js('http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js')
-            self.add_js('/static/listview/js/jquery.ui.listview.js')
+                self.add_js('/static/js/jquery.mobile-1.4.5.min.js')
+            self.add_js('/static/js/jquery.ui.listview.js')
 
     def add_js(self, path):
         """Adds an reference to javascript file to the page. The JS file could from the available

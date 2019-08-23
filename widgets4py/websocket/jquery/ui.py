@@ -2335,54 +2335,67 @@ class TabSection(Widget):
         return self._widget_content
 
 
-class Tab(Widget):
+class TabEvents(Enum):
+    OPEN_ON_MOUSE_OVER = "mouseover"
+    CLICK = "click"
+
+
+class Tab(Widget, Namespace):
     """A tab widget to display multiple panel at the same place stacked over each other.
     A panel is made active and visible by clicking on the headers of the panel or section
     """
 
-    _collapsible = None
-    _open_on_mouseover = None
+    _namespace = None
+    _socket_io = None
     _sortable = None
     _v_orient = None
     _tab_activated_callback = None
-    _app = None
+    _active = None
+    _collapsible = None
     _disabled = None
-    _selected_index = None
+    _event = None
+    _height_style = None
+    _hide = None
+    _show = None
 
-    def __init__(self, name, desc=None, prop=None, style=None, attr=None,
-                 app=None, css_cls=None, collapsible=None, open_on_mouseover=None,
+    def __init__(self, name, socket_io, desc=None, prop=None, style=None, attr=None,
+                 css_cls=None, collapsible=None, event=None,
                  sortable=None, v_orient=None, tab_activated_callback=None,
-                 disabled=None, selected_index=None):
+                 disabled=None, active=None):
         """Default constructor of the TabSection widget class
 
             Args:
                 name (string): name of the widget for internal use
+                socket_io (SocketIO): An instance of SocketIO
                 header (string): Current value of the spinner
                 desc (string, optional): description of the button widget
                 prop (dict, optional): dict of objects to be added as properties of widget
                 style (dict, optional): dict of objects to be added as style elements to HTML tag
                 attr (list, optional): list of objects to be added as attributes of HTML tag
-                app (Flask, optional): An instance of Flask app
                 css_cls (list, optional): An list of CSS class names to be added to current widget
                 collapsible (boolean, optional): Whether the active panel should collapse on re-click or not
-                open_on_mouseover (boolean, optional): Whether tab should be active on mouse hover instead of click
+                event (TabEvents, optional): Whether tab should be active on mouse hover instead of click
                 sortable (boolean, optional): If true, allows to sort tabs using drag & drop
                 v_orient (boolean, optional): Whether to render headers vertically instead of horizontally
                 tab_activated_callback (callable, optional): Calls the function when an tab is activated
                 disabled (boolean, optional): True or False to disable the whole tab widget or list
                 of panel indices to disable individual tabs
-                selected_index (int, optional): Index of the selected tab in the widget
+                active (int, optional): Index of the selected tab in the widget
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
+        Namespace.__init__(self, '/' + str(__name__ + "_" + name + "_tab").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + name + "_tab").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
         if collapsible is not None:
             self._collapsible = collapsible
         else:
             self._collapsible = False
-        if open_on_mouseover is not None and open_on_mouseover:
-            self._open_on_mouseover = "mouseover"
+        if event is not None:
+            self._event = event
         else:
-            self._open_on_mouseover = "click"
+            self._event = TabEvents.CLICK.value
         if sortable is not None:
             self._sortable = sortable
         else:
@@ -2392,15 +2405,49 @@ class Tab(Widget):
         else:
             self._v_orient = False
         self._tab_activated_callback = tab_activated_callback
-        self._app = app
         if disabled is not None:
             self._disabled = disabled
         else:
             self._disabled = False
-        if selected_index is not None:
-            self._selected_index = selected_index
+        if active is not None:
+            self._active = active
         else:
-            self._selected_index = 0
+            self._active = 0
+
+    @property
+    def sortable(self):
+        return self._sortable
+
+    @sortable.setter
+    def sortable(self, val):
+        self._sortable = val
+        self._sync_properties('sortable', val)
+
+    @property
+    def v_orient(self):
+        return self._v_orient
+
+    @v_orient.setter
+    def v_orient(self, val):
+        self._v_orient = val
+        self._sync_properties('v_orient', val)
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def active(self):
+        return self._active
+
+    @active.setter
+    def active(self, val):
+        self._active = val
+        self._sync_properties('active', val)
 
     @property
     def collapsible(self):
@@ -2409,94 +2456,107 @@ class Tab(Widget):
     @collapsible.setter
     def collapsible(self, val):
         self._collapsible = val
+        self._sync_properties('collapsible', val)
 
     @property
-    def open_on_mouseover(self):
-        return self._open_on_mouseover
+    def disabled(self):
+        return self._disabled
 
-    @open_on_mouseover.setter
-    def open_on_mouseover(self, val):
-        self._open_on_mouseover = val
+    @disabled.setter
+    def disabled(self, val):
+        self._disabled = val
+        self._sync_properties('disabled', val)
 
     @property
-    def selected_index(self):
-        """Value or Index of the selected section or panel under Tab widget
-        """
-        return self._selected_index
+    def event(self):
+        if self._event == "click":
+            return TabEvents.CLICK
+        return TabEvents.OPEN_ON_MOUSE_OVER
 
-    @selected_index.setter
-    def selected_index(self, val):
-        self._selected_index = val
+    @event.setter
+    def event(self, val):
+        self._event = val.value
+        self._sync_properties('event', val.value)
+
+    @property
+    def heightStyle(self):
+        return self._heightStyle
+
+    @heightStyle.setter
+    def heightStyle(self, val):
+        self._heightStyle = val
+        self._sync_properties('heightStyle', val)
+
+    @property
+    def hide(self):
+        return self._hide
+
+    @hide.setter
+    def hide(self, val):
+        self._hide = val
+        self._sync_properties('hide', val)
+
+    @property
+    def show(self):
+        return self._show
+
+    @show.setter
+    def show(self, val):
+        self._show = val
+        self._sync_properties('show', val)
 
     def _attach_script(self):
         script = ""
-        found = True
-        if self._app is not None:
-            url = str(__name__ + "_" + self._name + "_tab_activated").replace('.', '_')
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
         script = """<script>
                         $(function(){
-                            var selector = $("#%s");
-                            selector.tabs({
-                                collapsible: %s,
-                                event: "%s",
-                                activate: tabActivated
+                                var selector = $("#%s");
+                                var socket = io("%s");
+
+                                selector.tabs({
+                                    collapsible: %s,
+                                    event: "%s"
+                                });
+
+                                selector.on('tabsactivate', function(event, ui){
+                                    var props = {'newTab': ui.newTab != undefined ? ui.newTab[0].id : "",
+                                                 'oldTab': ui.oldTab != undefined ? ui.oldTab[0].id : "",
+                                                 'newPanel': ui.newPanel != undefined ? ui.newPanel[0].id : "",
+                                                 'oldPanel': ui.oldPanel != undefined ? ui.oldPanel[0].id : "",
+                                                 'active': selector.tabs('option', 'active')}
+                                    socket.emit('fire_tab_activated', props);
+                                });
+
+                                socket.on('sync_properties_%s', function(props){
+                                    var cmd = props['cmd'];
+                                    var value = props['value'];
+                                    if(cmd === 'sortable' && value){
+                                        selector.find( ".ui-tabs-nav" ).sortable({
+                                            axis: "x",
+                                            stop: function() {
+                                                selector.tabs( "refresh" );
+                                            }
+                                        });
+                                    } else if (cmd === 'v_orient' && value){
+                                        selector.tabs().addClass( "ui-tabs-vertical ui-helper-clearfix" );
+                                        selector.removeClass( "ui-corner-top" ).addClass( "ui-corner-left" );
+                                    } else {
+                                        selector.tabs('option', cmd, value);
+                                    }
+                                });
                             });
-                            var sortable = %s
-                            if(sortable){
-                                selector.find( ".ui-tabs-nav" ).sortable({
-                                    axis: "x",
-                                    stop: function() {
-                                    selector.tabs( "refresh" );
-                                    }
-                                });
-                            }
-                            var v_orient = %s
-                            if(v_orient){
-                                selector.tabs().addClass( "ui-tabs-vertical ui-helper-clearfix" );
-                                selector.removeClass( "ui-corner-top" ).addClass( "ui-corner-left" );
-                            }""" % (self._name, json.dumps(self._collapsible),
-                                    self._open_on_mouseover, json.dumps(self._sortable),
-                                    self._v_orient)
-        if self._app is not None and self._tab_activated_callback is not None:
-            script += """function tabActivated(event, ui){
-                            $.ajax({
-                                url: "/%s",
-                                type: "get",
-                                dataType: "json",
-                                data: {'selected_index': selector.tabs("option", "active")},
-                                success: function(){alertify("Done!");},
-                                error: function(err_status){
-                                        alertify.error("Status Code: "
-                                        + err_status.status + "<br />" + "Error Message:"
-                                        + err_status.statusText);
-                                    }
-                                });
-                            }
-                        });
-                    </script>
-                """ % (url)
-        else:
-            script += """
-                            function tabActivated(event, ui){}
-                            });</script>
-                        """
-        if not found:
-            self._app.add_url_rule('/' + url, url,
-                                   self._process_tab_activated_callback)
+
+                            </script>
+                            """ % (self._name, self._namespace, json.dumps(self._collapsible),
+                                    self._event, self._name)
         return script
 
-    def _process_tab_activated_callback(self):
-        if request.args.__len__() > 0:
-            val = request.args['selected_index']
+    def on_fire_tab_activated(self, props):
+        if props.__len__() > 0:
+            val = props['active'];
             if val is not None:
-                self._selected_index = val
+                self._active = val
         if self._tab_activated_callback is not None:
-            return json.dumps({'result': self._tab_activated_callback()})
-        return json.dumps({'result': ''})
+            self._tab_activated_callback(self._name, props)
 
     def _attach_css(self):
         css = ""
@@ -2512,77 +2572,20 @@ class Tab(Widget):
                 """
         return css
 
-    def _sync_properties(self):
-        return json.dumps({'collapsible': self._collapsible,
-                           'open_on_mouseover': self._open_on_mouseover,
-                           'sortable': self._sortable,
-                           'selected_index': self._selected_index,
-                           'disabled': self._disabled
-                           })
-
-    def _attach_polling(self):
-        script = ""
-        if self._app is not None:
-            url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
-            script = """<script>
-                        (function %s_poll(){
-                            setTimeout(function(){
-                                $.ajax({
-                                    url: "/%s",
-                                    success: function(props){
-                                        selector = $('#%s');
-                                        //fill up the values
-                                        if(props.selected_index != undefined){
-                                            var existing_val = selector.tabs('option', 'active');
-                                            if(existing_val != props.selected_index){
-                                                selector.tabs('option', 'active', props.selected_index);
-                                            }
-                                        }
-                                        if(props.collapsible != undefined){
-                                            selector.tabs('option', 'collapsible', props.collapsible);
-                                        }
-                                        if(props.open_on_mouseover != undefined){
-                                            selector.tabs('option', 'event', props.open_on_mouseover);
-                                        }
-                                        if(props.sortable != undefined){
-                                            selector.tabs('option', 'sortable', props.sortable);
-                                        }
-                                        if(props.disabled != undefined){
-                                            selector.tabs('option', 'disabled', props.disabled);
-                                        }
-                                        //poll again
-                                        %s_poll();
-                                    },
-                                    error: function(err_status){
-                                                                alertify.error("Status Code: "
-                                                                + err_status.status + "<br />" + "Error Message:"
-                                                                + err_status.statusText);
-                                                            },
-                                    dataType: "json"
-                                });
-                            },500);
-                        })();
-                    </script>
-                """ % (url, url, self._name, url)
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
-            if not found:
-                self._app.add_url_rule('/' + url, url,
-                                       self._sync_properties)
-        return script
+    def _sync_properties(self, cmd, value):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value},
+             namespace=self._namespace)
 
     def render(self):
         content = self._attach_css() + "\n"
         content += self._render_pre_content('div')
         content += "\n" + "<ul>"
         for widget in self._child_widgets:
-            content += "\n" + "<li><a href='" + widget.name + "'>" + widget.header
+            content += "\n" + "<li id='" + widget.name + "'><a href='" + widget.name + "_a'>" + widget.header
             content += "</a></li>"
         content += "</ul>"
         for widget in self._child_widgets:
             content += "\n" + widget.render()
         content += self._render_post_content('div')
-        self._widget_content = content + self._attach_script() + "\n" + self._attach_polling()
+        self._widget_content = content + "\n" + self._attach_script()
         return self._widget_content
