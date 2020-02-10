@@ -550,8 +550,8 @@ class Grid(Widget, Namespace):
         """
         Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
                         css_cls=css_cls)
-        Namespace.__init__(self, str(__name__ + "_" + name + "_grid_tb").replace('.', '_'))
-        self._namespace = str(__name__ + "_" + name + "_grid_tb").replace('.', '_')
+        Namespace.__init__(self, '/' + str(__name__ + "_" + str(name) + "_grid_tb").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + "_" + str(name) + "_grid_tb").replace('.', '_')
         self._socket_io = socket_io
         self._socket_io.on_namespace(self)
         self._header = header
@@ -641,7 +641,7 @@ class Grid(Widget, Namespace):
                     <script>
                         $2(function(){
                             var selector = $2('#%s');
-                            var socket = io('/%s');
+                            var socket = io('%s');
                             selector.w2grid({
                                 name: '%s',
                                 header: '%s',
@@ -742,7 +742,7 @@ class Grid(Widget, Namespace):
                     <script>
                         $2(function(){
                             var selector = $2('#%s');
-                            var socket = io('/%s');
+                            var socket = io('%s');
                             selector.w2grid({
                                 name: '%s',
                                 header: '%s',
@@ -844,7 +844,7 @@ class Grid(Widget, Namespace):
                     <script>
                         $2(function(){
                          var selector = $2('#%s');
-                         var socket = io('/%s');
+                         var socket = io('%s');
                          socket.emit('get_grid_records', {});
                          socket.on('set_grid_records', function(data){
                             selector.w2grid({

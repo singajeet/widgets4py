@@ -261,6 +261,7 @@ if __name__ == "__main__":
     if os.uname().machine == 'aarch64':
         start_app()
     else:
+        print("Starting Webview and the Application")
         app_proc = Process(target=start_app)
         web_app = Process(target=start_web_view)
         app_proc.start()
