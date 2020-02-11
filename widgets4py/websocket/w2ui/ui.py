@@ -1353,7 +1353,7 @@ class ToolbarHTML(ToolbarDropDown):
         self._type = 'html'
 
 
-class Toolbar(Widget):
+class Toolbar(Widget, Namespace):
     """A toolbar having collection of buttons, chexkbox,
     radio buttons, separaters, etc. An toolbar item can
     have title or button or both
@@ -1361,20 +1361,32 @@ class Toolbar(Widget):
 
     _onclick_callback = None
     _onclick_client_script = None
-    _app = None
     _clicked_item = None
-    _queue = None
+    _namespace = None
+    _socket_io = None
 
-    def __init__(self, name, items=None, onclick_callback=None, onclick_client_script=None, app=None):
+    def __init__(self, name, socket_io, items=None, desc=None,
+                 prop=None, style=None, attr=None, css_cls=None,
+                 onclick_callback=None, onclick_client_script=None):
         """
             Args:
                 name (string): Name or Id for internal use
+                socket_io (SocketIO): An instance of the SocketIO class
                 items (Widget): Child items like, ToolbarButton, ToolbarRadio, etc
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                css_cls (list, optional): An list of CSS class names to be added to current widget
                 onclick_callback (callable): will be called when mouse is clicked on any child item
                 onclick_client_script (string): JS to be called when mouse is clicked on any item
-                app (Flask): An instance of Flask app
         """
-        Widget.__init__(self, name)
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style,
+                        attr=attr, css_cls=css_cls)
+        Namespace.__init__(self, '/' + str(__name__ + str(name) + "_toolbar").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + str(name) + "_toolbar").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
         if items is not None:
             self._child_widgets = items
         else:
@@ -1384,8 +1396,28 @@ class Toolbar(Widget):
             self._onclick_client_script = onclick_client_script
         else:
             self._onclick_client_script = ""
-        self._app = app
-        self._queue = []
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
+
+    @property
+    def items(self):
+        return self._child_widgets
+
+    @items.setter
+    def items(self, val):
+        self._child_widgets = val
+
+    @property
+    def clicked_item(self):
+        """Contains the name / id of item where mouse was clicked (i.e., the item which received
+        the mouse click event)"""
+        return self._clicked_item
 
     def add_item(self, item):
         """Adds a new item to the toolbar passed as argument
@@ -1393,7 +1425,7 @@ class Toolbar(Widget):
             Args:
                 item (ToolbarButton): An instance of ToolbarButton or its subclasses
         """
-        self._queue.append({'cmd': 'ADD-ITEM', 'arg0': item.render()})
+        self._sync_properties('ADD-ITEM', item.render())
 
     def insert_item(self, item, ref_item):
         """Inserts a new item to the toolbar after the specified referenced item
@@ -1403,7 +1435,7 @@ class Toolbar(Widget):
                 ref_item (string): Id or name of the item after which new item should be
                                     inserted
         """
-        self._queue.append({'cmd': 'INSERT-ITEM', 'arg0': item.render(), 'ref': ref_item})
+        self._sync_properties('INSERT-ITEM', item.render(), ref_item)
 
     def remove_item(self, index_of_item):
         """Removes an item from the toolbar available at the specified index location
@@ -1411,7 +1443,7 @@ class Toolbar(Widget):
             Args:
                 index_of_item (int): Index of item that needs to be removed from toolbar
         """
-        self._queue.append({'cmd': 'REMOVE-ITEM', 'arg0': index_of_item})
+        self._sync_properties('REMOVE-ITEM', index_of_item)
 
     def show_item(self, item_name):
         """Shows an item which was in hidden state previously
@@ -1419,7 +1451,7 @@ class Toolbar(Widget):
             Args:
                 item_name (string): Name or Id of the toolbar item that needs to be set visible
         """
-        self._queue.append({'cmd': 'SHOW-ITEM', 'arg0': item_name})
+        self._sync_properties('SHOW-ITEM', item_name)
 
     def hide_item(self, item_name):
         """Hides an visible item available on the toolbar
@@ -1427,7 +1459,7 @@ class Toolbar(Widget):
             Args:
                 item_name (string): Name or Id of the toolbar item that needs to be set as hidden
         """
-        self._queue.append({'cmd': 'HIDE-ITEM', 'arg0': item_name})
+        self._sync_properties('HIDE-ITEM', item_name)
 
     def enable_item(self, item_name):
         """Enables an visible toollbar item if its has been set as disiabled
@@ -1435,7 +1467,7 @@ class Toolbar(Widget):
             Args:
                 item_name (string): Name or Id of item that needs to be enabled
         """
-        self._queue.append({'cmd': 'ENABLE-ITEM', 'arg0': item_name})
+        self._sync_properties('ENABLE-ITEM', item_name)
 
     def disable_item(self, item_name):
         """Disable an visible toolbar item which is already in enabled state
@@ -1443,138 +1475,87 @@ class Toolbar(Widget):
             Args:
                 item_name (string): Name or Id of the item that needs to be disabled
         """
-        self._queue.append({'cmd': 'DISABLE-ITEM', 'arg0': item_name})
+        self._sync_properties('DISABLE-ITEM', item_name)
 
-    def _sync_properties(self):
-        if self._queue.__len__() > 0:
-            cmd = self._queue.pop()
-            return json.dumps(cmd)
-        return json.dumps({'result': ''})
-
-    def _attach_polling(self):
-        if self._app is None:
-            return
-        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
-        script = """<script>
-                    (function %s_poll(){
-                        setTimeout(function(){
-                            $2.ajax({
-                                url: "/%s",
-                                dataType: "json",
-                                success: function(props){
-                                    selector = w2ui['%s'];
-                                    if(selector != undefined){
-                                        if(props.cmd != undefined){
-                                            if(props.cmd == "HIDE-ITEM"){
-                                                selector.hide(props.arg0);
-                                            }
-                                            if(props.cmd == "SHOW-ITEM"){
-                                                selector.show(props.arg0);
-                                            }
-                                            if(props.cmd == "ENABLE-ITEM"){
-                                                selector.enable(props.arg0);
-                                            }
-                                            if(props.cmd == "DISABLE-ITEM"){
-                                                selector.disable(props.arg0);
-                                            }
-                                            if(props.cmd == "ADD-ITEM"){
-                                                selector.add(JSON.parse(props.arg0));
-                                            }
-                                            if(props.cmd == "INSERT-ITEM"){
-                                                selector.insert(props.ref, JSON.parse(props.arg0));
-                                            }
-                                            if(props.cmd == "REMOVE-ITEM"){
-                                                selector.remove(props.arg0);
-                                            }
-                                        } else {
-                                            alertify.warning("No command to process");
-                                        }
-                                    }
-                                },
-                                error: function(err_status){
-                                    alertify.error("Status Code: "
-                                    + err_status.status + "<br />" + "Error Message:"
-                                    + err_status.statusText);
-                                }
-                            });
-                            %s_poll();
-                        }, 500);
-                    })();
-                    </script>
-                """ % (url, url, self._name, url)
-        found = False
-        for rule in self._app.url_map.iter_rules():
-            if rule.endpoint == url:
-                found = True
-        if not found:
-            self._app.add_url_rule('/' + url, url, self._sync_properties)
-        return script
+    def _sync_properties(self, cmd, value, ref_item=None):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value, 'ref_item': ref_item},
+             namespace=self._namespace)
 
     def _attach_script(self):
-        url = ""
-        if self._app is not None:
-            url = str(__name__ + "_" + self._name).replace('.', '_')
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
-            if not found:
-                self._app.add_url_rule('/' + url, url, self._process_onclick_callback)
         child_widgets = "[\n"
         for child in self._child_widgets:
             child_widgets += child.render() + ",\n"
         child_widgets += "\n]"
-        script = """
-                <script>
-                    $2(function(){
-                        $2('#%s').w2toolbar({
+        script = """<script>
+                    $2(document).ready(function(){
+                        var selector = '%s'; //$2('#');
+                        var socket = io('%s');
+
+                        $2('#' + selector).w2toolbar({
                             name: '%s',
                             items: %s,
                             onClick: function(event){
                                 %s
-                                $2.ajax({
-                                    url: '/%s',
-                                    type: 'get',
-                                    data: {'target': event.target},
-                                    dataType: 'json',
-                                    success: function(status){},
-                                    error: function(err_status){
-                                        alertify.error("Status Code: "
-                                        + err_status.status + "<br />" + "Error Message:"
-                                        + err_status.statusText);
+                                socket.emit("fire_click_event", {"target": event.target});
+                            }
+                        });
+
+                        socket.on("sync_properties_%s", function(props){
+                            if(selector != undefined){
+                                if(props.cmd != undefined){
+                                    if(props.cmd == "HIDE-ITEM"){
+                                        w2ui[selector].hide(props.value);
                                     }
-                                });
+                                    if(props.cmd == "SHOW-ITEM"){
+                                        w2ui[selector].show(props.value);
+                                    }
+                                    if(props.cmd == "ENABLE-ITEM"){
+                                        w2ui[selector].enable(props.value);
+                                    }
+                                    if(props.cmd == "DISABLE-ITEM"){
+                                        w2ui[selector].disable(props.value);
+                                    }
+                                    if(props.cmd == "ADD-ITEM"){
+                                        w2ui[selector].add(JSON.parse(props.value));
+                                    }
+                                    if(props.cmd == "INSERT-ITEM"){
+                                        w2ui[selector].insert(props.ref_item, JSON.parse(props.value));
+                                    }
+                                    if(props.cmd == "REMOVE-ITEM"){
+                                        w2ui[selector].remove(props.value);
+                                    }
+                                } else {
+                                    alertify.warning("No command to process");
+                                }
                             }
                         });
                     });
-                </script>
-                """ % (self._name, self._name, child_widgets, self._onclick_client_script, url)
+                    </script>
+                """ % (self._name, self._namespace, self._name, child_widgets,
+                       self._onclick_client_script, self._name)
         return script
 
-    def _process_onclick_callback(self):
-        if request.args.__len__() > 0:
-            val = request.args['target']
+    def on_fire_click_event(self, props):
+        if props.__len__() > 0:
+            val = props['target']
             if val is not None:
                 self._clicked_item = val
         if self._onclick_callback is not None:
-            return json.dumps({'result': self._onclick_callback()})
-        return json.dumps({'result': ''})
+            self._onclick_callback(self._name, props)
 
-    @property
-    def clicked_item(self):
-        """Contains the name / id of item where mouse was clicked (i.e., the item which received
-        the mouse click event)"""
-        return self._clicked_item
+    def on_click(self, onclick_callback):
+        """Adds an event handler to on_click event of the widget. The event handler can be
+        a method or function.
 
-    @clicked_item.setter
-    def clicked_item(self, val):
-        self._clicked_item = val
+            Args:
+                onclick_callback (function): The function/callback that will be called for this event
+        """
+        self._onclick_callback = onclick_callback
 
     def render(self):
         content = self._render_pre_content('div')
         content += self._render_post_content('div')
         content += "\n" + self._attach_script()
-        content += "\n" + self._attach_polling()
         self._widget_content = content
         return self._widget_content
 
