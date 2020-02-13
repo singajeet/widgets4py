@@ -2142,7 +2142,7 @@ class FormFieldTextArea(FormFieldText):
         self._type = 'textarea'
 
 
-class Form(Widget):
+class Form(Widget, Namespace):
     """A form can have multiple fields embedded and provides option to
     either POST data from fields to server for further processing OR
     sends the data from fields to GET more information
@@ -2152,29 +2152,43 @@ class Form(Widget):
     _header = None
     _submit_callback = None
     _reset_callback = None
-    _app = None
     _form_data = None
+    _socket_io = None
+    _namespace = None
 
-    def __init__(self, name, url=None, header=None, fields=None,
-                 submit_callback=None, reset_callback=None, app=None):
+    def __init__(self, name, socket_io, url=None, header=None, fields=None,
+                 desc=None, prop=None, style=None, attr=None, css_cls=None,
+                 submit_callback=None, reset_callback=None):
         """
             Args:
                 name (string, required): Name or unique id of the object
+                socket_io (SocketIO): An instance of the SocketIO class
                 url (string): Url to which data should be posted. If not
                             provided, the data will be submitted internally
                             to the submit callback handler
                 header (string): An title to be shown on top of the form
                 fields (FormFieldxxx): Objects of FormFfieldxxx type to read
                                         input from users
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
+                css_cls (list, optional): An list of CSS class names to be added to current widget
                 submit_callback (callable): Gets called when form is submitted
                                             and Url parameter is None
                 reset_callback (callable): Called when user clicks on the form's
                                             reset button
         """
-        Widget.__init__(self, name)
-        self._app = app
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style,
+                        attr=attr, css_cls=css_cls)
+        Namespace.__init__(self, '/' + str(__name__ + str(name) + "_form").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + str(name) + "_form").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
         if url is not None:
             self._url = url
+        else:
+            self._url = '#'
         if header is not None:
             self._header = header
         else:
@@ -2185,6 +2199,14 @@ class Form(Widget):
             self._child_widgets = []
         self._submit_callback = submit_callback
         self._reset_callback = reset_callback
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
 
     @property
     def URL(self):
@@ -2240,37 +2262,16 @@ class Form(Widget):
         """
         self._reset_callback = reset_callback
 
-    def _process_submit_callback(self):
+    def on_submit_click_event(self):
         self._form_data = request.form
         if self._submit_callback is not None:
-            return json.dumps({'result': self._submit_callback(request.form)})
-        return json.dumps({'result': ''})
+            self._submit_callback(request.form)
 
-    def _process_reset_callback(self):
+    def on_reset_click_event(self):
         if self._reset_callback is not None:
-            return json.dumps({'result': self._reset_callback()})
-        return json.dumps({'result': ''})
+            self._reset_callback()
 
     def _attach_script(self):
-        reset_url = ""
-        if self._app is not None and self._url is None:
-            # Prepare the form submit URL if no external URL is provided
-            self._url = str(__name__ + "_" + self._name).replace('.', '_')
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == self._url:
-                    found = True
-            if not found:
-                self._app.add_url_rule('/' + self._url, self._url, self._process_submit_callback,
-                                       methods=['POST'])
-            # Prepare the form reset URL to call the reset callback
-            reset_url = str(__name__ + "_" + self._name + "reset").replace('.', '_')
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == reset_url:
-                    found = True
-            if not found:
-                self._app.add_url_rule('/' + reset_url, reset_url, self._process_reset_callback)
         # Prepare the fields to be added to form
         fields = "[\n"
         for field in self._child_widgets:
@@ -2279,6 +2280,8 @@ class Form(Widget):
         script = """
                 <script>
                     $2(function(){
+                        var socket = io('%s');
+
                         $2('#%s').w2form({
                             name: '%s',
                             url: '%s',
@@ -2287,27 +2290,18 @@ class Form(Widget):
                             actions: {
                                 reset: function(){
                                     this.clear();
-                                    $2.ajax({
-                                        url: '/%s',
-                                        type: 'get',
-                                        dataType: 'json',
-                                        success: function(status){},
-                                        error: function(err_status){
-                                            alertify.error("Status Code: "
-                                            + err_status.status + "<br />" + "Error Message:"
-                                            + err_status.statusText);
-                                        }
-                                    });
+                                    socket.emit('reset_click_event');
                                 },
                                 save: function(){
                                     this.save();
+                                    socket.emit('submit_click_evet');
                                 }
                             }
                         });
                     });
                 </script>
-                """ % (self._name, self._name, self._url, self._header,
-                       fields, reset_url)
+                """ % (self._namespace, self._name, self._name, self._url,
+                       self._header, fields)
         return script
 
     def render(self):
