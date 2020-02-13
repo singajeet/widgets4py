@@ -1488,10 +1488,10 @@ class Toolbar(Widget, Namespace):
         child_widgets += "\n]"
         script = """<script>
                     $2(document).ready(function(){
-                        var selector = '%s'; //$2('#');
+                        var name = '%s';
                         var socket = io('%s');
 
-                        $2('#' + selector).w2toolbar({
+                        $2('#' + name).w2toolbar({
                             name: '%s',
                             items: %s,
                             onClick: function(event){
@@ -1501,28 +1501,28 @@ class Toolbar(Widget, Namespace):
                         });
 
                         socket.on("sync_properties_%s", function(props){
-                            if(selector != undefined){
+                            if(name != undefined){
                                 if(props.cmd != undefined){
                                     if(props.cmd == "HIDE-ITEM"){
-                                        w2ui[selector].hide(props.value);
+                                        w2ui[name].hide(props.value);
                                     }
                                     if(props.cmd == "SHOW-ITEM"){
-                                        w2ui[selector].show(props.value);
+                                        w2ui[name].show(props.value);
                                     }
                                     if(props.cmd == "ENABLE-ITEM"){
-                                        w2ui[selector].enable(props.value);
+                                        w2ui[name].enable(props.value);
                                     }
                                     if(props.cmd == "DISABLE-ITEM"){
-                                        w2ui[selector].disable(props.value);
+                                        w2ui[name].disable(props.value);
                                     }
                                     if(props.cmd == "ADD-ITEM"){
-                                        w2ui[selector].add(JSON.parse(props.value));
+                                        w2ui[name].add(JSON.parse(props.value));
                                     }
                                     if(props.cmd == "INSERT-ITEM"){
-                                        w2ui[selector].insert(props.ref_item, JSON.parse(props.value));
+                                        w2ui[name].insert(props.ref_item, JSON.parse(props.value));
                                     }
                                     if(props.cmd == "REMOVE-ITEM"){
-                                        w2ui[selector].remove(props.value);
+                                        w2ui[name].remove(props.value);
                                     }
                                 } else {
                                     alertify.warning("No command to process");
@@ -1659,7 +1659,7 @@ class SidebarNode(Widget):
             return obj
 
 
-class Sidebar(Widget):
+class Sidebar(Widget, Namespace):
     """The w2sidebar object provides a quick solution for a vertical menu. A sidebar can have
     multiple items and some of the items can be nested. The very same object can be used to create
     tree structures too.
@@ -1667,34 +1667,47 @@ class Sidebar(Widget):
 
     _onclick_callback = None
     _onclick_client_script = None
-    _app = None
     _topHTML = None
     _bottomHTML = None
     _flatButton = None
     _clicked_item = None
-    _queue = None
+    _namespace = None
+    _socket_io = None
 
-    def __init__(self, name, nodes=None, onclick_callback=None, onclick_client_script=None, app=None,
-                 topHTML=None, bottomHTML=None, flatButton=None):
+    def __init__(self, name, socket_io, nodes=None, desc=None, prop=None,
+                 style=None, attr=None, css_cls=None, onclick_callback=None,
+                 onclick_client_script=None, topHTML=None, bottomHTML=None,
+                 flatButton=None):
         """
             Args:
                 name (string): Name or Id for internal use
+                socket_io (SocketIO): An instance of the SocketIO class
                 nodes (Widget): Sub Nodes or leaves of the current node
+                desc (string, optional): description of the button widget
+                prop (dict, optional): dict of objects to be added as properties of widget
+                style (dict, optional): dict of objects to be added as style elements to HTML tag
+                attr (list, optional): list of objects to be added as attributes of HTML tag
                 onclick_callback (callable): will be called when mouse is clicked on any child item
                 onclick_client_script (string): JS to be called when mouse is clicked on any item
-                app (Flask): An instance of Flask app
                 topHTML (string): HTML to show at the top of the sidebar
                 bottomHTML (string): HTML to be shown on the bottom of sidebar
                 flatButton (boolean): If true, it will show button to minimize or flat the sidebar
         """
-        Widget.__init__(self, name)
+        Widget.__init__(self, name, desc=desc, prop=prop, style=style, attr=attr,
+                        css_cls=css_cls)
+        Namespace.__init__(self, '/' + str(__name__ + str(name) + "_sidebar").replace('.', '_'))
+        self._namespace = '/' + str(__name__ + str(name) + "_sidebar").replace('.', '_')
+        self._socket_io = socket_io
+        self._socket_io.on_namespace(self)
         if nodes is not None:
             self._child_widgets = nodes
         else:
             self._child_widgets = []
         self._onclick_callback = onclick_callback
-        self._onclick_client_script = onclick_client_script
-        self._app = app
+        if onclick_client_script is not None:
+            self._onclick_client_script = onclick_client_script
+        else:
+            self._onclick_client_script = ""
         if topHTML is not None:
             self._topHTML = topHTML
         else:
@@ -1707,7 +1720,14 @@ class Sidebar(Widget):
             self._flatButton = flatButton
         else:
             self._flatButton = False
-        self._queue = []
+
+    @property
+    def namespace(self):
+        return self._namespace
+
+    @namespace.setter
+    def namespace(self, val):
+        self._namespace = val
 
     @property
     def onclick_client_script(self):
@@ -1756,7 +1776,7 @@ class Sidebar(Widget):
         content = []
         for item in items:
             content.append(item.render())
-        self._queue.append({'cmd': 'ADD-ITEMS', 'arg0': content})
+        self._sync_properties('ADD-ITEMS', content)
 
     def insert_items(self, items, ref_item):
         """Insert specified items after the item passed for reference
@@ -1768,7 +1788,7 @@ class Sidebar(Widget):
         content = []
         for item in items:
             content.append(item.render())
-        self._queue.append({'cmd': 'INSERT-ITEMS', 'arg0': content, 'ref': ref_item})
+        self._sync_properties('INSERT-ITEMS', content, ref_item)
 
     def remove_items(self, items):
         """Removes all items from the toolbar passed as arg to this method
@@ -1776,7 +1796,7 @@ class Sidebar(Widget):
             Args:
                 items (list): A list of item names to be removed from toolbar
         """
-        self._queue.append({'cmd': 'REMOVE-ITEMS', 'arg0': json.dumps(items)})
+        self._sync_properties('REMOVE-ITEMS', json.dumps(items))
 
     def show_items(self, items):
         """Shows the hidden items passed as list of item names
@@ -1784,7 +1804,7 @@ class Sidebar(Widget):
             Args:
                 items (list): List of names of items
         """
-        self._queue.append({'cmd': 'SHOW-ITEMS', 'arg0': json.dumps(items)})
+        self._sync_properties('SHOW-ITEMS', json.dumps(items))
 
     def hide_items(self, items):
         """Hides the specified items passed as list of item names parameter
@@ -1792,7 +1812,7 @@ class Sidebar(Widget):
             Args:
                 items (list): List of item names
         """
-        self._queue.append({'cmd': 'HIDE-ITEMS', 'arg0': json.dumps(items)})
+        self._sync_properties('HIDE-ITEMS', json.dumps(items))
 
     def enable_item(self, item):
         """Enables an already disabled item in the sidebar
@@ -1800,7 +1820,7 @@ class Sidebar(Widget):
             Args:
                 item (string): Name or Id of the item that needs to be enabled
         """
-        self._queue.append({'cmd': 'ENABLE-ITEM', 'arg0': item})
+        self._sync_properties('ENABLE-ITEM', item)
 
     def disable_item(self, item):
         """Disables an already enabled item in the sidebar
@@ -1808,7 +1828,7 @@ class Sidebar(Widget):
             Args:
                 item (string): Name or Id of the item that needs to be enabled
         """
-        self._queue.append({'cmd': 'DISABLE-ITEM', 'arg0': item})
+        self._sync_properties('DISABLE-ITEM', item)
 
     def expand_item(self, item):
         """Expands an collapsed item node
@@ -1816,7 +1836,7 @@ class Sidebar(Widget):
             Args:
                 item (string): Name or Id of the node that needs to be expanded
         """
-        self._queue.append({'cmd': 'EXPAND-ITEM', 'arg0': item})
+        self._sync_properties('EXPAND-ITEM', item)
 
     def collapse_item(self, item):
         """Collapse an expanded node in the sidebar
@@ -1824,7 +1844,7 @@ class Sidebar(Widget):
             Args:
                 item (string): Collapse the provided node
         """
-        self._queue.append({'cmd': 'COLLAPSE-ITEM', 'arg0': item})
+        self._sync_properties('COLLAPSE-ITEM', item)
 
     def select_item(self, item):
         """Selects the specified item in the sidebar
@@ -1832,7 +1852,7 @@ class Sidebar(Widget):
             Args:
                 item (string): Name or Id of the node that needs to be selected
         """
-        self._queue.append({'cmd': 'SELECT-ITEM', 'arg0': item})
+        self._sync_properties('SELECT-ITEM', item)
 
     def unselect_item(self, item):
         """UnSelects the specidied item in the sidebar
@@ -1840,7 +1860,7 @@ class Sidebar(Widget):
             Args:
                 item (string): Name or Id of the node that needs to be unselected
         """
-        self._queue.append({'cmd': 'UNSELECT-ITEM', 'arg0': item})
+        self._sync_properties('UNSELECT-ITEM', item)
 
     def click_item(self, item):
         """Emulates an click on the specified node
@@ -1848,9 +1868,9 @@ class Sidebar(Widget):
             Args:
                 item (string): Name or Id of the node
         """
-        self._queue.append({'cmd': 'CLICK-ITEM', 'arg0': item})
+        self._sync_properties('CLICK-ITEM', item)
 
-    def on_sidebar_item_clicked(self, click_callback):
+    def on_click(self, click_callback):
         """Registers an method or callback to be called whenever an mouse click event
         is triggered on the widget
 
@@ -1859,113 +1879,67 @@ class Sidebar(Widget):
         """
         self._onclick_callback = click_callback
 
-    def _sync_properties(self):
-        if self._queue.__len__() > 0:
-            cmd = self._queue.pop()
-            return json.dumps(cmd)
-        return json.dumps({'result': ''})
-
-    def _attach_polling(self):
-        if self._app is None:
-            return
-        url = str(__name__ + "_" + self._name + "_props").replace('.', '_')
-        script = """<script>
-                    (function %s_poll(){
-                        setTimeout(function(){
-                            $2.ajax({
-                                url: "/%s",
-                                dataType: "json",
-                                success: function(props){
-                                    selector = w2ui['%s'];
-                                    if(selector != undefined){
-                                        if(props.cmd != undefined){
-                                            if(props.cmd == "HIDE-ITEMS"){
-                                                selector.hide(JSON.parse(props.arg0));
-                                            }
-                                            if(props.cmd == "SHOW-ITEMS"){
-                                                selector.show(JSON.parse(props.arg0));
-                                            }
-                                            if(props.cmd == "ENABLE-ITEM"){
-                                                selector.enable(props.arg0);
-                                            }
-                                            if(props.cmd == "DISABLE-ITEM"){
-                                                selector.disable(props.arg0);
-                                            }
-                                            if(props.cmd == "ADD-ITEMS"){
-                                                selector.add(props.arg0);
-                                            }
-                                            if(props.cmd == "INSERT-ITEMS"){
-                                                selector.insert(props.ref, props.arg0);
-                                            }
-                                            if(props.cmd == "REMOVE-ITEMS"){
-                                                selector.remove(JSON.parse(props.arg0));
-                                            }
-                                            if(props.cmd == "COLLAPSE-ITEM"){
-                                                selector.collapse(props.arg0);
-                                            }
-                                            if(props.cmd == "EXPAND-ITEM"){
-                                                selector.expand(props.arg0);
-                                            }
-                                            if(props.cmd == "SELECT-ITEM"){
-                                                selector.select(props.arg0);
-                                            }
-                                            if(props.cmd == "UNSELECT-ITEM"){
-                                                selector.unselect(props.arg0);
-                                            }
-                                            if(props.cmd == "CLICK-ITEM"){
-                                                selector.click(props.arg0);
-                                            }
-                                        } else {
-                                            alertify.warning("No command to process");
-                                        }
-                                    }
-                                },
-                                error: function(err_status){
-                                    alertify.error("Status Code: "
-                                    + err_status.status + "<br />" + "Error Message:"
-                                    + err_status.statusText);
-                                }
-                            });
-                            %s_poll();
-                        }, 500);
-                    })();
-                    </script>
-                """ % (url, url, self._name, url)
-        found = False
-        for rule in self._app.url_map.iter_rules():
-            if rule.endpoint == url:
-                found = True
-        if not found:
-            self._app.add_url_rule('/' + url, url, self._sync_properties)
-        return script
-
-    def _process_onclick_callback(self):
-        if request.args.__len__() > 0:
-            val = request.args['target']
-            if val is not None:
-                self._clicked_item = val
-        if self._onclick_callback is not None:
-            return json.dumps({'result': self._onclick_callback()})
-        return json.dumps({'result': ''})
+    def _sync_properties(self, cmd, value, ref_item=None):
+        emit('sync_properties_' + self._name, {'cmd': cmd, 'value': value,
+             'ref_item': ref_item},
+             namespace=self._namespace)
 
     def _attach_script(self):
-        url = ""
-        if self._app is not None:
-            url = str(__name__ + "_" + self._name).replace('.', '_')
-            found = False
-            for rule in self._app.url_map.iter_rules():
-                if rule.endpoint == url:
-                    found = True
-            if not found:
-                self._app.add_url_rule('/' + url, url, self._process_onclick_callback)
         child_widgets = "[\n"
         for child in self._child_widgets:
             child_widgets += json.dumps(child.render()) + ",\n"
         child_widgets += "\n]"
-        script = """
-                    <script>
-                        $2(function(){
-                            $2('#%s').w2sidebar({
+        script = """<script>
+                    $2(document).ready(function(){
+                        var name = '%s';
+                        var socket = io("%s");
+
+                        socket.on("sync_properties_%s", function(props){
+                            if(name != undefined){
+                                if(props.cmd != undefined){
+                                    if(props.cmd == "HIDE-ITEMS"){
+                                        w2ui[name].hide(JSON.parse(props.value));
+                                    }
+                                    if(props.cmd == "SHOW-ITEMS"){
+                                        w2ui[name].show(JSON.parse(props.value));
+                                    }
+                                    if(props.cmd == "ENABLE-ITEM"){
+                                        w2ui[name].enable(props.value);
+                                    }
+                                    if(props.cmd == "DISABLE-ITEM"){
+                                        w2ui[name].disable(props.value);
+                                    }
+                                    if(props.cmd == "ADD-ITEMS"){
+                                        w2ui[name].add(props.value);
+                                    }
+                                    if(props.cmd == "INSERT-ITEMS"){
+                                        w2ui[name].insert(props.ref_item, props.value);
+                                    }
+                                    if(props.cmd == "REMOVE-ITEMS"){
+                                        w2ui[name].remove(JSON.parse(props.value));
+                                    }
+                                    if(props.cmd == "COLLAPSE-ITEM"){
+                                        w2ui[name].collapse(props.value);
+                                    }
+                                    if(props.cmd == "EXPAND-ITEM"){
+                                        w2ui[name].expand(props.value);
+                                    }
+                                    if(props.cmd == "SELECT-ITEM"){
+                                        w2ui[name].select(props.value);
+                                    }
+                                    if(props.cmd == "UNSELECT-ITEM"){
+                                        w2ui[name].unselect(props.value);
+                                    }
+                                    if(props.cmd == "CLICK-ITEM"){
+                                        w2ui[name].click(props.value);
+                                    }
+                                } else {
+                                    alertify.warning("No command to process");
+                                }
+                            }
+                        });
+
+                        $2('#%s').w2sidebar({
                                 name: '%s',
                                 flatButton: %s,
                                 topHTML: '%s',
@@ -1975,32 +1949,33 @@ class Sidebar(Widget):
                                     $2('#%s').css('width', (event.goFlat ? '35px' : '200px'));
                                 },
                                 onClick: function(event){
-                                    $2.ajax({
-                                        url: '/%s',
-                                        type: 'get',
-                                        dataType: 'json',
-                                        data: {'target': event.target},
-                                        success: function(status){},
-                                        error: function(err_status){
-                                            alertify.error("Status Code: "
-                                            + err_status.status + "<br />" + "Error Message:"
-                                            + err_status.statusText);
-                                        }
-                                    });
+                                    %s
+                                    var props = {'target': event.target};
+                                    socket.emit('fire_click_event', props);
                                 }
                             });
-                        });
+                    });
                     </script>
-                """ % (self._name, self._name, json.dumps(self._flatButton), self._topHTML,
-                       self._bottomHTML, child_widgets, self._name, url)
+                """ % (self._name, self._namespace, self._name, self._name,
+                       self._name, json.dumps(self._flatButton), self._topHTML,
+                       self._bottomHTML, child_widgets, self._name,
+                       self._onclick_client_script)
         return script
+
+    def on_fire_click_event(self, props):
+        if props.__len__() > 0:
+            val = props['target']
+            if val is not None:
+                self._clicked_item = val
+        print('Fire Click Event: ' + val)
+        if self._onclick_callback is not None:
+            self._onclick_callback()
 
     def render(self):
         """Renders the sidebar with its nodes and subnodes"""
         content = self._render_pre_content('div')
         content += self._render_post_content('div')
         content += "\n" + self._attach_script()
-        content += "\n" + self._attach_polling()
         return content
 
 
