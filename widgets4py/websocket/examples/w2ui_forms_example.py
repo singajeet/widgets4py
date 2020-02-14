@@ -30,9 +30,9 @@ class W2UIPage:
     fft = None
     ffta = None
 
-    def show_layout(self):
+    def create_form(self):
         self.pg = Page('pg', 'Forms')
-        self.form = Form('form', socketio, header="Form Example", submit_callback=self.form_submitted)
+        self.form = Form('form', socketio, app, header="Form Example", submit_callback=self.form_submitted)
         self.ffa = FormFieldAlpha('ffa', caption='AlphaNumeric:')
         self.ffc = FormFieldCheckbox('ffc', caption="CheckBox:")
         self.ffd = FormFieldDate('ffd', caption="Date:")
@@ -56,6 +56,8 @@ class W2UIPage:
         self.form.add(self.fft)
         self.form.add(self.ffta)
         self.pg.add(self.form)
+
+    def show_layout(self):
         return self.pg.render()
 
     def form_submitted(self, form_data):
@@ -64,6 +66,7 @@ class W2UIPage:
 
 def start_app():
     p = W2UIPage()
+    p.create_form()
     app.add_url_rule('/', 'index', p.show_layout)
     socketio.run(app, debug=True)
 

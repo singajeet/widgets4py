@@ -6,10 +6,12 @@ from widgets4py.websocket.html5.app_ui import Image, Month, Number, Password, Ra
 from widgets4py.websocket.html5.app_ui import File, Reset, Search, Submit, Telephone, Time, URL
 from widgets4py.websocket.html5.app_ui import Week, Form, ListBox, Label
 from widgets4py.layouts import SimpleGridLayout
+from engineio.payload import Payload
 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
+Payload.max_decode_packets = 500
 socketio = SocketIO(app, async_mode=None)
 
 
